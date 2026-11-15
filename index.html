@@ -137,7 +137,16 @@ button.pri:hover:not(:disabled){background:#3a6ea6}
 #rodape .pDir{display:flex;align-items:center;gap:14px;min-width:0;justify-content:flex-start}
 #rodape.tres .lado1 .pMana,#rodape.tres .lado2 .pMana,#rodape.tres .lado3 .pMana{display:none} /* 3 ou 4 mestres: dos rivais só nome, monstros e torres */
 #rodape.quatro .pDir{gap:10px}#rodape.quatro .pDir .pLado{gap:8px}
-@media (max-width:1100px){#rodape.quatro .pDir .nm{display:none}} /* tela estreita com 4 mestres: dos rivais fica só a bolinha da cor */
+#rodape{grid-template-columns:auto 1fr}
+#rodape .pJog{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:inherit;min-width:0}
+#rodape .pManaBox{display:flex;align-items:center;padding:2px 10px;border-right:1px solid var(--line);white-space:nowrap;font-weight:600}
+#rodape.tres .pJog{display:flex;justify-content:space-between;flex-wrap:nowrap}
+#rodape.tres .pLado{justify-content:center;gap:8px;padding:2px 8px;border-radius:6px;background:#ffffff0a}
+#rodape .pTorMini{width:20px;height:20px;image-rendering:pixelated;display:block}
+.pc #rodape .pTorMini{width:clamp(24px,1.6vw,32px);height:clamp(24px,1.6vw,32px)}
+.retrato #rodape .pTorMini{width:16px;height:16px}
+.retrato #rodape.tres .pLado{gap:5px;padding:2px 5px}
+@media (max-width:1100px){#rodape.quatro .nm{display:none}} /* tela estreita com 4 mestres: dos rivais fica só a bolinha da cor */
 #rodape .pLado.fora{opacity:.35;text-decoration:line-through}
 #saves .modos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:4px 0 2px;width:100%;max-width:620px}
 #saves .modos button{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;min-width:0;padding:8px 10px;text-align:left}
@@ -1816,7 +1825,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.12'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.13'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -4916,30 +4925,34 @@ function atualiza(){
     <button onclick="fechaMenuJogo();abrirCarregar()" ${J.ocupado?'disabled':''}>📂 Carregar</button>
     <button onclick="event.stopPropagation();mudaModoCena()" title="Tela que mostra cada combate">⚔ Tela de combate: ${MODOS_CENA[modoCena()]}</button>
     ${pedidoInstalar?'<button onclick="fechaMenuJogo();instalarApp()" title="Coloca o jogo na tela inicial, em tela cheia e jogável sem internet">⤓ Instalar como app</button>':''}`;
-  // placar espelhado, logo abaixo do topo (PC e celular): nome · mana (+saldo) · monstros · torres | ícone de torre | torres · monstros · mana · nome
-  // as torres ficam coladas no ícone do meio; o cerco só aparece como alerta sobre o mapa
+  // placar logo abaixo do topo (PC e celular): [sua mana (+saldo)] | placar dos jogadores
+  // 1x1: espelhado, nome · monstros · torres | ícone de torre | torres · monstros · nome; 3 ou 4 mestres: um bloco por jogador
+  // o cerco só aparece como alerta sobre o mapa
   {const it=(l,tipo,html,dica)=>`<span class="pIt ${tipo}" title="${dica}">${html}</span>`;
+   // mana (só a sua; a dos rivais aparece na ficha ao tocar no mestre deles)
+   const manaHud=()=>{const l=0,sd=saldo(l),r=renda(l),m=manutencao(l),def=sd<0?Math.max(0,Math.floor(J.mp[l]/-sd)):null;
+     return it(l,'pMana',`${mpCurto(l)} <b style="color:${sd>0?'#6ee08a':sd<0?'#ff8a80':'var(--txt)'}">${sd>=0?'+':'−'}${Math.abs(sd)}</b>`,
+         `Mana ${l?doM(l):'sua'}: reserva ${J.mp[l]} (máx. ${MANA_MAX}). Por turno: renda +${r} (torres, castelo e fortalezas) e manutenção −${m} (criaturas).${def!=null?` No ritmo atual, a reserva acaba em ${def} turno${def===1?'':'s'}.`:''}`);};
    const lado=l=>{
-     const sd=saldo(l),r=renda(l),m=manutencao(l),def=sd<0?Math.max(0,Math.floor(J.mp[l]/-sd)):null;
-     // a mana dos rivais não fica no placar: aparece na ficha ao tocar no mestre deles
      const partes=[
        `<span class="pNome"><span class="ponto" style="background:var(--p${l})"></span><span class="nm">${l?NM(l):'Você'}</span></span>`,
-       l?'':it(l,'pMana',`${mpCurto(l)} <b style="color:${sd>0?'#6ee08a':sd<0?'#ff8a80':'var(--txt)'}">${sd>=0?'+':'−'}${Math.abs(sd)}</b>`,
-         `Mana ${l?doM(l):'sua'}: reserva ${J.mp[l]} (máx. ${MANA_MAX}). Por turno: renda +${r} (torres, castelo e fortalezas) e manutenção −${m} (criaturas).${def!=null?` No ritmo atual, a reserva acaba em ${def} turno${def===1?'':'s'}.`:''}`),
-       it(l,'pMon',`${iconeSpr(INVOCAVEIS[0],document.documentElement.classList.contains('pc')?Math.round(Math.min(30,Math.max(22,innerWidth*.0145))):18,l)}${criaturas(l)}/${limite(l)}`,`Criaturas no exército ${l?doM(l):'seu'} / limite (2 + 1 por torre)`),
-       it(l,'pTor',`<b>${torresDe(l)}</b>`,l?`Torres ${doM(l)}`:'Suas torres')];
-     return `<div class="pLado lado${l}${ativo(l)?'':' fora'}"${ativo(l)?'':` title="${OM(l)} está fora da partida"`}>${(l&&NP()===2?partes.reverse():partes).join('')}</div>`;}; // 1x1: espelhado; 1x1x1: cada rival com o nome na frente
+       it(l,'pMon',`${iconeSpr(INVOCAVEIS[0],document.documentElement.classList.contains('pc')?Math.round(Math.min(30,Math.max(22,innerWidth*.0145))):18,l)}${criaturas(l)}`,`Criaturas no exército ${l?doM(l):'seu'}: ${criaturas(l)} (limite ${limite(l)}: 2 + 1 por torre)`),
+       it(l,'pTor',`${NP()>2?`<img class="pTorMini" src="${PLACAR_TORRE}" alt="">`:''}<b>${torresDe(l)}</b>`,l?`Torres ${doM(l)}`:'Suas torres')];
+     // 1x1: espelhado (monstros · torres | ícone de torre | torres · monstros)
+     // 3 ou 4 mestres: cada lado é um bloco próprio com bolinha · torres · monstros (sem o ícone do meio)
+     if(NP()>2)partes.splice(-2,2,partes[partes.length-1],partes[partes.length-2]);
+     return `<div class="pLado lado${l}${ativo(l)?'':' fora'}"${ativo(l)?'':` title="${OM(l)} está fora da partida"`}>${(l&&NP()===2?partes.reverse():partes).join('')}</div>`;};
    if(!PLACAR_TORRE)PLACAR_TORRE=iconePx(estiloIcone('torre'),'torre').toDataURL();
-   // Torre do Cristal: o andamento do cabo de guerra fica no meio do placar, ao lado do ícone de torre (no mapa, só o anel e o cristal)
-   // Clássico: o cabo de guerra das torres usa a mesma faixa e o mesmo contador
+   // Torre do Cristal e Clássico (cabo de guerra das torres): o andamento aparece só na faixa da borda de baixo
    const C=J.cristal||J.cabo,META=J.cristal?CRISTAL_META:CABO_META,corC=C&&C.lado!=null?COR[C.lado]:'#9aa3ad';
    const dicaC=!C?'':J.cristal?`Cristal: ${C.v?`${C.v} de ${CRISTAL_META} montados para ${C.lado?OM(C.lado):'você'}`:'desmontado'}. Força por turno (1 por torre, ${CRISTAL_VALOR} pela do cristal): ${LADOS().filter(ativo).map(l=>`${l?NM(l):'você'} +${forcaCristal(l)}`).join(', ')}.`
      :`Cabo de guerra: ${C.v?`${C.v} de ${CABO_META} para ${C.lado?OM(C.lado):'você'}`:'empatado'}. No fim do turno, cada um puxa 1 por torre: ${LADOS().filter(ativo).map(l=>`${l?NM(l):'você'} +${torresDe(l)}`).join(', ')}. Quem chegar a ${CABO_META} vence.`;
-   const meio=quem=>`<div class="pMeio"><img class="pTorre" src="${PLACAR_TORRE}" alt="Torres" title="Torres: você à esquerda, ${quem} à direita">${C?`<span class="pCristal" title="${dicaC}">${J.cristal?'💎':'🏳'}<b style="color:${corC}">${C.v}/${META}</b></span>`:''}</div>`;
+   const meio=quem=>`<div class="pMeio"><img class="pTorre" src="${PLACAR_TORRE}" alt="Torres" title="Torres: você à esquerda, ${quem} à direita"></div>`;
    const rod=document.getElementById('rodape');rod.classList.toggle('tres',NP()>2);rod.classList.toggle('quatro',NP()>3);
-   rod.innerHTML=NP()>2
-     ?lado(0)+meio('os rivais')+`<div class="pDir">${LADOS().slice(1).map(lado).join('')}</div>`
-     :lado(0)+meio(`${ART(1)} ${NM(1)}`)+lado(1);
+   // a mana fica num bloco próprio, à esquerda, separada do placar dos jogadores
+   rod.innerHTML=`<div class="pManaBox">${manaHud()}</div>`+`<div class="pJog">${NP()>2
+     ?LADOS().map(lado).join('')
+     :lado(0)+meio(`${ART(1)} ${NM(1)}`)+lado(1)}</div>`;
    // 1x1: a faixa cresce do meio para o lado de quem monta (você à esquerda, o rival à direita); chegou na ponta, venceu.
    // 1x1x1: só um lado tem cristal montado por vez, então a faixa cresce do meio para as duas pontas na cor desse lado.
    if(C){const q=50-C.v/META*50,tres=NP()>2;
