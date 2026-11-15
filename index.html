@@ -556,8 +556,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
       <p>Para invocar, clique numa construção sua (castelo, fortaleza ou torre) que esteja livre e ao lado do seu mestre. Elas ficam com borda dourada tracejada.</p>
       <p>Seu exército pode ter até 2 criaturas + 1 por torre que você controla. Ganhe torres (e MP) terminando o movimento sobre elas.</p>
       <p><b>Modos:</b> no <b>1 × 1</b> você enfrenta um mestre. No <b>1 × 1 × 1</b> são três mestres, todos contra todos (você e dois controlados pelo computador), num mapa maior com três castelos. Quando um mestre cai ou tem o castelo cercado, ele sai da partida: o exército dele se desfaz e as construções dele ficam sem dono. Vence o último mestre de pé.</p>
-      <p><b>Cabo de guerra (Clássico):</b> além de derrotar o mestre ou cercar o castelo, dá para vencer pelas torres. No fim do seu turno você puxa o cabo de guerra 1 ponto por torre que controla, e o rival faz o mesmo no turno dele. Se o cabo está do lado de um rival, puxar primeiro desfaz a vantagem dele. O mapa tem uma torre a mais no centro, para nunca haver empate no número de torres entre dois mestres. A faixa no placar mostra quem está na frente; quem chegar a 30 vence na hora.</p>
-      <p><b>Torre do Cristal:</b> modo escolhido em Preparar Batalha, junto do número de mestres. Funciona como o cabo de guerra do Clássico: no fim do turno, cada mestre puxa 1 ponto por torre que controla. A diferença é a torre do centro, com um cristal desmontado: ela vale 5 pontos por turno para quem a controla. Os cacos vão se juntando e o cristal ganha a cor de quem está montando. Puxar contra um rival primeiro desfaz o que ele montou, e só depois monta para si. Ao contrário das outras torres, ela não cura quem está nela. Quem chegar a 80 vence na hora; derrotar o mestre ou cercar o castelo continuam valendo.</p>
+      <p><b>Cabo de guerra e Torre do Cristal:</b> além de derrotar o mestre ou cercar o castelo, dá para vencer pelas torres. No fim do seu turno você puxa o cabo de guerra 1 ponto por torre que controla, e cada rival faz o mesmo no turno dele. No centro do mapa fica a Torre do Cristal, que vale 3 pontos por turno para quem a controla, mas, ao contrário das outras torres, não cura quem está nela. Os cacos do cristal vão se juntando na cor de quem está na frente. Se o cabo está do lado de um rival, puxar primeiro desfaz a vantagem dele. Quem chegar a 50 vence na hora.</p>
       <p><b>Mana:</b> no início do turno você ganha +15 por torre e +5 por fortaleza ou castelo, e paga a manutenção das criaturas (3, 6 ou 10 por nível). A sobra vai para a reserva, que guarda no máximo 300 MP (o que passar disso se perde); o que faltar sai dela. Com a reserva zerada, as criaturas sem pagamento ficam enfraquecidas (selo roxo) e, se o déficit continuar, uma delas debanda a cada turno.</p>
       <p><b>Dicas:</b> use Gatos Alados, rápidos e voadores, para tomar torres neutras logo no início. Não deixe criaturas paradas à toa, porque elas custam manutenção. Tomar torres do mestre inimigo corta a renda dele e o limite do exército.</p>
       <p><b>Evoluir na criação:</b> quando sua reserva chega a 200 MP, o menu do mestre ganha <b>Evoluir</b>. Escolha uma criatura inicial e o jogo oferece duas formas de estágio 1, conforme o que seu exército mais viveu na partida (horário dos ataques, dano feito e sofrido, terrenos, turnos parados ou correndo, feridos, abates). A escolhida custa 200 MP e fica fixa: daí em diante, invocar aquela criatura já traz a forma evoluída, pelo custo dela.</p>
@@ -1384,14 +1383,14 @@ let J, nid=1;
 // preferências do novo jogo (mestre escolhido), lembradas no navegador
 const PREFS_CHAVE='senhoresDoVeu.prefs';
 function prefs(){let p=null;try{p=JSON.parse(localStorage.getItem(PREFS_CHAVE));}catch(e){}
-  p=p||{};if(!ORDENS[p.ordem])p.ordem='coro';if(p.modo!=='1x1x1')p.modo='1x1';p.cristal=!!p.cristal;p.manaBase=0;return p;}
+  p=p||{};if(!ORDENS[p.ordem])p.ordem='coro';if(p.modo!=='1x1x1')p.modo='1x1';delete p.cristal;p.manaBase=0;return p;}
 function gravaPrefs(p){try{localStorage.setItem(PREFS_CHAVE,JSON.stringify(p));}catch(e){}}
 function novoJogo(op=prefs()){
   document.getElementById('fim').style.display='none';
   const seed=(Math.random()*1e9)|0;
   const np=op.modo==='1x1x1'?3:2;
   defineLinhas(np===3?17:13);
-  const m=gerarMapa(seed,np,!!op.cristal);
+  const m=gerarMapa(seed,np,op.cristal!==false); // modo único: todo mapa tem a Torre do Cristal (false só para testes)
   // os rivais recebem mestres diferentes do seu e entre si, sorteados
   const outras=Object.keys(ORDENS).filter(o=>o!==op.ordem);
   for(let i=outras.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[outras[i],outras[j]]=[outras[j],outras[i]];}
@@ -1411,7 +1410,7 @@ function novoJogo(op=prefs()){
     log(`Seu mestre: ${NM(0)}. Mestre inimigo: ${NM(1)}.`);
   }
   if(J.cabo)log(`🏳 Cabo de guerra: no fim de cada turno, cada mestre puxa 1 ponto por torre que controla. Quem chegar a ${CABO_META} vence.`);
-  if(J.cristal)log(`💎 Torre do Cristal: no fim de cada turno, cada mestre monta o cristal 1 ponto por torre que controla; a torre do cristal, no centro, vale ${CRISTAL_VALOR}. Quem chegar a ${CRISTAL_META} vence.`);
+  if(J.cristal)log(`💎 Cabo de guerra: no fim de cada turno, cada mestre puxa 1 ponto por torre que controla; a Torre do Cristal, no centro, vale ${CRISTAL_VALOR}. Quem chegar a ${CRISTAL_META} vence.`);
   inicioTurno(0);
   atualiza();
 }
@@ -1453,7 +1452,7 @@ function carregar(slot){
   log(`Jogo carregado (turno ${J.turno}).`);
   fecharSaves();atualiza();return true;
 }
-const descSave=s=>`${s.np===3?'1×1×1 · ':''}${s.cristal?'💎 Cristal · ':''}Turno ${s.turno} · ${s.tema} · ${new Date(s.quando).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`;
+const descSave=s=>`${s.np===3?'1×1×1 · ':''}Turno ${s.turno} · ${s.tema} · ${new Date(s.quando).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`;
 function salvarJogo(){
   const el=document.getElementById('saves');el.classList.remove('cfg','tela','ini','arte');
   const ok=gravar('manual');
@@ -1715,7 +1714,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.04'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.05'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -1736,14 +1735,13 @@ function desenhaInicio(){
   el.classList.remove('cfg');el.classList.add('tela','ini');el.style.display='block';
 }
 // Jogar: partida 1x1 clássica, com o último mestre escolhido (as opções salvas não mudam)
-function jogarRapido(){fecharSaves();novoJogo({...prefs(),modo:'1x1',cristal:false});}
+function jogarRapido(){fecharSaves();novoJogo({...prefs(),modo:'1x1'});}
 function desenhaConfig(){
   const el=document.getElementById('saves');
   // tela cheia (classe "tela"), com o nome do jogo no alto
   const tres=cfgSel.modo==='1x1x1';
   let h=`<div class="tituloJogo">Preparar Batalha</div><div class="subt"><strong>Preparar Batalha</strong></div>
     <div class="modos"><button class="${tres?'':'pri'}" onclick="cfgSel.modo='1x1';desenhaConfig()"><b>1 × 1</b><small>Você contra um mestre</small></button><button class="${tres?'pri':''}" onclick="cfgSel.modo='1x1x1';desenhaConfig()"><b>1 × 1 × 1</b><small>Todos contra todos, 3 mestres</small></button></div>
-    <div class="modos"><button class="${cfgSel.cristal?'':'pri'}" onclick="cfgSel.cristal=false;desenhaConfig()"><b>⚔ Clássico</b><small>Mestre, cerco ou cabo de guerra das torres</small></button><button class="${cfgSel.cristal?'pri':''}" onclick="cfgSel.cristal=true;desenhaConfig()"><b>💎 Torre do Cristal</b><small>Cabo de guerra pela torre do centro</small></button></div>
     <div class="vez">Escolha seu mestre. ${tres?'Os dois rivais recebem outros, sorteados.':'O inimigo recebe outro, sorteado.'}</div><div class="mestres">`;
   for(const [id,o] of Object.entries(ORDENS))
     h+=`<button class="${id===cfgSel.ordem?'pri':''}" onclick="cfgSel.ordem='${id}';desenhaConfig()">${iconeSpr(o.esp,TOQUE()?64:84,'cor')}<span class="txt"><b>${o.nome}</b><small>Força Elemental: ${o.forca.map(e=>`<span style="color:${EL[e]}">${ELN[e]}</span>`).join(', ')}</small><small class="desc">${o.desc}</small></span></button>`;
@@ -1786,7 +1784,7 @@ function torresDe(l){let n=0;J.ter.forEach((t,k)=>{if(t==='torre'&&J.dono[k]===l
 // J.cristal={k,v,lado}: k = casa da torre central; v = quanto do cristal está montado (0..CRISTAL_META); lado = para quem.
 // No fim do turno de cada lado, ele puxa 1 ponto por torre que controla; a do cristal vale CRISTAL_VALOR (igual ao cabo do Clássico).
 // Puxar um cristal que está montado para um rival primeiro o desmonta; passando de zero, ele começa a montar para quem puxa.
-let CRISTAL_META=80,CRISTAL_VALOR=5; // let: o simulador testa outros valores
+let CRISTAL_META=50,CRISTAL_VALOR=3; // let: o simulador testa outros valores
 const ehCristal=k=>!!(J&&J.cristal)&&J.cristal.k===k;
 const nomeTer=k=>ehCristal(k)?'Torre do Cristal':TER[J.ter[k]].nome;
 const forcaCristal=l=>torresDe(l)+(J.dono[J.cristal.k]===l?CRISTAL_VALOR-1:0);
