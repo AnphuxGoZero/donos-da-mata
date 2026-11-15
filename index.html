@@ -571,7 +571,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
         <li><b>Gato Alado:</b> turnos terminados numa construção sua contam para o Grifo; cada torre capturada vale 3 para o Anzu.</li>
         <li><b>Dríade</b> (estágio 1 da Semente): cada turno terminado ao lado de 2 ou mais criaturas aliadas (a manada) conta para a Caipora; com 2 ou mais → Caipora. Senão → Curupira.</li>
         <li><b>Essência:</b> viu 2 criaturas caírem a até 2 casas (derrubadas por outros), ou 1 e está ferida (metade da vida ou menos) → Caveira; senão, derrubou um inimigo sem levar dano em até 3 turnos depois de nascer → Espada; senão → Cumacanga.</li>
-        <li><b>Caveira</b> (estágio 1 da Essência): viu 3 ou mais criaturas caírem a até 2 casas (derrubadas por outros) → Esqueleto Mago. Senão, evoluir com 35% da vida ou menos → Esqueleto Guerreiro. Senão, viu 2 caírem → Esqueleto Mago; menos que isso → Esqueleto Arqueiro. O Arqueiro e o Flecheiro Maldito atacam a 2 casas: quem só luta corpo a corpo não revida.</li>
+        <li><b>Caveira</b> (estágio 1 da Essência): viu 3 ou mais criaturas caírem a até 2 casas (derrubadas por outros) → Esqueleto Mago. Senão, evoluir com 40% da vida ou menos → Esqueleto Guerreiro. Senão, viu 2 caírem → Esqueleto Mago; menos que isso → Esqueleto Arqueiro. O Arqueiro e o Flecheiro Maldito atacam a 2 casas: quem só luta corpo a corpo não revida.</li>
       </ul>
       <p>Há duas formas de vencer: derrotar o mestre inimigo, ou ocupar com suas criaturas mais da metade da área urbana dele (4 das 7 casas entre castelo e fortalezas) e segurar até o início do seu próximo turno. Casas da sua área ocupadas pelo inimigo piscam em laranja.</p>
       <p><b>Elementos</b> (vantagem = ×1,5 de dano; desvantagem = ×0,75):</p>
@@ -1008,16 +1008,16 @@ const ESP={
   harpiaLua:{nome:'Harpia Lunar',cat:'voo',el:'ar',hora:'noite',hp:36,atk:17,def:2,mov:7,alc:1,xp:90,evo:'esfingeLua',forma:'asa',tier:2},
   esfingeLua:{nome:'Esfinge Lunar',cat:'voo',el:'ar',hora:'noite',hp:58,atk:25,def:4,mov:7,alc:1,forma:'asa',tier:3},
   mulaSemCabeca:{nome:'Mula sem Cabeça',cat:'terFogo',el:'fogo',hp:64,atk:25,def:3,mov:8,alc:1,forma:'chama',tier:3},
-  // terceiro ramo da Essência: os mortos-vivos. A Caveira nasce da Essência que viu a morte de perto (~⅓ das Essências; um pouco
-  // mais forte) e se divide em três esqueletos: o Guerreiro (linha de frente), o Mago (colhe almas, ataque alto e
+  // terceiro ramo da Essência: os mortos-vivos. A Caveira nasce da Essência que viu a morte de perto (~⅓ das Essências, mesmo
+  // nível da Cumacanga e da Espada) e se divide em três esqueletos: o Guerreiro (linha de frente), o Mago (colhe almas, ataque alto e
   // frágil) e o Arqueiro, a única criatura que ataca a 2 casas (sem revide de quem só luta corpo a corpo)
-  caveira:{nome:'Caveira',cat:'vooBaixo',el:'arcano',hp:26,atk:12,def:1,mov:3,alc:1,custo:80,xp:50,evo:'esqGuerreiro',forma:'olho',tier:1},
-  esqGuerreiro:{nome:'Esqueleto Guerreiro',cat:'terPeq',el:'arcano',hp:48,atk:16,def:5,mov:3,alc:1,xp:95,evo:'draugr',forma:'olho',tier:2},
-  draugr:{nome:'Draugr',cat:'terGra',el:'arcano',hp:76,atk:23,def:9,mov:3,alc:1,forma:'olho',tier:3},
-  esqMago:{nome:'Esqueleto Mago',cat:'terPeq',el:'arcano',hp:38,atk:19,def:2,mov:3,alc:1,xp:95,evo:'lich',forma:'olho',tier:2},
-  lich:{nome:'Lich',cat:'vooBaixo',el:'arcano',hp:58,atk:28,def:4,mov:4,alc:1,forma:'olho',tier:3},
-  esqArqueiro:{nome:'Esqueleto Arqueiro',cat:'terPeq',el:'arcano',hp:36,atk:13,def:2,mov:3,alc:2,xp:95,evo:'flecheiro',forma:'olho',tier:2},
-  flecheiro:{nome:'Flecheiro Maldito',cat:'terPeq',el:'arcano',hp:54,atk:19,def:3,mov:4,alc:2,forma:'olho',tier:3},
+  caveira:{nome:'Caveira',cat:'vooBaixo',el:'arcano',hp:24,atk:11,def:1,mov:3,alc:1,custo:80,xp:50,evo:'esqGuerreiro',forma:'olho',tier:1},
+  esqGuerreiro:{nome:'Esqueleto Guerreiro',cat:'terPeq',el:'arcano',hp:42,atk:15,def:5,mov:3,alc:1,xp:95,evo:'draugr',forma:'olho',tier:2},
+  draugr:{nome:'Draugr',cat:'terGra',el:'arcano',hp:64,atk:21,def:8,mov:3,alc:1,forma:'olho',tier:3},
+  esqMago:{nome:'Esqueleto Mago',cat:'terPeq',el:'arcano',hp:36,atk:17,def:2,mov:3,alc:1,xp:95,evo:'lich',forma:'olho',tier:2},
+  lich:{nome:'Lich',cat:'vooBaixo',el:'arcano',hp:52,atk:25,def:4,mov:4,alc:1,forma:'olho',tier:3},
+  esqArqueiro:{nome:'Esqueleto Arqueiro',cat:'terPeq',el:'arcano',hp:34,atk:13,def:2,mov:3,alc:2,xp:95,evo:'flecheiro',forma:'olho',tier:2},
+  flecheiro:{nome:'Flecheiro Maldito',cat:'terPeq',el:'arcano',hp:50,atk:19,def:3,mov:4,alc:2,forma:'olho',tier:3},
 };
 // qual desenho do atlas a espécie usa (arte: opcional, para emprestar o desenho de outra espécie)
 function spr(esp){return (ESP[esp]&&ESP[esp].arte)||esp;}
@@ -1062,9 +1062,9 @@ const RAMOS={
       return (h.abates||0)>0&&!h.sofrido&&turnos<=3?[0,1,0]:[1,0,0];}},
   // ~⅓ cada (medido em partidas IA × IA, com Caveiras vindas da Essência e invocadas já evoluídas). O Mago colhe almas
   // (quedas a até 2 casas, derrubadas por outros); o Guerreiro é quem aguentou a surra; o Arqueiro saiu inteiro da briga
-  caveira:{para:['esqGuerreiro','esqMago','esqArqueiro'],dica:'Viu 3 ou mais criaturas caírem a até 2 casas (derrubadas por outros) → Esqueleto Mago. Senão, evoluir com 35% da vida ou menos → Esqueleto Guerreiro. Senão, viu 2 caírem → Esqueleto Mago; menos que isso → Esqueleto Arqueiro.',
+  caveira:{para:['esqGuerreiro','esqMago','esqArqueiro'],dica:'Viu 3 ou mais criaturas caírem a até 2 casas (derrubadas por outros) → Esqueleto Mago. Senão, evoluir com 40% da vida ou menos → Esqueleto Guerreiro. Senão, viu 2 caírem → Esqueleto Mago; menos que isso → Esqueleto Arqueiro.',
     pontos:u=>{const m=hist(u).mortes||0;
-      return m>=3?[0,1,0]:u.hp<=ESP[u.esp].hp*.35?[1,0,0]:m>=2?[0,1,0]:[0,0,1];}},
+      return m>=3?[0,1,0]:u.hp<=ESP[u.esp].hp*.4?[1,0,0]:m>=2?[0,1,0]:[0,0,1];}},
 };
 const novaHist=()=>({ter:{},passos:0,p0:0,parado:0,correu:0,torre:0,guarda:0,abates:0,feito:0,sofrido:0,mordidas:0,m0:0,firme:0,galope:0,bando:0,bando1:0,mortes:0});
 function hist(u){return u.h||(u.h=novaHist());}
@@ -1737,7 +1737,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.09'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.10'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
