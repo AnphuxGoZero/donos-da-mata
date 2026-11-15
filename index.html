@@ -1816,7 +1816,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.11'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.12'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -4375,7 +4375,7 @@ const ORDEM_SPR=['faisca','brasador','pirolorde','gotim','corrente','abissal','b
   'harpiaSol','esfingeSol','cocatrizLua','harpiaLua','esfingeLua','caveira', // 11ª linha: as linhagens Solar e Lunar do Ar e a Caveira
   'esqGuerreiro','draugr','esqMago','lich','esqArqueiro','flecheiro']; // 12ª linha: os esqueletos da Essência
 const ATL_LIN=12;
-const ATLAS=/*ATLAS*/"img/atlas.png?v=8ea68f8b"/*FIM_ATLAS*/;
+const ATLAS=/*ATLAS*/"img/atlas.png?v=b8c6ce3f"/*FIM_ATLAS*/;
 const CEL=128;
 // estágio de evolução tem que ser legível só pelo tamanho: 0 mínimo, 1º pequeno, 2º médio, 3º grande (passa da borda do hexágono)
 const TAM_SPR=[21,28,40,56];
@@ -4432,6 +4432,7 @@ function tingir(img,rampa){
 // figuras que encostam na borda da célula original ganham o contorno inteiro, sem bordas cortadas,
 // e o contorno de uma célula nunca invade a vizinha. Para desenhar, use celSpr() abaixo.
 const MARG=10,CELP=CEL+2*MARG;
+const R_MESTRE=2; // raio do contorno dos mestres (4ª linha do atlas, células 0-4)
 function contornar(img,r,cor){
   const W2=6*CELP,H2=ATL_LIN*CELP;
   const lim=document.createElement('canvas');lim.width=W2;lim.height=H2;const lg=lim.getContext('2d');
@@ -4460,8 +4461,9 @@ function contornar(img,r,cor){
   const carimbo=(cx,cy,dx,dy)=>g.drawImage(sil,cx*CELP,cy*CELP,CELP,CELP,cx*CELP+dx,cy*CELP+dy,CELP,CELP);
   for(let cy=0;cy<ATL_LIN;cy++)for(let cx=0;cx<6;cx++){
     g.save();g.beginPath();g.rect(cx*CELP+1,cy*CELP+1,CELP-2,CELP-2);g.clip(); // 1 px livre na borda: a suavização não puxa a vizinha
-    for(let a=0;a<16;a++){const an=a/16*Math.PI*2;carimbo(cx,cy,Math.round(Math.cos(an)*r),Math.round(Math.sin(an)*r));}
-    for(let a=0;a<8;a++){const an=a/8*Math.PI*2;carimbo(cx,cy,Math.round(Math.cos(an)*r*.5),Math.round(Math.sin(an)*r*.5));}
+    const rc=cy===3&&cx<5?R_MESTRE:r; // mestres: a arte já tem traço grosso, o contorno extra é mais fino
+    for(let a=0;a<16;a++){const an=a/16*Math.PI*2;carimbo(cx,cy,Math.round(Math.cos(an)*rc),Math.round(Math.sin(an)*rc));}
+    for(let a=0;a<8;a++){const an=a/8*Math.PI*2;carimbo(cx,cy,Math.round(Math.cos(an)*rc*.5),Math.round(Math.sin(an)*rc*.5));}
     g.restore();}
   g.drawImage(lim,0,0);
   return c;
