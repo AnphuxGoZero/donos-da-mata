@@ -538,7 +538,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
   <div id="lado"><div id="ladoIn">
     <canvas id="mini" title="Mini mapa: clique ou arraste para mover a câmera"></canvas>
     <div class="cx" id="info"></div>
-    <div id="linhaFim"><button id="btLog" onclick="alternaLog(event)" aria-label="Registro" title="Registro">📜</button><button id="btProx" onclick="proximaCriatura()" aria-label="Próxima criatura" title="Próxima criatura que ainda não agiu (atalho: N)">👣<b id="btProxN"></b></button><button id="btMagia" onclick="magiaDoBotao()" aria-label="Magia" title="Magia (atalho: M)">✦<span class="rot"> Magia</span></button><button class="pri" id="btFim" onclick="fimTurno()">Encerrar turno</button></div>
+    <div id="linhaFim"><button id="btLog" onclick="alternaLog(event)" aria-label="Registro" title="Registro">📜</button><button id="btProx" onclick="proximaCriatura()" aria-label="Próxima criatura" title="Próxima criatura que ainda não agiu (atalho: N)">👣<b id="btProxN"></b></button><button id="btMagia" onclick="magiaDoBotao()" aria-label="Magia" title="Magia (atalho: M)">✦<span class="rot"> Magia</span></button><button class="pri" id="btFim" onclick="cliqueFim()">Encerrar turno</button></div>
     <div class="cx" id="caixaLog"><h2>Registro</h2><div id="log"></div></div>
   </div></div>
 </div>
@@ -760,6 +760,7 @@ const CENTRO=[8,6];
 function espelho(c,r){const [x,,z]=cubo(c,r),[cx,,cz]=cubo(...CENTRO);return deCubo(2*cx-x,2*cz-z);}
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
 let VEL=1; // 0 = sem animações (útil para testes automáticos)
+let VEL_PULO=null; // velocidade guardada enquanto a vez dos rivais é pulada
 const dorme=ms=>VEL?new Promise(r=>setTimeout(r,ms*VEL)):Promise.resolve();
 
 // ---------- Dados ----------
@@ -1386,6 +1387,7 @@ function prefs(){let p=null;try{p=JSON.parse(localStorage.getItem(PREFS_CHAVE));
   p=p||{};if(!ORDENS[p.ordem])p.ordem='coro';if(p.modo!=='1x1x1')p.modo='1x1';delete p.cristal;p.manaBase=0;return p;}
 function gravaPrefs(p){try{localStorage.setItem(PREFS_CHAVE,JSON.stringify(p));}catch(e){}}
 function novoJogo(op=prefs()){
+  if(VEL_PULO!=null){VEL=VEL_PULO;VEL_PULO=null;} // saiu no meio de um pulo da vez do rival
   document.getElementById('fim').style.display='none';
   const seed=(Math.random()*1e9)|0;
   const np=op.modo==='1x1x1'?3:2;
@@ -1430,6 +1432,7 @@ function gravar(slot){
 }
 function carregar(slot){
   const s=lerSave(slot);if(!s)return false;
+  if(VEL_PULO!=null){VEL=VEL_PULO;VEL_PULO=null;}
   defineLinhas(s.ter.length/COLS); // 13 linhas no 1x1, 17 no 1x1x1
   document.getElementById('fim').style.display='none';
   for(const u of s.un){delete u.anim;delete u.hit;} // saves antigos podem trazer esses horários
@@ -1714,7 +1717,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.05'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.06'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2436,7 +2439,7 @@ const MAGIAS={
     valida:(l,u)=>falta(u)>0,
     executa:(l,{u})=>{curar(u,pctVida(u,POT.cura));},
     ia:l=>{const r=melhorDe(criaturasDe(l),u=>Math.min(pctVida(u,POT.cura),falta(u)));return r&&r.s>=6?{s:r.s*0.8,alvo:{u:r.alvo}}:null;}},
-  curaGeral:{nome:'Cura Geral',ordem:null,custo:40,alvo:'global',area:'todas as criaturas aliadas',desc:`Recupera ${pctTxt(POT.curaGeral)} da vida máxima de cada criatura aliada.`,
+  curaGeral:{nome:'Cura Geral',ordem:null,custo:40,alvo:'global',area:'todas as criaturas aliadas',desc:`Cura ${pctTxt(POT.curaGeral)} da vida de cada aliado.`,
     valida:l=>criaturasDe(l).some(u=>falta(u)>0),
     areaDe:l=>criaturasDe(l).map(u=>K(u.c,u.r)),
     executa:async l=>{for(const u of criaturasDe(l))curar(u,pctVida(u,POT.curaGeral));await dorme(300);},
@@ -2986,7 +2989,17 @@ function escolherInvocacao(esp){
   if(!hx.size)return;
   desseleciona();J.invocando=esp;J.invocHex=hx;J.menuInv=false;atualiza();
 }
+// botão de baixo: na sua vez encerra o turno; na vez dos rivais, pula as animações até voltar a sua vez
+function cliqueFim(){if(J.vez===0)fimTurno();else pularRival();}
+function pularRival(){
+  if(J.vez===0||J.fim||J.pular)return;
+  J.pular=true;VEL_PULO=VEL;VEL=0;if(CENA)CENA.rapido=true;atualiza();
+}
+function fimPulo(){if(J.pular){J.pular=false;VEL=VEL_PULO??1;VEL_PULO=null;}}
 async function fimTurno(){
+  try{await fimTurnoJogo();}finally{if(J.vez===0||J.fim){fimPulo();atualiza();}}
+}
+async function fimTurnoJogo(){
   if(J.vez!==0||J.ocupado||J.fim)return;
   desseleciona();J.invocando=null;J.invocHex=null;J.menuInv=false;J.invHex=null;J.mg=null;J.fz=null;J.evo=null;J.prevArea=null;J.menuAlvo=null;
   fimDeTurno(0);
@@ -4755,8 +4768,9 @@ function atualiza(){
   const bt=document.getElementById('btFim');
   // nada mais a fazer (criaturas já agiram, não dá para invocar e o mestre não tem quem atacar): o botão fica dourado
   {const m=mestreDe(0),mestreAtaca=m&&!m.agiu&&alvosDesde(m,m.c,m.r).length>0;
-   bt.disabled=!minha;bt.classList.toggle('brilha',minha&&turnoEsgotado()&&!mestreAtaca);}
-  bt.textContent=J.fim?'Fim de jogo':J.vez===0?'Encerrar turno':`Vez ${doM(J.vez)}…`;
+   bt.disabled=!minha&&(J.fim||!!J.pular);bt.classList.toggle('brilha',minha&&turnoEsgotado()&&!mestreAtaca);}
+  bt.textContent=J.fim?'Fim de jogo':J.vez===0?'Encerrar turno':J.pular?`Vez ${doM(J.vez)}…`:`⏩ Pular vez ${doM(J.vez)}`;
+  bt.title=J.vez!==0&&!J.fim?'Pula as animações dos rivais e vai direto para a sua vez':'';
   // celular deitado: a ficha do rodapé termina antes dos botões da direita (que crescem com 👣 e ✦)
   if(document.documentElement.classList.contains('paisagem')){
     const lf=document.getElementById('linhaFim').getBoundingClientRect();
@@ -4876,7 +4890,6 @@ function menus(){
   }else if(minha&&m&&J.mg?.fase==='confirma'){
     const g=MAGIAS[J.mg.id];
     poeHTML(mm,`<div class="tit" style="color:#c58cff">✦ ${g.nome} · ${g.custo} MP</div><div class="vez" style="margin-top:4px">${g.desc}</div>
-      <div class="vez" style="margin-top:4px">Área destacada em roxo no mapa.</div>
       <button class="pri" onclick="confirmaMagia()">Lançar</button><button onclick="voltaListaMagia()">✕ Voltar</button>`);
     mm.style.width='260px';mm.style.display='block';posMenu(mm,m);
   }else if(minha&&J.fz?.fase==='elem'){
