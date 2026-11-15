@@ -326,9 +326,10 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 #rodape .pMeio{display:flex;align-items:center;gap:6px}
 #rodape .pCristal{display:inline-flex;align-items:center;gap:3px;font-size:12px;white-space:nowrap}
 /* cabo de guerra do cristal: faixa fina na borda de baixo do placar, com um marco no meio */
-#rodape .pCabo{position:absolute;left:8px;right:8px;bottom:0;height:5px;border-radius:3px;background:#262a34;overflow:hidden}
+#rodape.cabo{padding-bottom:14px!important} /* espaço para a faixa não cobrir o placar */
+#rodape .pCabo{position:absolute;left:8px;right:8px;bottom:3px;height:9px;border-radius:5px;box-shadow:inset 0 0 0 1px #0006;background:#262a34;overflow:hidden}
 #rodape .pCabo i{position:absolute;top:0;bottom:0;transition:left .5s,right .5s,background .5s}
-#rodape .pCabo::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;background:#e8eaf0}
+#rodape .pCabo::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:3px;margin-left:-1.5px;background:#e8eaf0}
 #alertaCerco.on{display:flex;flex-direction:column;align-items:flex-end;gap:4px;position:absolute;right:8px;bottom:8px;z-index:3}
 #alertaCerco div{font-size:12px;font-weight:600;padding:5px 9px;border-radius:8px;background:#0e1015e6;border:1px solid;box-shadow:0 4px 14px #000a;cursor:help;animation:alertaCerco 1.6s ease-in-out infinite}
 #alertaCerco .contra{color:#ff8a80;border-color:#a8565f}
@@ -952,7 +953,7 @@ const COR=['#4aa8ff','#ff5b52','#f2b335','#35d688'];
 const COR_TORRE=['rgba(45,110,225,.85)','rgba(215,55,50,.85)','rgba(215,150,25,.85)','rgba(20,150,90,.9)'];
 const COR_HEX=['rgba(55,135,235,.62)','rgba(225,70,60,.62)','rgba(230,165,35,.62)','rgba(25,170,105,.7)'];
 const COR_BAND=[['#5aa8ff','#2a5aa8'],['#ff5a4a','#a82a20'],['#ffc040','#a87410'],['#4be09a','#178a55']]; // bandeira da cena da torre
-const PAL_LADO=['azul','verm','ouro']; // títulos das cenas na cor do time
+const PAL_LADO=['azul','verm','ouro','verde']; // títulos das cenas na cor do time
 
 const ESP={
   arquimaga:{nome:'Summoner',cat:'mago',el:'arcano',hp:110,atk:13,def:5,mov:3,alc:1,forma:'coroa',mestre:true,tier:3},
@@ -1825,7 +1826,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.13'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.15'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2166,7 +2167,8 @@ const PAL_TXT={
   verm:['#ffe0c8','#ff6a48','#d8302a','#8a1414','#1a0408'],
   ouro:['#fff6c8','#f8d060','#d89a20','#7a4808','#1a0e02'],
   azul:['#eef8ff','#86c8ff','#3a86e8','#1a3a90','#05081a'],
-  roxo:['#f6eaff','#cfa8ff','#8e5ce0','#3c1c78','#12062a']};
+  roxo:['#f6eaff','#cfa8ff','#8e5ce0','#3c1c78','#12062a'],
+  verde:['#e8ffee','#7af0aa','#28b86a','#0e5a30','#02140a']};
 const cacheTxt=new Map();
 function spriteTexto(txt,tam,pal){
   const ch=txt+'|'+tam+'|'+pal;if(cacheTxt.has(ch))return cacheTxt.get(ch);
@@ -2232,6 +2234,7 @@ function rodaCena(o){
     const quadro=now=>{
       if(acabou)return;
       const t=now-t0;if(t>o.dur){fecha();return;}
+      requestAnimationFrame(quadro); // agendado antes de desenhar: um erro num quadro não congela a cena
       while(prox<o.agenda.length&&t>=o.agenda[prox].t){const a=o.agenda[prox++];ativos.push({...raioCerco(a.x,a.y),t:t});flash=1;}
       g.drawImage(o.fundo,0,0);
       o.baixo&&o.baixo(g,t,now);
@@ -2246,7 +2249,6 @@ function rodaCena(o){
       }
       gt.setTransform(1,0,0,1,0,0);gt.imageSmoothingEnabled=false;gt.drawImage(cv2,0,0,ct.width,ct.height);gt.setTransform(kt,0,0,kt,0,0);
       o.cima&&o.cima(gt,t,now);
-      requestAnimationFrame(quadro);
     };
     requestAnimationFrame(quadro);
   });
@@ -4948,7 +4950,7 @@ function atualiza(){
    const dicaC=!C?'':J.cristal?`Cristal: ${C.v?`${C.v} de ${CRISTAL_META} montados para ${C.lado?OM(C.lado):'você'}`:'desmontado'}. Força por turno (1 por torre, ${CRISTAL_VALOR} pela do cristal): ${LADOS().filter(ativo).map(l=>`${l?NM(l):'você'} +${forcaCristal(l)}`).join(', ')}.`
      :`Cabo de guerra: ${C.v?`${C.v} de ${CABO_META} para ${C.lado?OM(C.lado):'você'}`:'empatado'}. No fim do turno, cada um puxa 1 por torre: ${LADOS().filter(ativo).map(l=>`${l?NM(l):'você'} +${torresDe(l)}`).join(', ')}. Quem chegar a ${CABO_META} vence.`;
    const meio=quem=>`<div class="pMeio"><img class="pTorre" src="${PLACAR_TORRE}" alt="Torres" title="Torres: você à esquerda, ${quem} à direita"></div>`;
-   const rod=document.getElementById('rodape');rod.classList.toggle('tres',NP()>2);rod.classList.toggle('quatro',NP()>3);
+   const rod=document.getElementById('rodape');rod.classList.toggle('tres',NP()>2);rod.classList.toggle('cabo',!!C);rod.classList.toggle('quatro',NP()>3);
    // a mana fica num bloco próprio, à esquerda, separada do placar dos jogadores
    rod.innerHTML=`<div class="pManaBox">${manaHud()}</div>`+`<div class="pJog">${NP()>2
      ?LADOS().map(lado).join('')
