@@ -570,7 +570,8 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
         <li><b>Ovo Alado:</b> evolui ferido (metade da vida ou menos) → Cocatriz, da linhagem Solar na Manhã ou no Dia, ou Lunar no Entardecer ou à Noite; com mais da metade da vida → Gato Alado. A linhagem Solar luta melhor de dia (como Fogo e Planta) e a Lunar à noite (como Água e Arcano); o resto do Ar é neutro ao horário.</li>
         <li><b>Gato Alado:</b> turnos terminados numa construção sua contam para o Grifo; cada torre capturada vale 3 para o Anzu.</li>
         <li><b>Dríade</b> (estágio 1 da Semente): cada turno terminado ao lado de 2 ou mais criaturas aliadas (a manada) conta para a Caipora; com 2 ou mais → Caipora. Senão → Curupira.</li>
-        <li><b>Essência:</b> derrubou algum inimigo no estágio → Espada; não derrubou ninguém → Cumacanga.</li>
+        <li><b>Essência:</b> viu 2 ou mais criaturas caírem a até 2 casas (derrubadas por outros) → Caveira; senão, derrubou algum inimigo no estágio → Espada; não derrubou ninguém → Cumacanga.</li>
+        <li><b>Caveira</b> (estágio 1 da Essência): turno terminado ao lado de um inimigo conta para o Esqueleto Guerreiro; senão, a até 2 casas do seu mestre conta para o Esqueleto Mago; senão, a 2 ou 3 casas do inimigo mais próximo conta para o Esqueleto Arqueiro. O Arqueiro e o Flecheiro Maldito atacam a 2 casas: quem só luta corpo a corpo não revida.</li>
       </ul>
       <p>Há duas formas de vencer: derrotar o mestre inimigo, ou ocupar com suas criaturas mais da metade da área urbana dele (4 das 7 casas entre castelo e fortalezas) e segurar até o início do seu próximo turno. Casas da sua área ocupadas pelo inimigo piscam em laranja.</p>
       <p><b>Elementos</b> (vantagem = ×1,5 de dano; desvantagem = ×0,75):</p>
@@ -1007,6 +1008,16 @@ const ESP={
   harpiaLua:{nome:'Harpia Lunar',cat:'voo',el:'ar',hora:'noite',hp:36,atk:17,def:2,mov:7,alc:1,xp:90,evo:'esfingeLua',forma:'asa',tier:2},
   esfingeLua:{nome:'Esfinge Lunar',cat:'voo',el:'ar',hora:'noite',hp:58,atk:25,def:4,mov:7,alc:1,forma:'asa',tier:3},
   mulaSemCabeca:{nome:'Mula sem Cabeça',cat:'terFogo',el:'fogo',hp:64,atk:25,def:3,mov:8,alc:1,forma:'chama',tier:3},
+  // terceiro ramo da Essência: os mortos-vivos. A Caveira nasce da Essência que viu a morte de perto (ramo raro, um pouco
+  // mais forte) e se divide em três esqueletos: o Guerreiro (linha de frente), o Mago (aprendiz do mestre, ataque alto e
+  // frágil) e o Arqueiro, a única criatura que ataca a 2 casas (sem revide de quem só luta corpo a corpo)
+  caveira:{nome:'Caveira',cat:'vooBaixo',el:'arcano',hp:26,atk:12,def:1,mov:3,alc:1,custo:80,xp:50,evo:'esqGuerreiro',forma:'olho',tier:1},
+  esqGuerreiro:{nome:'Esqueleto Guerreiro',cat:'terPeq',el:'arcano',hp:48,atk:16,def:5,mov:3,alc:1,xp:95,evo:'draugr',forma:'olho',tier:2},
+  draugr:{nome:'Draugr',cat:'terGra',el:'arcano',hp:76,atk:23,def:9,mov:3,alc:1,forma:'olho',tier:3},
+  esqMago:{nome:'Esqueleto Mago',cat:'terPeq',el:'arcano',hp:38,atk:19,def:2,mov:3,alc:1,xp:95,evo:'lich',forma:'olho',tier:2},
+  lich:{nome:'Lich',cat:'vooBaixo',el:'arcano',hp:58,atk:28,def:4,mov:4,alc:1,forma:'olho',tier:3},
+  esqArqueiro:{nome:'Esqueleto Arqueiro',cat:'terPeq',el:'arcano',hp:36,atk:13,def:2,mov:3,alc:2,xp:95,evo:'flecheiro',forma:'olho',tier:2},
+  flecheiro:{nome:'Flecheiro Maldito',cat:'terPeq',el:'arcano',hp:54,atk:19,def:3,mov:4,alc:2,forma:'olho',tier:3},
 };
 // qual desenho do atlas a espécie usa (arte: opcional, para emprestar o desenho de outra espécie)
 function spr(esp){return (ESP[esp]&&ESP[esp].arte)||esp;}
@@ -1043,10 +1054,15 @@ const RAMOS={
   ovoAlado:{para:['penugem','cocatrizSol','cocatrizLua'],dica:'Evoluir ferido (metade da vida ou menos) → Cocatriz: Solar na Manhã ou no Dia, Lunar no Entardecer ou à Noite. Com mais da metade da vida → Gato Alado.',
     pontos:u=>u.hp>ESP[u.esp].hp/2?[1,0,0]:faseAtual().diurno?[0,1,0]:[0,0,1]},
   // a arma nasce do combate: quem deu o golpe final em algum inimigo vira Espada
-  essencia:{para:['olho','espada'],dica:'Derrubou algum inimigo neste estágio → Espada; não derrubou ninguém → Cumacanga.',
-    pontos:u=>(hist(u).abates||0)>0?[0,1]:[1,0]},
+  // ...e quem viu 2+ criaturas caírem perto de si (a até 2 casas, derrubadas por outros) vira Caveira (ramo raro)
+  essencia:{para:['olho','espada','caveira'],dica:'Viu 2 ou mais criaturas caírem a até 2 casas (derrubadas por outros) → Caveira. Senão, derrubou algum inimigo neste estágio → Espada; não derrubou ninguém → Cumacanga.',
+    pontos:u=>(hist(u).mortes||0)>=2?[0,0,1]:(hist(u).abates||0)>0?[0,1,0]:[1,0,0]},
+  // cada turno conta para um esqueleto só, pelo lugar onde a Caveira terminou: colada num inimigo (Guerreiro), senão perto
+  // do próprio mestre (Mago), senão a 2 ou 3 casas do inimigo mais próximo, de tocaia (Arqueiro)
+  caveira:{para:['esqGuerreiro','esqMago','esqArqueiro'],dica:'Turno terminado ao lado de um inimigo conta para o Guerreiro; senão, a até 2 casas do seu mestre conta para o Mago; senão, a 2 ou 3 casas do inimigo mais próximo conta para o Arqueiro.',
+    pontos:u=>[hist(u).frente||0,hist(u).junto||0,hist(u).tocaia||0]},
 };
-const novaHist=()=>({ter:{},passos:0,p0:0,parado:0,correu:0,torre:0,guarda:0,abates:0,feito:0,sofrido:0,mordidas:0,m0:0,firme:0,galope:0,bando:0,bando1:0});
+const novaHist=()=>({ter:{},passos:0,p0:0,parado:0,correu:0,torre:0,guarda:0,abates:0,feito:0,sofrido:0,mordidas:0,m0:0,firme:0,galope:0,bando:0,bando1:0,mortes:0,frente:0,junto:0,tocaia:0});
 function hist(u){return u.h||(u.h=novaHist());}
 const turnosEm=(u,...ts)=>ts.reduce((s,t)=>s+(hist(u).ter[t]||0),0);
 // ramos empatados no topo dos pontos (um só = esse vence; vários = sorteio entre eles)
@@ -1077,6 +1093,10 @@ function anotaTurno(u){
   if(ehConstrucao(t)&&J.dono[K(u.c,u.r)]===u.lado)h.guarda=(h.guarda||0)+1;
   const aliados=vizinhos(u.c,u.r).filter(([c,r])=>J.un.some(o=>o!==u&&o.lado===u.lado&&o.c===c&&o.r===r&&!ESP[o.esp].mestre)).length;
   if(aliados>=2)h.bando=(h.bando||0)+1;if(aliados>=1)h.bando1=(h.bando1||0)+1;
+  if(u.esp==='caveira'){ // os três esqueletos (ver RAMOS.caveira)
+    const ini=J.un.filter(o=>o.lado!==u.lado&&!o.elemental).map(o=>d6(u,o)),perto=ini.length?Math.min(...ini):99,m=mestreDe(u.lado);
+    if(perto<=1)h.frente=(h.frente||0)+1;else if(m&&d6(u,m)<=2)h.junto=(h.junto||0)+1;else if(perto<=3)h.tocaia=(h.tocaia||0)+1;
+  }
 }
 const INVOCAVEIS=['brasa','semente','girino','argila','ovoAlado','essencia'];
 // ---------- Evolução na criação ----------
@@ -1085,7 +1105,7 @@ const INVOCAVEIS=['brasa','semente','girino','argila','ovoAlado','essencia'];
 // As duas opções saem do histórico da partida (J.hj: o que o exército daquele mestre mais viveu até agora).
 // Escolhida, a forma fica fixa até o fim da partida.
 const EVO_CUSTO=200;
-const novaHj=()=>({atkDia:0,atkNoite:0,atkCresp:0,feito:0,sofrido:0,abates:0,torre:0,ter:{},parado:0,correu:0,saudavel:0,ferido:0,feridoDia:0,feridoNoite:0});
+const novaHj=()=>({atkDia:0,atkNoite:0,atkCresp:0,feito:0,sofrido:0,abates:0,torre:0,ter:{},parado:0,correu:0,saudavel:0,ferido:0,feridoDia:0,feridoNoite:0,perdas:0});
 function hj(l){J.hj=J.hj||[];return J.hj[l]||(J.hj[l]=novaHj());}
 const contaHj=u=>u&&!u.elemental&&!ESP[u.esp].mestre&&u.dominado==null; // só as criaturas do próprio mestre
 const hjTer=(h,...ts)=>ts.reduce((s,t)=>s+(h.ter[t]||0),0);
@@ -1107,7 +1127,7 @@ const EVO_HJ={
   semente:h=>{const f=hjTer(h,'flor'),pl=hjTer(h,'plan');
     return [[h.parado+f,`${h.parado} turnos parados e ${f} na floresta`],[h.correu+pl,`${h.correu} turnos correndo e ${pl} na planície`]];},
   ovoAlado:h=>[[h.saudavel*.4,`${h.saudavel} turnos terminados com mais da metade da vida`],[h.feridoDia,`${h.feridoDia} turnos feridos de dia`],[h.feridoNoite,`${h.feridoNoite} turnos feridos de noite`]],
-  essencia:h=>[[h.parado*.3,`${h.parado} turnos de vigia (parados)`],[h.abates*2,`${h.abates} inimigos derrubados`]],
+  essencia:h=>[[h.parado*.3,`${h.parado} turnos de vigia (parados)`],[h.abates*2,`${h.abates} inimigos derrubados`],[(h.perdas||0)*1.5,`${h.perdas||0} criaturas suas derrubadas`]],
 };
 // as duas formas que o histórico mais favorece (empate: a ordem dos ramos decide, para não mudar a cada clique)
 function opcoesEvo(l,base){
@@ -1717,7 +1737,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.07'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.08'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -1762,7 +1782,8 @@ const OLHA_SPR={faisca:-1,brasador:1,pirolorde:1,gotim:1,corrente:1,abissal:1,br
   homemLagarto:-1,lagartoDuplo:-1,hidra:-1,filhote:-1,unicornio:-1,pegasus:-1,
   anzu:1,quimera:1,espada:1,armamentario:1,armadura:1,
   filhoteInf:-1,caoInfernal:-1,cerberus:-1,mulaSemCabeca:-1,sapinho:-1,bullywug:1,bullete:1,gnomo:-1,forjador:-1,golem:-1,caipora:1,hordaFloresta:1,
-  cocatrizSol:-1,harpiaSol:-1,esfingeSol:1,cocatrizLua:-1,harpiaLua:1,esfingeLua:1};
+  cocatrizSol:-1,harpiaSol:-1,esfingeSol:1,cocatrizLua:-1,harpiaLua:1,esfingeLua:1,
+  caveira:-1,esqGuerreiro:-1,draugr:1,esqMago:1,lich:1,esqArqueiro:1,flecheiro:1};
 // lado do tabuleiro: você começa à esquerda (olha para a direita), o Necromancer à direita (olha para a esquerda)
 function viraPara(u,x){const dx=x-centro(u.c,u.r)[0];if(Math.abs(dx)>1)u.dir=Math.sign(dx);}
 function criaUnidade(esp,lado,c,r){const u={id:nid++,esp,lado,c,r,dir:c<COLS/2?1:-1,hp:ESP[esp].hp,xp:0,movido:false,agiu:false};J.un.push(u);return u;}
@@ -2357,7 +2378,7 @@ async function golpear(a,d,mult,contra){
         ganhaXp(a,20);if(!a.elemental)hist(a).abates=(hist(a).abates||0)+1;if(contaHj(a))hj(a.lado).abates++;registraGolpes(a,d,acertos,i+1,total,contra,ch);
         if(CENA)await cenaQueda(d);
         if(d.elemental){d.hp=0;flutua(d,'Elemental desfeito','#ffb070',300);log(`${nome(d)} se desfez e não volta nesta partida.`);}
-        else morre(d);
+        else morre(d,a);
         return;
       }
     }else{flutua(d,'Errou!','#cfd8e3',d.elemental?150:0);if(CENA)await cenaGolpe(a,d,false,0,i);}
@@ -2384,8 +2405,10 @@ async function checaEvo(u){
   log(`${e.nome}${sufixo(u.lado)} evoluiu para ${n.nome}!`);
   atualiza();
 }
-function morre(u){
+function morre(u,por){
   J.un=J.un.filter(x=>x!==u);
+  for(const o of J.un)if(o!==por&&!o.elemental&&d6(o,u)<=2)hist(o).mortes=(hist(o).mortes||0)+1; // ramo da Caveira
+  if(contaHj(u))hj(u.lado).perdas=(hj(u.lado).perdas||0)+1;
   const [x,y]=centro(u.c,u.r);fx.push({txt:'✕',x,y,t0:performance.now(),cor:'#fff',dur:900});
   log(`${nome(u)} foi derrotado.`);
   if(J.sel===u)desseleciona();
@@ -4253,7 +4276,7 @@ function forma(f,x,y,s){
     ctx.lineTo(x+s*.32,y);ctx.lineTo(x+s*.65,y-s*.35);ctx.lineTo(x+s*.65,y+s*.4);ctx.closePath();ctx.fill();
   }
 }
-// ---------- Sprites (atlas 6x11 de células 128px; editar arte/atlas.png direto) ----------
+// ---------- Sprites (atlas 6x12 de células 128px; editar arte/atlas.png direto) ----------
 const ORDEM_SPR=['faisca','brasador','pirolorde','gotim','corrente','abissal','broto','espinhal','anciao',
   'cascalho','pedregulho','monolito','penugem','gaviao','tempestario','olho','vigia','oraculo',
   'arquimaga','barao','warlock','wizard','sorcerer',null, // 4ª linha do atlas: os mestres (Summoner, Necromancer, Warlock, Wizard, Sorcerer)
@@ -4263,9 +4286,10 @@ const ORDEM_SPR=['faisca','brasador','pirolorde','gotim','corrente','abissal','b
   'anzu','quimera','espada','armamentario','armadura','filhoteInf',
   'caoInfernal','cerberus','mulaSemCabeca','sapinho','bullywug','bullete', // 9ª linha: o fim da matilha do Fogo e os anfíbios da Água
   'gnomo','forjador','golem','caipora','hordaFloresta','cocatrizSol', // 10ª linha: os artesãos da Terra, a manada da Planta
-  'harpiaSol','esfingeSol','cocatrizLua','harpiaLua','esfingeLua',null]; // 11ª linha: as linhagens Solar e Lunar do Ar
-const ATL_LIN=11;
-const ATLAS=/*ATLAS*/"img/atlas.png?v=6927cf83"/*FIM_ATLAS*/;
+  'harpiaSol','esfingeSol','cocatrizLua','harpiaLua','esfingeLua','caveira', // 11ª linha: as linhagens Solar e Lunar do Ar e a Caveira
+  'esqGuerreiro','draugr','esqMago','lich','esqArqueiro','flecheiro']; // 12ª linha: os esqueletos da Essência
+const ATL_LIN=12;
+const ATLAS=/*ATLAS*/"img/atlas.png?v=8ea68f8b"/*FIM_ATLAS*/;
 const CEL=128;
 // estágio de evolução tem que ser legível só pelo tamanho: 0 mínimo, 1º pequeno, 2º médio, 3º grande (passa da borda do hexágono)
 const TAM_SPR=[21,28,40,56];
@@ -4375,13 +4399,13 @@ atlas.onload=()=>{
 if(ATLAS)atlas.src=ATLAS;
 // ----- monstros coloridos (arte/atlas_cor.png, mesmo layout do atlas; só as 18 criaturas) -----
 // usados onde a cor do time não importa: tela de combate e menu de invocação. Mestres continuam do atlas do time.
-const N_COR=65; // 18 monstros + 5 mestres + 1 vazio + 6 do estágio 0 + 17 dos segundos ramos + 4 da matilha do Fogo + 3 anfíbios + 3 artesãos + 2 da manada + 6 Solar/Lunar
+const N_COR=72; // 18 monstros + 5 mestres + 1 vazio + 6 do estágio 0 + 17 dos segundos ramos + 4 da matilha do Fogo + 3 anfíbios + 3 artesãos + 2 da manada + 6 Solar/Lunar + 7 mortos-vivos
 const atlasCorImg=new Image();let atlasCor=null;
 atlasCorImg.onload=()=>{
   document.documentElement.style.setProperty('--atlasCor',`url(${atlasCorImg.src})`);
   atlasCor=contornar(atlasCorImg,4,'#07080c');if(J)atualiza();
 };
-atlasCorImg.src=/*ATLAS_COR*/"img/atlas-cor.png?v=9ab03b6b";
+atlasCorImg.src=/*ATLAS_COR*/"img/atlas-cor.png?v=71ac626c";
 const temCor=esp=>{const i=ORDEM_SPR.indexOf(spr(esp));return i>=0&&i<N_COR;};
 function iconeSpr(esp,t,lado=0){
   const i=ORDEM_SPR.indexOf(spr(esp));
