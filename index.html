@@ -254,6 +254,8 @@ button{touch-action:manipulation}
 .soToque{display:none}
 .toque .soToque{display:block}.toque .soMouse{display:none}
 #btCancela{position:absolute;left:8px;bottom:8px;z-index:4;display:none;background:#3a2530ee;border-color:#a8565f;box-shadow:0 4px 14px #000a}
+#dica .dLin{display:flex;align-items:center;gap:5px;margin-top:5px}#dica .dSub{margin-top:5px;font-size:12px;color:var(--dim)}
+#dica .elIc{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:12px;border:1px solid #0008}
 #dica{position:fixed;z-index:9;display:none;max-width:min(300px,86vw);background:#0e1015f5;border:1px solid #4a5268;border-radius:8px;padding:8px 10px;font-size:13px;box-shadow:0 6px 20px #000c;pointer-events:none}
 .toque button{min-height:40px;padding:9px 12px}
 .toque h1 .bt{min-height:34px;min-width:38px;padding:2px 9px;font-size:16px;vertical-align:middle}
@@ -923,7 +925,14 @@ function relogio(){
   const dur=CICLO.filter(x=>x===i).length,parte=(dir>0?CICLO.slice(0,pos+1):CICLO.slice(pos)).filter(x=>x===i).length;
   const resta=dur-parte;
   const fz=Math.round(f.forca*100);
-  el.title=`Turno ${J.turno} · ${dir<0?'⟲ ':''}${f.nome}${dur>1?` ${parte}/${dur}`:''} (${f.diurno?`Fogo e Planta +${fz}% de precisão, Água e Arcano −${fz}%`:`Água e Arcano +${fz}% de precisão, Fogo e Planta −${fz}%`}; Terra e Ar não mudam). ${resta?`Continua por mais ${resta} rodada.`:`Na próxima rodada: ${prox.nome}.`}${dir<0?' O tempo corre ao contrário (Eclipse).':''}`;
+  // balão curto (abre ao tocar/clicar): turno e período, quem ganha e quem perde precisão, e o que vem depois
+  const ganha=f.diurno?['fogo','planta']:['agua','arcano'],perde=f.diurno?['agua','arcano']:['fogo','planta'];
+  const ics=l=>l.map(x=>`<span class="elIc" style="background:${EL[x]}" title="${ELN[x]}">${EL_EMO[x]}</span>`).join('');
+  el.dataset.dica=`<b>Turno ${J.turno} · ${f.nome}${dur>1?` ${parte}/${dur}`:''}</b>
+    <div class="dLin">${ics(ganha)} <b style="color:#6ee08a">+${fz}%</b> precisão</div>
+    <div class="dLin">${ics(perde)} <b style="color:#ff8a80">−${fz}%</b> precisão</div>
+    <div class="dSub">${resta?`Mais ${resta} rodada`:`Depois: ${prox.nome}`}${dir<0?' · ⟲ tempo ao contrário':''}</div>`;
+  el.setAttribute('aria-label',`Turno ${J.turno}, ${f.nome}`);el.removeAttribute('title');
   // quadro do período atual + trilha do sol/lua por cima (uma marca por rodada do ciclo) + selo com o número do turno
   if(!el.querySelector('.trilha'))el.innerHTML=`<svg class="trilha" viewBox="0 0 144 124" aria-hidden="true">${CICLO.map((fi,k)=>{
       const a0=(RELO_A0-RELO_PASSO*k-.8)*Math.PI/180,a1=(RELO_A0-RELO_PASSO*(k+1)+.8)*Math.PI/180,
@@ -961,6 +970,7 @@ function modHora(esp){
   return (h==='dia')===f.diurno?f.forca:-f.forca;
 }
 const EL={fogo:'#e8663a',agua:'#3f8fd8',planta:'#4caf50',terra:'#a8814f',ar:'#6fc3dc',arcano:'#9b6be0'};
+const EL_EMO={fogo:'🔥',agua:'💧',planta:'🌿',terra:'🪨',ar:'💨',arcano:'✨'};
 const ELN={fogo:'Fogo',agua:'Água',planta:'Planta',terra:'Terra',ar:'Ar',arcano:'Arcano'};
 // quem vence quem (×1,5 de dano; no sentido contrário, ×0,75).
 // Arcano tem uma fraqueza a mais (é a elite cara, com Golpe Místico); Ar tem uma vantagem a mais (é frágil).
@@ -1857,7 +1867,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.20'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.21'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -5386,10 +5396,10 @@ addEventListener('resize',()=>{if(J)menus();});
  addEventListener('click',ev=>{
   dica.style.display='none';
   if(!ev.target.closest)return;
-  const el=ev.target.closest('[title]');
-  if(ultTipo==='mouse'&&!(el&&el.id==='relogio'))return; // com mouse, só o relógio abre o balão (o resto já mostra ao parar em cima)
-  if(!el||!el.title||el.tagName==='CANVAS'||ev.target.closest('button'))return;
-  dica.textContent=el.title;dica.style.display='block';
+  const el=ev.target.closest('[data-dica],[title]');
+  if(ultTipo==='mouse'&&!(el&&el.dataset.dica))return; // com mouse, só itens com data-dica abrem o balão (o resto já mostra ao parar em cima)
+  if(!el||!(el.dataset.dica||el.title)||el.tagName==='CANVAS'||ev.target.closest('button'))return;
+  if(el.dataset.dica)dica.innerHTML=el.dataset.dica;else dica.textContent=el.title;dica.style.display='block';
   const w=dica.offsetWidth,h=dica.offsetHeight;
   dica.style.left=Math.max(6,Math.min(innerWidth-w-6,ev.clientX-w/2))+'px';
   dica.style.top=(ev.clientY-h-14>6?ev.clientY-h-14:Math.min(innerHeight-h-6,ev.clientY+18))+'px';
