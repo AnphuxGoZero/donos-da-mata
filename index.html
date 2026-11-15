@@ -123,8 +123,7 @@ button.pri:hover:not(:disabled){background:#3a6ea6}
 #topoMapa .vez{color:#e3e8f2}
 #topoMapa h1{font-size:17px;white-space:nowrap}
 #topoMapa #zoomUI{position:static;justify-self:end;background:none;border:none;padding:0}
-#topoMapa #relogio{display:grid;grid-template-columns:auto auto;align-items:center;column-gap:8px;row-gap:2px}
-#topoMapa #relogio .quadro{grid-row:1/3;width:42px;height:42px}
+#topoMapa #relogio{display:block;cursor:pointer;--q:42px}
 /* placar espelhado: você | torre | inimigo; as torres de cada lado ficam coladas no ícone do meio */
 #rodape{font-size:13px;align-items:center;position:relative;grid-template-columns:1fr auto 1fr;gap:10px;padding:4px 10px}
 #rodape .pLado{display:flex;align-items:center;gap:12px;min-width:0;white-space:nowrap}
@@ -169,12 +168,22 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 #menuJogo.aberto{display:flex}
 #menuJogo button{text-align:left}
 
-#relogio{display:flex;flex-direction:column;align-items:center;gap:3px;flex:none}
-#relogio .quadro{width:60px;height:60px;border-radius:7px;border:2px solid #c9a24a;box-shadow:0 0 0 2px #2a1d0e,0 2px 8px rgba(0,0,0,.5);image-rendering:pixelated;display:block}
-#relogio .nomeFase{font-size:12px;font-weight:600;color:var(--txt);letter-spacing:.3px}
-#relogio .ciclo{display:flex;gap:3px}
-#relogio .ciclo img{width:14px;height:14px;border-radius:3px;image-rendering:pixelated;opacity:.4;border:1px solid transparent}
-#relogio .ciclo img.atual{opacity:1;border-color:#c9a24a}
+#relogio{--q:60px;flex:none;position:relative;padding:calc(var(--q)*.24) calc(var(--q)*.22) 0}
+#relogio .quadros{position:relative;display:block;width:var(--q);height:var(--q)}
+#relogio .quadro{width:var(--q);height:var(--q);border-radius:7px;border:2px solid #c9a24a;box-shadow:0 0 0 2px #2a1d0e,0 2px 8px rgba(0,0,0,.5);image-rendering:pixelated;display:block}
+#relogio .quadro.novo{position:absolute;left:0;top:0;opacity:0;box-shadow:none}
+#relogio .quadro.novo.mostra{opacity:1;transition:opacity .7s ease}
+#relogio .trilha{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+#relogio .trilha path{fill:none;stroke-width:7;stroke-linecap:round;opacity:.85}
+#relogio .astro{transform-box:view-box;transform-origin:72px 152px;transition:transform .8s cubic-bezier(.4,.1,.3,1)}
+#relogio .astro .sol{fill:#ffd84f;stroke:#f08a2a;stroke-width:3}
+#relogio .astro .lua{opacity:0}#relogio .astro .lua circle{fill:#f2f0d8;stroke:#1a2050;stroke-width:2.5}#relogio .astro .lua .sombra{fill:#1a2050;stroke:none}
+#relogio .astro.noite .sol{opacity:0}#relogio .astro.noite .lua{opacity:1}
+#relogio .turnoN{position:absolute;right:calc(var(--q)*.22 - 7px);bottom:-5px;min-width:16px;height:16px;padding:0 3px;border-radius:5px;background:#1a1408;border:1px solid #c9a24a;color:#fff6d8;font-size:11px;font-weight:700;line-height:14px;text-align:center;box-shadow:0 1px 3px #000a}
+#relogio .turnoN.vira{animation:viraNum .45s ease}
+@keyframes viraNum{0%{transform:scaleY(1)}45%{transform:scaleY(0)}100%{transform:scaleY(1)}}
+#relogio .inv{display:none;position:absolute;left:calc(var(--q)*.22 - 7px);bottom:-5px;width:16px;height:16px;border-radius:50%;background:#3c1c78;border:1px solid #cfa8ff;color:#f6eaff;font-size:11px;line-height:14px;text-align:center} /* tempo ao contrário (Eclipse) */
+#relogio.eclipse .inv{display:block}
 .ponto{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:-1px;margin-right:4px}
 .spr{display:inline-block;vertical-align:middle;margin-right:6px;background-repeat:no-repeat;flex-shrink:0}
 #fim{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:5}
@@ -266,7 +275,7 @@ button{touch-action:manipulation}
   .nomeJogo{display:none}
   h1 .bt:first-of-type{margin-left:0}
   #topoMapa{grid-template-columns:1fr auto auto;gap:6px;padding:5px 8px}
-  #topoMapa #relogio .quadro{width:36px;height:36px}
+  #topoMapa #relogio{--q:36px}
   .toque #zoomUI button:not(:last-child),#zoomN{display:none} /* a pinça faz o zoom; fica só o botão de centralizar */
   #rodape{font-size:12px;gap:8px;padding:6px 8px}
   /* menus do mestre e de invocação: centralizados e largos, em vez de presos ao lado da criatura */
@@ -291,7 +300,7 @@ button{touch-action:manipulation}
   .nomeJogo{display:none}
   h1 .bt:first-of-type{margin-left:0}
   #topoMapa{padding:4px 8px}
-  #topoMapa #relogio .quadro{width:34px;height:34px}
+  #topoMapa #relogio{--q:34px}
   #zoomN{display:none}
 }
 
@@ -335,8 +344,7 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 #alertaCerco .contra{color:#ff8a80;border-color:#a8565f}
 #alertaCerco .favor{color:#f2c14e;border-color:#8a7330}
 @keyframes alertaCerco{0%,100%{opacity:1}50%{opacity:.55}}
-.retrato #topoMapa #relogio{column-gap:6px}
-.retrato #topoMapa #relogio .quadro{width:34px;height:34px}
+.retrato #topoMapa #relogio{--q:32px}
 .retrato #zoomUI button:not(:last-child),.retrato #zoomN{display:none}
 .retrato #menuJogo{top:48px;left:4px}
 .retrato #mapa{order:2;flex:1 0 60vh;flex:1 0 60dvh;min-height:0}
@@ -379,6 +387,7 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 .terTab td{padding:3px 4px;border-bottom:1px solid #252935}
 .terTab th+th,.terTab td+td{text-align:right}
 .terTab tr.eu td{background:#3a3020;font-weight:600}
+.terVer{display:block;width:100%;margin-top:6px;padding:6px;font-size:12px}
 #fichaDet .topoAj button{min-height:0;padding:4px 10px}
 .retrato #info>.prev{order:-1;margin:0!important;padding:4px 8px;font-size:12px} /* dica da ação e previsão do ataque sempre no topo */
 .retrato #info .terr{margin-top:0;padding-top:5px}
@@ -418,8 +427,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 .paisagem .nomeJogo{display:none}
 .paisagem h1 .bt{margin:0;background:#1d2029e6}
 .paisagem #vez{font-size:12px;background:#0e1015d9;border:1px solid #3c4356;border-radius:8px;padding:6px 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.paisagem #topoMapa #relogio{background:#0e1015d9;border:1px solid #3c4356;border-radius:8px;padding:2px 8px 2px 3px;column-gap:6px}
-.paisagem #topoMapa #relogio .quadro{width:30px;height:30px}
+.paisagem #topoMapa #relogio{--q:26px}
 .paisagem #topoMapa #zoomUI{flex:none}
 .paisagem #zoomUI button:not(:last-child),.paisagem #zoomN{display:none}
 .paisagem #zoomUI button{background:#1d2029e6}
@@ -549,7 +557,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 <div id="app">
   <div id="colMapa">
   <div class="barra-mapa" id="topoMapa">
-    <div><h1><span class="nomeJogo">Senhores da Guerra</span><button class="bt" id="btJogo" onclick="alternaMenuJogo(event)" title="Menu principal, salvar e carregar">☰</button><button class="bt" onclick="abreAjuda()" title="Como jogar">?</button></h1><div class="vez" id="vez"></div></div>
+    <div><h1><span class="nomeJogo">Senhores da Guerra</span><button class="bt" id="btJogo" onclick="alternaMenuJogo(event)" title="Menu principal, salvar e carregar">☰</button></h1><div class="vez" id="vez"></div></div>
     <div id="relogio" title=""></div>
     <div id="zoomUI"><button onclick="mudaZoom(-1)" title="Afastar (−)">−</button><span id="zoomN">160%</span><button onclick="mudaZoom(1)" title="Aproximar (+)">+</button><button onclick="seguir(mestreDe(0),true)" title="Centralizar no seu mestre">⌖</button></div>
     <div id="menuJogo"></div>
@@ -898,6 +906,9 @@ function pintaFase(i){
   return c.toDataURL();
 }
 function iconeFase(i){return ICONE_FASE[i]||(ICONE_FASE[i]=pintaFase(i));}
+// trilha do relógio: cúpula achatada logo acima do quadro (círculo de raio 140 com centro abaixo dele, em unidades
+// do viewBox 144×124, onde o quadro ocupa 22..122 × 24..124), da esquerda (Manhã) para a direita (fim da Noite)
+const RELO_CX=72,RELO_CY=152,RELO_R=140,RELO_A0=117.2,RELO_PASSO=9.07,RELO_COR=['#f7bb6c','#6fb4ee','#dc5a55','#4a5cc0'];
 function relogio(){
   const i=faseIdx(),f=FASES[i],dir=J.cicloDir,prox=FASES[(i+dir+4)%4];
   const el=document.getElementById('relogio');
@@ -905,14 +916,34 @@ function relogio(){
   // teste: o cabeçalho ganha as cores do céu da fase atual (as mesmas da tela de combate)
   {const c=CEU_FASE[i].c,t=document.getElementById('topoMapa');
    t.style.background=`linear-gradient(rgba(8,10,16,.38),rgba(8,10,16,.38)),linear-gradient(90deg,${c[0]} 0%,${c[1]} 55%,${c[2]} 100%)`;}
-  if(el.dataset.pos===pos+'|'+dir)return; // só redesenha quando o relógio anda (ou inverte)
-  el.dataset.pos=pos+'|'+dir;
+  const chave=pos+'|'+dir+'|'+J.turno;
+  if(el.dataset.pos===chave)return; // só mexe quando o relógio anda (ou inverte)
+  const antes=el.dataset.pos?el.dataset.pos.split('|').map(Number):null;
+  el.dataset.pos=chave;
   const dur=CICLO.filter(x=>x===i).length,parte=(dir>0?CICLO.slice(0,pos+1):CICLO.slice(pos)).filter(x=>x===i).length;
   const resta=dur-parte;
   const fz=Math.round(f.forca*100);
-  el.title=`${f.nome} (${f.diurno?`Fogo e Planta +${fz}% de precisão, Água e Arcano −${fz}%`:`Água e Arcano +${fz}% de precisão, Fogo e Planta −${fz}%`}; Terra e Ar não mudam). ${resta?`Continua por mais ${resta} rodada.`:`Na próxima rodada: ${prox.nome}.`}${dir<0?' O tempo corre ao contrário (Eclipse).':''}`;
-  el.innerHTML=`<img class="quadro" src="${iconeFase(i)}" alt="${f.nome}"><span class="nomeFase">${dir<0?'⟲ ':''}${f.nome}${dur>1?` ${parte}/${dur}`:''}</span>
-    <span class="ciclo">${FASES.map((x,j)=>`<img src="${iconeFase(j)}" class="${j===i?'atual':''}" alt="${x.nome}" title="${x.nome}">`).join('')}</span>`;
+  el.title=`Turno ${J.turno} · ${dir<0?'⟲ ':''}${f.nome}${dur>1?` ${parte}/${dur}`:''} (${f.diurno?`Fogo e Planta +${fz}% de precisão, Água e Arcano −${fz}%`:`Água e Arcano +${fz}% de precisão, Fogo e Planta −${fz}%`}; Terra e Ar não mudam). ${resta?`Continua por mais ${resta} rodada.`:`Na próxima rodada: ${prox.nome}.`}${dir<0?' O tempo corre ao contrário (Eclipse).':''}`;
+  // quadro do período atual + trilha do sol/lua por cima (uma marca por rodada do ciclo) + selo com o número do turno
+  if(!el.querySelector('.trilha'))el.innerHTML=`<svg class="trilha" viewBox="0 0 144 124" aria-hidden="true">${CICLO.map((fi,k)=>{
+      const a0=(RELO_A0-RELO_PASSO*k-.8)*Math.PI/180,a1=(RELO_A0-RELO_PASSO*(k+1)+.8)*Math.PI/180,
+        pt=a=>`${(RELO_CX+RELO_R*Math.cos(a)).toFixed(1)} ${(RELO_CY-RELO_R*Math.sin(a)).toFixed(1)}`;
+      return `<path d="M${pt(a0)} A${RELO_R} ${RELO_R} 0 0 1 ${pt(a1)}" stroke="${RELO_COR[fi]}"/>`;}).join('')}
+    <g class="astro"><circle class="sol" cx="${RELO_CX+RELO_R}" cy="${RELO_CY}" r="10"/><g class="lua"><circle cx="${RELO_CX+RELO_R}" cy="${RELO_CY}" r="10"/><circle class="sombra" cx="${RELO_CX+RELO_R+5}" cy="${RELO_CY-4}" r="8"/></g></g></svg>
+    <span class="quadros"><img class="quadro" alt=""><img class="quadro novo" alt=""></span><span class="turnoN"></span><span class="inv">⟲</span>`;
+  const [qa,qb]=el.querySelectorAll('.quadro'),astro=el.querySelector('.astro'),num=el.querySelector('.turnoN'),src=iconeFase(i);
+  // 3 leve: o céu troca suavemente, o astro anda uma marca e o número vira. Sem animação ao abrir/carregar ou ao fechar o ciclo.
+  const anima=!!antes&&qa.getAttribute('src')&&Math.abs(antes[0]-pos)===1;
+  qa.alt=f.nome;
+  if(anima&&qa.getAttribute('src')!==src){qb.src=src;qb.classList.remove('mostra');void qb.offsetWidth;qb.classList.add('mostra');
+    clearTimeout(el._t);el._t=setTimeout(()=>{qa.src=src;qb.classList.remove('mostra');},750);}
+  else{clearTimeout(el._t);qa.src=src;qb.classList.remove('mostra');}
+  astro.style.transition=anima?'':'none';
+  astro.style.transform=`rotate(${-(RELO_A0-RELO_PASSO*(pos+.5))}deg)`;
+  astro.classList.toggle('noite',!f.diurno);
+  if(!anima)void astro.getBoundingClientRect(),requestAnimationFrame(()=>{astro.style.transition='';});
+  if(num.textContent!==String(J.turno)){num.textContent=J.turno;if(anima){num.classList.remove('vira');void num.offsetWidth;num.classList.add('vira');}}
+  el.classList.toggle('eclipse',dir<0);
 }
 function anunciaFase(antes){
   if(faseIdx()===antes)return; // só avisa quando a fase muda
@@ -1826,7 +1857,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.15'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.20'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -4826,18 +4857,35 @@ function abreTerreno(k,refId){
   const t=J.ter[k],i=IDX_TER[t],ref=J.un.find(x=>x.id===refId),catRef=ref&&ESP[ref.esp].cat;
   const pct=v=>`${v>0?'':v<0?'−':''}${Math.round(Math.abs(v)*100)}%`;
   const gelo=t==='gelo';
-  const linhas=Object.entries(CAT_DEF).filter(([id])=>id!=='elemental').map(([id,c])=>{
-    const cm=c.custo[i],df=c.def[i],at=atkCat(c,t),entra=isFinite(cm);
+  // tipos com os mesmos números viram uma linha só; família inteira no mesmo grupo vira o nome curto ("Terrestres")
+  const cats=Object.entries(CAT_DEF).filter(([id])=>id!=='elemental');
+  const grupos=new Map();
+  for(const [id,c] of cats){const ch=[c.custo[i],c.def[i],gelo?atkCat(c,t):0].join('|');
+    if(!grupos.has(ch))grupos.set(ch,{ids:[],c});grupos.get(ch).ids.push(id);}
+  const FAM={Voador:'Voadores',Terrestre:'Terrestres','Aquático':'Aquáticos',Glacial:'Gelo'};
+  const nomeGrupo=ids=>{const nomes=[],feitas=new Set();
+    for(const id of ids){const f=CAT_DEF[id].grupo;
+      const todos=cats.filter(([,c])=>c.grupo===f).map(([x])=>x);
+      if(FAM[f]&&todos.length>1&&todos.every(x=>ids.includes(x))){if(!feitas.has(f)){feitas.add(f);nomes.push(FAM[f]);}}
+      else nomes.push(CAT_DEF[id].nome);}
+    return nomes.join(', ');};
+  // primeiro os tipos que estão no seu exército (e o da criatura em destaque); o resto fica atrás de "ver todos"
+  const meus=new Set(J.un.filter(u=>u.lado===0&&!u.elemental).map(u=>ESP[u.esp].cat));if(catRef)meus.add(catRef);
+  const linha=({ids,c})=>{
+    const cm=c.custo[i],df=c.def[i],at=atkCat(c,t),entra=isFinite(cm),eu=ids.includes(catRef);
     const corEv=df<0?'#ff8a80':df>=.5?'#6ee08a':'var(--txt)';
-    return `<tr class="${id===catRef?'eu':''}"${id===catRef?` title="Categoria ${ref?'de '+ESP[ref.esp].nome:''}"`:''}><td>${c.nome}</td>
+    return `<tr class="${eu?'eu':''}"${eu?` title="Categoria ${ref?'de '+ESP[ref.esp].nome:''}"`:''}><td>${nomeGrupo(ids)}</td>
       <td>${entra?cm:'<span style="color:#ff8a80">não entra</span>'}</td>
-      <td style="color:${entra?corEv:'var(--dim)'}">${entra?pct(df):'—'}</td>${gelo?`<td style="color:${at>1?'#6ee08a':at<1?'#ff8a80':'var(--txt)'}">${!entra?'—':at===1?'0%':(at>1?'+':'−')+Math.round(Math.abs(at-1)*100)+'%'}</td>`:''}</tr>`;}).join('');
+      <td style="color:${entra?corEv:'var(--dim)'}">${entra?pct(df):'—'}</td>${gelo?`<td style="color:${at>1?'#6ee08a':at<1?'#ff8a80':'var(--txt)'}">${!entra?'—':at===1?'0%':(at>1?'+':'−')+Math.round(Math.abs(at-1)*100)+'%'}</td>`:''}</tr>`;};
+  const gs=[...grupos.values()],prim=gs.filter(g=>g.ids.some(id=>meus.has(id))),resto=gs.filter(g=>!prim.includes(g));
+  const linhas=prim.map(linha).join('')+(resto.length?`</tbody><tbody class="terResto" hidden>${resto.map(linha).join('')}`:'');
+  const verTodos=resto.length?`<button class="terVer" onclick="const r=this.parentNode.querySelector('.terResto'),a=r.hidden;r.hidden=!a;this.textContent=a?'Ver menos':'Ver todos os tipos (${resto.length} a mais)'">Ver todos os tipos (${resto.length} a mais)</button>`:'';
   let dono='';
   if(ehConstrucao(t))dono=`<div class="vez">${J.dono[k]==null?'Sem dono':J.dono[k]===0?'Sua':OM(J.dono[k])+' controla'} · +${RENDA_TER[t]} MP por turno para quem controla</div>`;
   const html=`<div class="terTopo"><span class="terHex" style="background:${TER[t].cor}"></span><div><strong style="font-size:15px">${nomeTer(k)}</strong>${dono}</div></div>
     <p class="terDesc">${TER_DICA[t]}</p>${ehCristal(k)?`<p class="terDesc" style="color:#bfe3ff">💎 No fim do turno, cada mestre puxa o cristal 1 ponto por torre que controla, e quem controla esta torre puxa ${CRISTAL_VALOR} por ela. Puxar um cristal de um rival primeiro o desfaz. Vence quem montar ${CRISTAL_META}. Ao contrário das outras torres, não cura quem está nela. Agora: ${J.cristal.v?`${J.cristal.v}/${CRISTAL_META} para ${J.cristal.lado?OM(J.cristal.lado):'você'}`:'desmontado'}.</p>`:''}
-    <table class="terTab"><thead><tr><th>Tipo de criatura</th><th title="Pontos de movimento gastos para entrar na casa">Mov.</th><th title="Chance de o golpe inimigo errar">Evasão</th>${gelo?'<th>Ataque</th>':''}</tr></thead><tbody>${linhas}</tbody></table>
-    <p class="vez" style="margin:6px 0 0">Mov. = pontos gastos para entrar. Evasão = chance de o golpe inimigo errar${ref?`. Em destaque: ${ESP[ref.esp].nome}`:''}.</p>`;
+    <table class="terTab"><thead><tr><th>Tipo de criatura</th><th title="Pontos de movimento gastos para entrar na casa">Mov.</th><th title="Chance de o golpe inimigo errar">Evasão</th>${gelo?'<th>Ataque</th>':''}</tr></thead><tbody>${linhas}</tbody></table>${verTodos}
+    <p class="vez" style="margin:6px 0 0">Mov. = pontos gastos para entrar. Evasão = chance de o golpe inimigo errar.${resto.length?' Primeiro, os tipos do seu exército':''}${ref?`${resto.length?'; em':' Em'} destaque: ${ESP[ref.esp].nome}`:''}${resto.length||ref?'.':''}</p>`;
   abreDet('Terreno',html);
 }
 function fechaFicha(){fichaAberta=null;document.getElementById('fichaDet').classList.remove('aberto');}
@@ -4911,11 +4959,11 @@ let PLACAR_TORRE=null; // ícone de torre do placar (pixel art gerada uma vez)
 function atualiza(){
   if(!J)return;
   relogio();
-  document.getElementById('vez').innerHTML=J.fim?'Fim de jogo':`Turno ${J.turno} · ${J.vez===0?'<span style="color:var(--p0)">sua vez</span>':`<span style="color:var(--p${J.vez})">${ART(J.vez)} ${NM(J.vez)} está agindo…</span>`}`;
+  document.getElementById('vez').innerHTML=J.fim?'Fim de jogo':`${J.vez===0?'<span style="color:var(--p0)">Sua vez</span>':`<span style="color:var(--p${J.vez})">${ART(J.vez)} ${NM(J.vez)} está agindo…</span>`}`;
   // celular deitado: a reserva e o saldo de MP vão junto do turno, na barra do topo (o placar fica atrás do 📜)
   // celular em pé: só o turno (mana, monstros e torres ficam no placar abaixo do topo)
   const mpCurto=l=>J.mp[l]>=MANA_MAX?`<span style="color:#ff6b6b;font-weight:700" title="Limite de mana (${MANA_MAX}). A renda acima disso se perde: gaste!">${J.mp[l]} MP máx</span>`:`${J.mp[l]} MP`;
-  if(RETRATO()&&!J.fim)document.getElementById('vez').innerHTML=`<span>Turno ${J.turno} · ${J.vez===0?'<span style="color:var(--p0)">sua vez</span>':`<span style="color:var(--p${J.vez})">${NM(J.vez)} agindo…</span>`}</span>`;
+  if(RETRATO()&&!J.fim)document.getElementById('vez').innerHTML=`<span>${J.vez===0?'<span style="color:var(--p0)">Sua vez</span>':`<span style="color:var(--p${J.vez})">${NM(J.vez)} agindo…</span>`}</span>`;
   if(PAISAGEM()&&!J.fim){const sd=saldo(0);document.getElementById('vez').innerHTML+=` · ${mpHtml(0)} <b style="color:${sd>0?'#6ee08a':sd<0?'#ff8a80':'var(--txt)'}">${sd>=0?'+':'−'}${Math.abs(sd)}</b>`;}
   const minha=J.vez===0&&!J.ocupado&&!J.fim;
   // rodapé do mapa: você à esquerda, o Necromancer à direita, os botões do turno no meio
@@ -4925,6 +4973,7 @@ function atualiza(){
     <button onclick="abreConfig()">↻ Menu principal</button>
     <button onclick="fechaMenuJogo();salvarJogo()" ${podeSalvar()?'':'disabled'}>💾 Salvar</button>
     <button onclick="fechaMenuJogo();abrirCarregar()" ${J.ocupado?'disabled':''}>📂 Carregar</button>
+    <button onclick="abreAjuda()">❓ Como jogar</button>
     <button onclick="event.stopPropagation();mudaModoCena()" title="Tela que mostra cada combate">⚔ Tela de combate: ${MODOS_CENA[modoCena()]}</button>
     ${pedidoInstalar?'<button onclick="fechaMenuJogo();instalarApp()" title="Coloca o jogo na tela inicial, em tela cheia e jogável sem internet">⤓ Instalar como app</button>':''}`;
   // placar logo abaixo do topo (PC e celular): [sua mana (+saldo)] | placar dos jogadores
@@ -5010,7 +5059,7 @@ function atualiza(){
   // celular em pé: com criatura na ficha, a linha do terreno sai (fica só quando não há criatura para mostrar)
   if(HV&&!pv&&!PAISAGEM()&&!(RETRATO()&&mostra))inf+=terrenoHtml(HV,J.sel||mostra);
   document.getElementById('info').classList.toggle('vazio',!inf); // deitado: sem nada a mostrar, a ficha some
-  {const el=document.getElementById('info'),h=inf||`<span class="vez">${TOQUE()?'Toque numa criatura, ou segure o dedo numa casa, para ver os detalhes.':'Passe o mouse sobre uma criatura ou um terreno para ver os detalhes.'}</span>`;
+  {const el=document.getElementById('info'),h=inf||(TOQUE()?'':`<span class="vez">Passe o mouse sobre uma criatura ou um terreno para ver os detalhes.</span>`); // na tela de toque a ficha vazia fica em branco
    if(el.dataset.h!==h){el.dataset.h=h;el.innerHTML=h;}} // só troca se mudou, para não perder a rolagem
   // o registro só é redesenhado quando entra mensagem nova, para não perder a rolagem
   const lg=document.getElementById('log'),chLog=J.logs.length+'|'+J.logs.slice(0,3).join('|'); // 3 linhas: num jogo novo a primeira é sempre igual
@@ -5336,8 +5385,9 @@ addEventListener('resize',()=>{if(J)menus();});
 {const dica=document.getElementById('dica');
  addEventListener('click',ev=>{
   dica.style.display='none';
-  if(ultTipo==='mouse'||!ev.target.closest)return;
+  if(!ev.target.closest)return;
   const el=ev.target.closest('[title]');
+  if(ultTipo==='mouse'&&!(el&&el.id==='relogio'))return; // com mouse, só o relógio abre o balão (o resto já mostra ao parar em cima)
   if(!el||!el.title||el.tagName==='CANVAS'||ev.target.closest('button'))return;
   dica.textContent=el.title;dica.style.display='block';
   const w=dica.offsetWidth,h=dica.offsetHeight;
