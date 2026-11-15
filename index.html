@@ -1717,7 +1717,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.06'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.07'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2181,6 +2181,83 @@ function mostraTorre(u,doDono,liberou){
       if(liberou)textoCena(g,liberou,15,14,liberou.startsWith('Força')?'verm':'roxo',t,600,150); // 1ª torre libera a Magia; 2ª, a Força
     }});
 }
+// ---------- Cena do cristal completo ----------
+// Vitória pelo cristal: céu violeta, a Torre do Cristal (a mesma pixel art do mapa, ampliada 2×) no meio.
+// Os seis cacos voam das bordas, girando, e se encaixam entre as garras; o cristal fecha com um clarão, os raios
+// caem nele, o brilho e os fachos de luz giram na cor do vencedor, e o título desce. Depois vem a tela de fim.
+let cxFundo=null,cxTopo=[80,14];
+function fundoCristal(){
+  if(cxFundo)return cxFundo;
+  const c=document.createElement('canvas');c.width=CC_W;c.height=CC_H;const g=c.getContext('2d');
+  const rnd=mulberry32(9157),px=(x,y,cor)=>{g.fillStyle=cor;g.fillRect(x,y,1,1);};
+  const CEU=['#07041a','#140a36','#231252','#341c6c','#46288a','#5c3aa6'];
+  for(let y=0;y<CC_H;y++)for(let x=0;x<CC_W;x++){
+    const dx=(x-CC_W/2)/CC_W,dy=(y-20)/CC_H; // o céu clareia em volta do topo da torre
+    let v=(Math.sin(x*.13+Math.sin(y*.24)*2)*Math.cos(y*.17-x*.06)*.5+1.1-Math.hypot(dx*1.6,dy)*1.7)*CEU.length*.62;
+    v+=((x+y)&1)?.35:-.35;px(x,y,CEU[Math.max(0,Math.min(CEU.length-1,Math.floor(v)))]);
+  }
+  for(let i=0;i<34;i++)px(Math.floor(rnd()*CC_W),Math.floor(rnd()*60),rnd()<.3?'#ffffff':'#b8a8f0'); // estrelas
+  // planalto de pedra em volta da torre, com lajes
+  const colina=(base,amp,fr,f,cores)=>{for(let x=0;x<CC_W;x++){const h=Math.round(base-amp*Math.sin(x*fr+f)-amp*.5*Math.sin(x*fr*2.3+f*2));for(let y=h;y<CC_H;y++)px(x,y,cores[((x*5+y*3)%9===0||rnd()<.07)?1:0]);px(x,h,cores[2]);}};
+  colina(86,5,.05,2,['#140f2a','#0c0920','#241c46']);
+  colina(100,3,.08,4,['#1c1830','#120f22','#3a3358']);
+  const ico=iconeCristal(),s=2,w=ico.width*s,h=ico.height*s,dx=Math.round(CC_W/2-w/2),dy=CC_H+2-h;
+  g.imageSmoothingEnabled=false;g.drawImage(ico,dx,dy,w,h);
+  cxTopo=[Math.round(CC_W/2),dy+7*s]; // entre as garras
+  return cxFundo=c;
+}
+function mostraCristal(l){
+  if(!VEL||document.hidden)return Promise.resolve();
+  const cor=rgbHex(COR[l]),corS=c=>`rgb(${c.map(v=>Math.max(0,Math.min(255,Math.round(v)))).join(',')})`;
+  const m=mestreDe(l);
+  document.querySelector('#cercoCena .cap').innerHTML=m?`<div class="ccTropas">${iconeSpr(m.esp,30,l)}</div>`:'';
+  const fundo=fundoCristal(),[cx,cy]=cxTopo,JUNTA=1700;
+  // cacos: cada um sai de um ponto da borda e chega na sua face do cristal
+  const V=[[0,-10],[7,-4],[7,4],[0,10],[-7,4],[-7,-4]],LUZ=[1.35,.85,.6,.72,1,1.5];
+  const ori=[[8,10],[150,8],[156,60],[96,104],[4,92],[2,44]].map(([x,y])=>[x,y]);
+  const desenhaCaco=(g,i,x,y,rot,k=1)=>{
+    const a=V[i],b=V[(i+1)%6],mx=(a[0]+b[0])/3,my=(a[1]+b[1])/3;
+    g.save();g.translate(x,y);g.rotate(rot);
+    g.beginPath();g.moveTo(-mx,-my);g.lineTo(a[0]-mx,a[1]-my);g.lineTo(b[0]-mx,b[1]-my);g.closePath();
+    g.fillStyle=corS(cor.map(v=>v*LUZ[i]*k+40*(k-1)));g.fill();g.strokeStyle='#0a0612';g.lineWidth=.8;g.stroke();g.restore();
+    return [mx,my];
+  };
+  return rodaCena({fundo,dur:4300,raio:[COR[l],'#ffffff'],clarao:cor.join(','),
+    agenda:[{t:JUNTA,x:cx,y:cy},{t:JUNTA+380,x:cx,y:cy},{t:JUNTA+900,x:20+Math.random()*30,y:84},{t:JUNTA+1300,x:110+Math.random()*30,y:84},{t:JUNTA+1900,x:cx,y:cy}],
+    baixo:(g,t,now)=>{
+      const fe=Math.min(1,Math.max(0,(t-JUNTA)/400));          // 0 → 1 quando o cristal fecha
+      // brilho em volta do topo (cresce com os cacos chegando; pulsa depois de fechado)
+      const pre=Math.min(1,t/JUNTA),raio=10+pre*10+fe*16+fe*Math.sin(now/180)*2;
+      const gr=g.createRadialGradient(cx,cy,1,cx,cy,raio);
+      gr.addColorStop(0,`rgba(${cor.join(',')},${.25+pre*.3+fe*.35})`);gr.addColorStop(1,`rgba(${cor.join(',')},0)`);
+      g.fillStyle=gr;g.fillRect(cx-raio,cy-raio,raio*2,raio*2);
+      // fachos de luz girando, depois de fechado
+      if(fe>0){g.save();g.translate(cx,cy);g.rotate(now/1400);g.globalAlpha=.22*fe;g.fillStyle='#ffffff';
+        for(let i=0;i<8;i++){g.rotate(Math.PI/4);g.beginPath();g.moveTo(0,0);g.lineTo(-3,-90);g.lineTo(3,-90);g.closePath();g.fill();}
+        g.restore();}
+      // os seis cacos
+      for(let i=0;i<6;i++){
+        const ini=i*120,p=Math.min(1,Math.max(0,(t-ini)/(JUNTA-ini))),e=1-Math.pow(1-p,3); // chegam juntos, saem em sequência
+        const [ox,oy]=ori[i],a=V[i],b=V[(i+1)%6],fx=cx+(a[0]+b[0])/3,fy=cy+(a[1]+b[1])/3+Math.sin(now/650)*fe;
+        const curva=Math.sin(e*Math.PI)*18*(i%2?1:-1); // arco: não vêm em linha reta
+        const x=ox+(fx-ox)*e+curva*(fy-oy)/120,y=oy+(fy-oy)*e-curva*(fx-ox)/120;
+        if(p<1){ // rastro de faíscas
+          for(let j=1;j<=4;j++){const q=Math.max(0,e-j*.05),tx=ox+(fx-ox)*q,ty=oy+(fy-oy)*q;
+            g.globalAlpha=.5-j*.1;g.fillStyle=corS(cor.map(v=>v*1.3+60));g.fillRect(Math.round(tx),Math.round(ty),1,1);}
+          g.globalAlpha=1;
+        }
+        desenhaCaco(g,i,x,y,(1-e)*(i%2?5:-5),1+fe*.35);
+      }
+      // faíscas que sobem depois de fechado
+      if(fe>0)for(let i=0;i<14;i++){const f=((now/900+i*.37)%1),x=cx+Math.sin(i*2.3+now/400)*(6+f*16),y=cy-f*36;
+        g.globalAlpha=(1-f)*fe;g.fillStyle=i%3?'#ffffff':corS(cor.map(v=>v*1.2+50));g.fillRect(Math.round(x),Math.round(y),1,1);}
+      g.globalAlpha=1;
+    },
+    cima:(g,t)=>{
+      textoCena(g,l===0?'VITÓRIA':'DERROTA',84,30,PAL_LADO[l],t,JUNTA+250);
+      textoCena(g,'O CRISTAL ESTÁ COMPLETO',101,9,'roxo',t,JUNTA+900,200);
+    }});
+}
 function checaCerco(l){
   if(J.fim)return;
   for(const o of rivais(l)){
@@ -2332,7 +2409,7 @@ function eliminar(l,por,motivo){
 function fimDeJogo(v,motivo='mestre',por=null){
   J.fim=true;J.motivoFim=motivo;
   const jogo=J;
-  setTimeout(()=>{
+  const mostra=()=>{
     if(J!==jogo)return; // um novo jogo já começou
     document.getElementById('fimTxt').textContent=v===0?'Vitória!':'Derrota';
     document.getElementById('fimSub').textContent=motivo==='cabo'
@@ -2346,7 +2423,10 @@ function fimDeJogo(v,motivo='mestre',por=null){
       ?(v===0?`Suas tropas tomaram o castelo ${doM(1)} no turno ${J.turno}.`:`As tropas ${doM(1)} tomaram seu castelo no turno ${J.turno}.`)
       :(v===0?`${OM(1)} caiu no turno ${J.turno}.`:`${OM(0)} caiu no turno ${J.turno}.`);
     document.getElementById('fim').style.display='flex';
-  },700);
+  };
+  // cristal completo: primeiro a cena (cacos se juntando, raios), depois a tela de fim
+  if(motivo==='cristal'&&VEL&&!document.hidden)setTimeout(()=>{if(J===jogo)mostraCristal(v).then(()=>setTimeout(mostra,150));},450);
+  else setTimeout(mostra,700);
 }
 
 // ---------- Invocação ----------
