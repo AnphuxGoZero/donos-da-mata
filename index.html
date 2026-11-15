@@ -14,7 +14,7 @@
 <title>Senhores da Guerra</title>
 <style>
 @font-face{font-family:"Pirata One";src:url(fontes/PirataOne.woff2) format("woff2");font-display:block} /* títulos das cenas; OFL, ver fontes/OFL-PirataOne.txt */
-:root{--bg:#14161c;--panel:#1d2029;--line:#2e3340;--txt:#e6e8ee;--dim:#9aa1b2;--p0:#4aa8ff;--p1:#ff5b52;--p2:#f2b335;--acc:#f2c14e}
+:root{--bg:#14161c;--panel:#1d2029;--line:#2e3340;--txt:#e6e8ee;--dim:#9aa1b2;--p0:#4aa8ff;--p1:#ff5b52;--p2:#f2b335;--p3:#35d688;--acc:#f2c14e}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.4 system-ui,"Segoe UI",sans-serif}
 #app{display:flex;gap:12px;padding:12px;max-width:1300px;margin:0 auto;align-items:flex-start}
@@ -133,13 +133,25 @@ button.pri:hover:not(:disabled){background:#3a6ea6}
 #rodape .pNome{display:flex;align-items:center;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis}#rodape .pIt{display:inline-flex;align-items:center;gap:3px}
 #rodape .pIt .spr{margin:0}
 #rodape .pTor b{font-size:17px}
-#rodape .lado0 .pTor b{color:var(--p0)}#rodape .lado1 .pTor b{color:var(--p1)}#rodape .lado2 .pTor b{color:var(--p2)}
+#rodape .lado0 .pTor b{color:var(--p0)}#rodape .lado1 .pTor b{color:var(--p1)}#rodape .lado2 .pTor b{color:var(--p2)}#rodape .lado3 .pTor b{color:var(--p3)}
 #rodape .pDir{display:flex;align-items:center;gap:14px;min-width:0;justify-content:flex-start}
-#rodape.tres .lado1 .pMana,#rodape.tres .lado2 .pMana{display:none} /* 1x1x1: dos rivais só nome, monstros e torres */
+#rodape.tres .lado1 .pMana,#rodape.tres .lado2 .pMana,#rodape.tres .lado3 .pMana{display:none} /* 3 ou 4 mestres: dos rivais só nome, monstros e torres */
+#rodape.quatro .pDir{gap:10px}#rodape.quatro .pDir .pLado{gap:8px}
+@media (max-width:1100px){#rodape.quatro .pDir .nm{display:none}} /* tela estreita com 4 mestres: dos rivais fica só a bolinha da cor */
 #rodape .pLado.fora{opacity:.35;text-decoration:line-through}
-#saves .modos{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0 2px}
-#saves .modos button{display:flex;flex-direction:column;align-items:center;min-width:150px}
+#saves .modos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:4px 0 2px;width:100%;max-width:620px}
+#saves .modos button{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;min-width:0;padding:8px 10px;text-align:left}
+#saves .modos .mTxt{display:flex;flex-direction:column;min-width:0}
+#saves .modos b{white-space:nowrap}
 #saves .modos small{opacity:.8;font-weight:400}
+#saves .modos svg{flex:none;width:38px;height:30px}
+#saves .passo{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);font-weight:700;margin-top:10px}
+#saves.tela.arte .passo{text-shadow:0 1px 3px #000}
+.retrato #saves .modos button{flex-direction:column;gap:4px;text-align:center;padding:8px 4px}
+.retrato #saves .modos .mTxt{align-items:center}
+.retrato #saves .modos b{white-space:normal;line-height:1.15}
+@media (max-width:560px){#saves .modos button{flex-direction:column;gap:4px;text-align:center;padding:8px 4px}#saves .modos .mTxt{align-items:center}#saves .modos b{white-space:normal;line-height:1.15}}
+.paisagem #saves .passo{margin-top:4px}.paisagem #saves .modos button{padding:4px 8px}
 #rodape .pTorre{width:30px;height:30px;image-rendering:pixelated;display:block}
 #rodape [title]{cursor:help}
 #info .prev:first-child{margin-top:0;margin-bottom:6px;padding:4px 8px;font-size:12px}
@@ -555,7 +567,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
       <p><b>Força Elemental:</b> é liberada quando você conquista a sua segunda torre (o mestre inimigo segue a mesma regra). Depois disso, uma vez por turno, por 40 MP, um elemental da sua ordem ataca qualquer criatura inimiga do mapa e enfrenta o revide. O elemental é feito para derrubar gigantes: contra nível 0 causa metade do dano, contra nível 1 três quartos, e contra nível 2, 3 e mestres o dano é cheio. Ele começa com 100 de vida, não se cura durante a partida e, se morrer, não volta. A Força Elemental não gasta a magia do turno.</p>
       <p>Para invocar, clique numa construção sua (castelo, fortaleza ou torre) que esteja livre e ao lado do seu mestre. Elas ficam com borda dourada tracejada.</p>
       <p>Seu exército pode ter até 2 criaturas + 1 por torre que você controla. Ganhe torres (e MP) terminando o movimento sobre elas.</p>
-      <p><b>Modos:</b> no <b>1 × 1</b> você enfrenta um mestre. No <b>1 × 1 × 1</b> são três mestres, todos contra todos (você e dois controlados pelo computador), num mapa maior com três castelos. Quando um mestre cai ou tem o castelo cercado, ele sai da partida: o exército dele se desfaz e as construções dele ficam sem dono. Vence o último mestre de pé.</p>
+      <p><b>Modos:</b> no <b>Duelo</b> você enfrenta um mestre. Na <b>Tríade</b> são três mestres, todos contra todos (você e dois controlados pelo computador), num mapa maior com três castelos. Na <b>Guerra Total</b> são quatro mestres, um castelo em cada canto do mapa. Quando um mestre cai ou tem o castelo cercado, ele sai da partida: o exército dele se desfaz e as construções dele ficam sem dono. Vence o último mestre de pé.</p>
       <p><b>Cabo de guerra e Torre do Cristal:</b> além de derrotar o mestre ou cercar o castelo, dá para vencer pelas torres. No fim do seu turno você puxa o cabo de guerra 1 ponto por torre que controla, e cada rival faz o mesmo no turno dele. No centro do mapa fica a Torre do Cristal, que vale 3 pontos por turno para quem a controla, mas, ao contrário das outras torres, não cura quem está nela. Os cacos do cristal vão se juntando na cor de quem está na frente. Se o cabo está do lado de um rival, puxar primeiro desfaz a vantagem dele. Quem chegar a 50 vence na hora.</p>
       <p><b>Mana:</b> no início do turno você ganha +15 por torre e +5 por fortaleza ou castelo, e paga a manutenção das criaturas (3, 6 ou 10 por nível). A sobra vai para a reserva, que guarda no máximo 300 MP (o que passar disso se perde); o que faltar sai dela. Com a reserva zerada, as criaturas sem pagamento ficam enfraquecidas (selo roxo) e, se o déficit continuar, uma delas debanda a cada turno.</p>
       <p><b>Dicas:</b> use Gatos Alados, rápidos e voadores, para tomar torres neutras logo no início. Não deixe criaturas paradas à toa, porque elas custam manutenção. Tomar torres do mestre inimigo corta a renda dele e o limite do exército.</p>
@@ -604,8 +616,8 @@ addEventListener('appinstalled',()=>{pedidoInstalar=null;if(J)atualiza();});
 async function instalarApp(){const p=pedidoInstalar;if(!p)return;pedidoInstalar=null;p.prompt();try{await p.userChoice;}catch(e){}atualiza();}
 // ---------- Geometria hexagonal (pointy-top, linhas ímpares deslocadas) ----------
 const COLS=17, R=27, W=Math.sqrt(3)*R, PAD=10, LIM_EXERCITO=30;
-let ROWS=13; // 13 linhas no 1x1; 17 no 1x1x1 (ver defineLinhas)
-const LIM_MAPA_N=[0,0,56,80],limMapa=()=>LIM_MAPA_N[NP()]; // criaturas no mapa, somando todos os lados
+let ROWS=13; // 13 linhas no 1x1; 17 com 3 ou 4 mestres (ver defineLinhas)
+const LIM_MAPA_N=[0,0,56,80,96],limMapa=()=>LIM_MAPA_N[NP()]; // criaturas no mapa, somando todos os lados
 const cv=document.getElementById('cv');
 // VW×VH = tamanho lógico do mapa; o canvas tem o dobro de resolução para o zoom ficar nítido
 const VW=Math.ceil(W*(COLS+0.5)+PAD*2),RES=2;
@@ -927,10 +939,10 @@ function montaTabVant(){
   const nomeEl=x=>`<span style="color:${EL[x]};font-weight:600">${ELN[x]}</span>`;
   el.innerHTML=Object.keys(VANT).map(x=>`<div style="font-size:12.5px;margin:2px 0"><span class="ponto" style="background:${EL[x]}"></span>${nomeEl(x)} vence ${VANT[x].map(nomeEl).join(' e ')}</div>`).join('');
 }
-const COR=['#4aa8ff','#ff5b52','#f2b335'];
-const COR_TORRE=['rgba(45,110,225,.85)','rgba(215,55,50,.85)','rgba(215,150,25,.85)'];
-const COR_HEX=['rgba(55,135,235,.62)','rgba(225,70,60,.62)','rgba(230,165,35,.62)'];
-const COR_BAND=[['#5aa8ff','#2a5aa8'],['#ff5a4a','#a82a20'],['#ffc040','#a87410']]; // bandeira da cena da torre
+const COR=['#4aa8ff','#ff5b52','#f2b335','#35d688'];
+const COR_TORRE=['rgba(45,110,225,.85)','rgba(215,55,50,.85)','rgba(215,150,25,.85)','rgba(20,150,90,.9)'];
+const COR_HEX=['rgba(55,135,235,.62)','rgba(225,70,60,.62)','rgba(230,165,35,.62)','rgba(25,170,105,.7)'];
+const COR_BAND=[['#5aa8ff','#2a5aa8'],['#ff5a4a','#a82a20'],['#ffc040','#a87410'],['#4be09a','#178a55']]; // bandeira da cena da torre
 const PAL_LADO=['azul','verm','ouro']; // títulos das cenas na cor do time
 
 const ESP={
@@ -1253,6 +1265,7 @@ const TEMAS=[
 ];
 function gerarMapa(seed,np=2,cristal=false){
   if(np===3)return gerarMapa3(seed,cristal);
+  if(np===4)return gerarMapa4(seed,cristal);
   for(let t=0;t<300;t++){
     const rnd=mulberry32(seed*31+t);
     let sorteio=rnd()*TEMAS.reduce((s,x)=>s+x.peso,0),tema=TEMAS[0];
@@ -1398,20 +1411,86 @@ function gerarMapa3(seed,cristal=false){
   }
   throw new Error('mapa3');
 }
+// 1x1x1x1: mapa de 17×17 com um castelo em cada canto, 12 casas entre vizinhos e 18 na diagonal.
+// O canto de cima à esquerda é sorteado e copiado para os outros três (espelho de cima/baixo e de esquerda/direita),
+// então os quatro lados têm o mesmo terreno e as mesmas torres: 2 perto de cada castelo, 1 na divisa com cada
+// vizinho (8 no total) e a do centro, a 9 casas dos quatro. Os lados seguem em volta do mapa, no sentido horário.
+const F4=[[2,2],[14,2],[14,14],[2,14]];
+const CENTRO4=[8,8];
+function gerarMapa4(seed,cristal=false){
+  const eV=(c,r)=>[c,ROWS-1-r],eH=(c,r)=>[(r&1?COLS-2:COLS-1)-c,r]; // linhas ímpares são deslocadas meia casa
+  const imgs=(c,r)=>[[c,r],eH(c,r),eV(c,r),eV(...eH(c,r))];
+  const meio=(ROWS-1)/2;
+  for(let t=0;t<800;t++){
+    const rnd=mulberry32(seed*41+t);
+    let sorteio=rnd()*TEMAS.reduce((s,x)=>s+x.peso,0),tema=TEMAS[0];
+    for(const x of TEMAS){if((sorteio-=x.peso)<0){tema=x;break;}}
+    const ter=new Array(COLS*ROWS).fill('plan');
+    const passeio=(tp,c,r,passos)=>{for(let j=0;j<passos;j++){ter[K(c,r)]=tp;const v=vizinhos(c,r);[c,r]=v[rnd()*v.length|0];}};
+    // só o canto de cima à esquerda importa (o resto é cópia): tudo é sorteado dentro dele, com metade das manchas
+    const Q=()=>[rnd()*(meio+1)|0,rnd()*(meio+1)|0];
+    for(let i=0;i<Math.ceil(tema.mar/2);i++){const p=rnd()*(meio+1)|0;passeio('mar',...(rnd()<.5?[p,0]:[0,p]),5+(rnd()*5|0));}
+    for(const [tp,n,tam] of tema.blobs)for(let i=0;i<Math.max(1,Math.round(n*.45));i++)passeio(tp,...Q(),tam+(rnd()*tam|0));
+    if(rnd()<tema.pant)passeio('pant',...Q(),4+(rnd()*3|0));
+    if(rnd()<tema.rio*.7){ // rio: desce da borda de cima até o centro
+      let c=5+(rnd()*3|0),r=0;const [cc,cr]=CENTRO4;
+      for(let g=0;g<40&&!(c===cc&&r===cr);g++){
+        ter[K(c,r)]='rio';
+        const v=vizinhos(c,r).filter(([a,b])=>a<=meio&&b<=meio);v.sort((a,b)=>d6c(...a,cc,cr)-d6c(...b,cc,cr)+(rnd()-0.5)*1.6);
+        [c,r]=v[0];
+      }
+    }
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const k=Math.min(...imgs(c,r).filter(p=>dentro(...p)).map(p=>K(...p)));ter[K(c,r)]=ter[k];}
+    const dono=new Array(COLS*ROWS).fill(null);
+    F4.forEach(([c,r],l)=>{ter[K(c,r)]='cast';dono[K(c,r)]=l;for(const [a,b] of vizinhos(c,r)){ter[K(a,b)]='fort';dono[K(a,b)]=l;}});
+    const dd=(c,r)=>F4.map(f=>d6c(c,r,...f)); // [meu, vizinho da direita, diagonal, vizinho de baixo]
+    const cand=[];
+    for(let r=0;r<meio;r++)for(let c=0;c<meio;c++){
+      if(['mar','rio','vulc','pant','fort','cast'].includes(ter[K(c,r)]))continue;
+      if(d6c(c,r,...F4[0])<3||d6c(c,r,...CENTRO4)<3)continue;
+      cand.push([c,r]);
+    }
+    for(let i=cand.length-1;i>0;i--){const j=rnd()*(i+1)|0;[cand[i],cand[j]]=[cand[j],cand[i]];}
+    const torres=[];
+    const poe=(c,r)=>{const q=imgs(c,r);
+      if(!q.every((p,i)=>torres.every(([a,b])=>d6c(a,b,...p)>=3)&&q.every((o,j)=>j<=i||d6c(...p,...o)>=3)))return false;
+      torres.push(...q);return true;};
+    let perto=0,divH=false,divV=false;
+    for(const [c,r] of cand){
+      const [a,b,,d]=dd(c,r);
+      if(perto<2&&a<=5&&a+3<=Math.min(b,d)){if(poe(c,r))perto++;}
+      else if(!divH&&a>=5&&b-a<=3&&d>=b+3){divH=poe(c,r);}
+      else if(!divV&&a>=5&&d-a<=3&&b>=d+3){divV=poe(c,r);}
+      if(perto===2&&divH&&divV)break;
+    }
+    if(perto<2||!divH||!divV)continue;
+    poeCristal(ter,torres,CENTRO4); // 17 torres no 1x1x1x1
+    torres.forEach(([c,r])=>ter[K(c,r)]='torre');
+    const vis=new Set([K(...F4[0])]),fila=[K(...F4[0])];
+    while(fila.length){const [c,r]=DK(fila.pop());for(const [a,b] of vizinhos(c,r)){const k=K(a,b);if(!vis.has(k)&&ter[k]!=='mar'&&ter[k]!=='vulc'){vis.add(k);fila.push(k);}}}
+    if(!F4.every(f=>vis.has(K(...f)))||!torres.every(([c,r])=>vis.has(K(c,r))))continue;
+    if(!F4.every(f=>vizinhos(...f).some(([a,b])=>vizinhos(a,b).some(([x,y])=>{const t=ter[K(x,y)];return t!=='mar'&&t!=='vulc'&&t!=='fort'&&t!=='cast';}))))continue;
+    return {ter,dono,f:F4,f0:F4[0],f1:F4[1],tema:tema.nome,cristal:cristal?K(...CENTRO4):null};
+  }
+  throw new Error('mapa4');
+}
 
 // ---------- Estado ----------
 let J, nid=1;
+// modos de jogo: quantos mestres em campo
+const MODOS={'1x1':2,'1x1x1':3,'1x1x1x1':4};
+const NOME_MODO=[,,'Duelo','Tríade','Guerra Total']; // pelo número de mestres
 // preferências do novo jogo (mestre escolhido), lembradas no navegador
 const PREFS_CHAVE='senhoresDoVeu.prefs';
 function prefs(){let p=null;try{p=JSON.parse(localStorage.getItem(PREFS_CHAVE));}catch(e){}
-  p=p||{};if(!ORDENS[p.ordem])p.ordem='coro';if(p.modo!=='1x1x1')p.modo='1x1';delete p.cristal;p.manaBase=0;return p;}
+  p=p||{};if(!ORDENS[p.ordem])p.ordem='coro';if(!MODOS[p.modo])p.modo='1x1';delete p.cristal;p.manaBase=0;return p;}
 function gravaPrefs(p){try{localStorage.setItem(PREFS_CHAVE,JSON.stringify(p));}catch(e){}}
 function novoJogo(op=prefs()){
   if(VEL_PULO!=null){VEL=VEL_PULO;VEL_PULO=null;} // saiu no meio de um pulo da vez do rival
   document.getElementById('fim').style.display='none';
   const seed=(Math.random()*1e9)|0;
-  const np=op.modo==='1x1x1'?3:2;
-  defineLinhas(np===3?17:13);
+  const np=MODOS[op.modo]||2;
+  defineLinhas(np>2?17:13);
   const m=gerarMapa(seed,np,op.cristal!==false); // modo único: todo mapa tem a Torre do Cristal (false só para testes)
   // os rivais recebem mestres diferentes do seu e entre si, sorteados
   const outras=Object.keys(ORDENS).filter(o=>o!==op.ordem);
@@ -1424,9 +1503,9 @@ function novoJogo(op=prefs()){
   m.f.forEach((f,l)=>criaUnidade(ORDENS[ordens[l]].esp,l,...f));
   zoomInicio(true);
   {const [x,y]=centro(...m.f0);CAM.x=x;CAM.y=y;CAM.alvo=null;limitaCam();}
-  if(np===3){
-    log(`Mapa: ${m.tema}. Todos contra todos: o último mestre de pé vence.`);
-    log(`Seu mestre: ${NM(0)}. Rivais: ${NM(1)} (vermelho) e ${NM(2)} (âmbar).`);
+  if(np>2){
+    log(`Mapa: ${m.tema}. ${NOME_MODO[np]}: todos contra todos, o último mestre de pé vence.`);
+    log(`Seu mestre: ${NM(0)}. Rivais: ${NM(1)} (vermelho)${np>3?', ':' e '}${NM(2)} (âmbar)${np>3?` e ${NM(3)} (verde)`:''}.`);
   }else{
     log(`Mapa: ${m.tema}. Capture as torres e derrote ${ART(1)} ${NM(1)}.`);
     log(`Seu mestre: ${NM(0)}. Mestre inimigo: ${NM(1)}.`);
@@ -1453,7 +1532,7 @@ function gravar(slot){
 function carregar(slot){
   const s=lerSave(slot);if(!s)return false;
   if(VEL_PULO!=null){VEL=VEL_PULO;VEL_PULO=null;}
-  defineLinhas(s.ter.length/COLS); // 13 linhas no 1x1, 17 no 1x1x1
+  defineLinhas(s.ter.length/COLS); // 13 linhas no 1x1, 17 com 3 ou 4 mestres
   document.getElementById('fim').style.display='none';
   for(const u of s.un){delete u.anim;delete u.hit;} // saves antigos podem trazer esses horários
   J={ter:s.ter,dono:s.dono,tema:s.tema,un:s.un,turno:s.turno,vez:0,mp:s.mp,sel:null,alc:null,alvosSet:new Set(),alvosMove:new Map(),
@@ -1475,7 +1554,7 @@ function carregar(slot){
   log(`Jogo carregado (turno ${J.turno}).`);
   fecharSaves();atualiza();return true;
 }
-const descSave=s=>`${s.np===3?'1×1×1 · ':''}Turno ${s.turno} · ${s.tema} · ${new Date(s.quando).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`;
+const descSave=s=>`${s.np>2?NOME_MODO[s.np]+' · ':''}Turno ${s.turno} · ${s.tema} · ${new Date(s.quando).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`;
 function salvarJogo(){
   const el=document.getElementById('saves');el.classList.remove('cfg','tela','ini','arte');
   const ok=gravar('manual');
@@ -1737,7 +1816,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.10'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.11'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -1762,10 +1841,17 @@ function jogarRapido(){fecharSaves();novoJogo({...prefs(),modo:'1x1'});}
 function desenhaConfig(){
   const el=document.getElementById('saves');
   // tela cheia (classe "tela"), com o nome do jogo no alto
-  const tres=cfgSel.modo==='1x1x1';
+  // dois passos: 1) quantos mestres em campo (cada botão mostra onde ficam os castelos); 2) o seu mestre
+  const np=MODOS[cfgSel.modo]||2;
+  const modo=(id,n,nome,pts)=>`<button class="${cfgSel.modo===id?'pri':''}" onclick="cfgSel.modo='${id}';desenhaConfig()" aria-pressed="${cfgSel.modo===id}">
+      <svg viewBox="0 0 38 30" aria-hidden="true"><rect x="1" y="1" width="36" height="28" rx="4" fill="#0d0f14" stroke="#ffffff55"/>${pts.map(([x,y],l)=>`<circle cx="${x}" cy="${y}" r="3.6" fill="${COR[l]}" stroke="#000" stroke-width=".8"/>`).join('')}</svg>
+      <span class="mTxt"><b>${nome}</b><small>${n} mestres</small></span></button>`;
   let h=`<div class="tituloJogo">Preparar Batalha</div><div class="subt"><strong>Preparar Batalha</strong></div>
-    <div class="modos"><button class="${tres?'':'pri'}" onclick="cfgSel.modo='1x1';desenhaConfig()"><b>1 × 1</b><small>Você contra um mestre</small></button><button class="${tres?'pri':''}" onclick="cfgSel.modo='1x1x1';desenhaConfig()"><b>1 × 1 × 1</b><small>Todos contra todos, 3 mestres</small></button></div>
-    <div class="vez">Escolha seu mestre. ${tres?'Os dois rivais recebem outros, sorteados.':'O inimigo recebe outro, sorteado.'}</div><div class="mestres">`;
+    <div class="passo">1 · Tipo de batalha</div>
+    <div class="modos">${modo('1x1',2,'Duelo',[[8,15],[30,15]])}${modo('1x1x1',3,'Tríade',[[10,7],[10,23],[29,15]])}${modo('1x1x1x1',4,'Guerra Total',[[8,7],[30,7],[30,23],[8,23]])}</div>
+    <div class="vez">${np>2?`Todos contra todos, num mapa maior com ${np===3?'três':'quatro'} castelos. Vence o último mestre de pé.`:'Você contra um mestre.'}</div>
+    <div class="passo">2 · Seu mestre</div>
+    <div class="vez">${np>2?`Os ${np===3?'dois':'três'} rivais recebem outros, sorteados.`:'O inimigo recebe outro, sorteado.'}</div><div class="mestres">`;
   for(const [id,o] of Object.entries(ORDENS))
     h+=`<button class="${id===cfgSel.ordem?'pri':''}" onclick="cfgSel.ordem='${id}';desenhaConfig()">${iconeSpr(o.esp,TOQUE()?64:84,'cor')}<span class="txt"><b>${o.nome}</b><small>Força Elemental: ${o.forca.map(e=>`<span style="color:${EL[e]}">${ELN[e]}</span>`).join(', ')}</small><small class="desc">${o.desc}</small></span></button>`;
   h+=`</div>
@@ -1789,9 +1875,9 @@ function viraPara(u,x){const dx=x-centro(u.c,u.r)[0];if(Math.abs(dx)>1)u.dir=Mat
 function criaUnidade(esp,lado,c,r){const u={id:nid++,esp,lado,c,r,dir:c<COLS/2?1:-1,hp:ESP[esp].hp,xp:0,movido:false,agiu:false};J.un.push(u);return u;}
 const unidadeEm=(c,r)=>J.un.find(u=>u.c===c&&u.r===r);
 const mestreDe=l=>J.un.find(u=>u.lado===l&&ESP[u.esp].mestre);
-// lados da partida: 0 = você; 1 e 2 = rivais (o 2 só existe no 1x1x1). Um lado eliminado fica em J.fora.
+// lados da partida: 0 = você; 1, 2 e 3 = rivais (o 2 só existe com 3 ou 4 mestres; o 3, só com 4). Um lado eliminado fica em J.fora.
 const NP=()=>(J&&J.np)||2;
-const LADOS=()=>NP()===3?[0,1,2]:[0,1];
+const LADOS=()=>[0,1,2,3].slice(0,NP());
 const ativo=l=>!(J.fora&&J.fora[l]);
 const rivais=l=>LADOS().filter(o=>o!==l&&ativo(o));
 function mestreMaisPerto(l,c,r){let b=null,bd=Infinity;for(const o of rivais(l)){const m=mestreDe(o);if(!m)continue;const d=d6c(c,r,m.c,m.r);if(d<bd){bd=d;b=m;}}return b;}
@@ -4301,9 +4387,10 @@ const atlas=new Image();let atlasOk=false;
 const RAMPA=[
   [[10,28,74],[46,120,225],[205,230,255]],   // azul (você)
   [[70,10,12],[218,58,48],[255,218,205]],    // vermelho (1º rival)
-  [[72,46,6],[228,165,32],[255,238,190]],    // âmbar (2º rival, só no 1x1x1)
+  [[72,46,6],[228,165,32],[255,238,190]],    // âmbar (2º rival, com 3 ou 4 mestres)
+  [[6,60,34],[40,196,112],[214,255,228]],    // verde (3º rival, só no 1x1x1x1)
 ];
-const atlasTime=[null,null,null];
+const atlasTime=[null,null,null,null];
 let atlasCinza=null; // versão cinza pronta (criaturas que já agiram), para não usar filtro a cada quadro
 // Versão em tons de cinza de um canvas. Feita pixel a pixel porque ctx.filter não existe no Safari (iPhone/iPad).
 function pintaCinza(g,src,brilho){
@@ -4385,14 +4472,14 @@ function celSpr(g,src,si,x,y,s){
   g.drawImage(src,(si%6)*CELP,Math.floor(si/6)*CELP,CELP,CELP,x-m,y-m,s+2*m,s+2*m);
 }
 atlas.onload=()=>{
-  for(const l of [0,1,2]){
+  for(const l of [0,1,2,3]){
     atlasTime[l]=tingir(atlas,RAMPA[l]);
     if(l===0){atlasCinza=document.createElement('canvas');atlasCinza.width=atlas.width;atlasCinza.height=atlas.height;
       const g=atlasCinza.getContext('2d');pintaCinza(g,atlasTime[0],.85);}
     document.documentElement.style.setProperty('--atlas'+l,`url(${atlasTime[l].toDataURL()})`);
   }
   // todas as criaturas ganham contorno escuro, para se destacarem de qualquer terreno
-  for(const l of [0,1,2])atlasTime[l]=contornar(atlasTime[l],4,'#07080c');
+  for(const l of [0,1,2,3])atlasTime[l]=contornar(atlasTime[l],4,'#07080c');
   atlasCinza=contornar(atlasCinza,4,'#07080c');
   atlasOk=true;if(J)atualiza();
 };
@@ -4847,9 +4934,9 @@ function atualiza(){
    const dicaC=!C?'':J.cristal?`Cristal: ${C.v?`${C.v} de ${CRISTAL_META} montados para ${C.lado?OM(C.lado):'você'}`:'desmontado'}. Força por turno (1 por torre, ${CRISTAL_VALOR} pela do cristal): ${LADOS().filter(ativo).map(l=>`${l?NM(l):'você'} +${forcaCristal(l)}`).join(', ')}.`
      :`Cabo de guerra: ${C.v?`${C.v} de ${CABO_META} para ${C.lado?OM(C.lado):'você'}`:'empatado'}. No fim do turno, cada um puxa 1 por torre: ${LADOS().filter(ativo).map(l=>`${l?NM(l):'você'} +${torresDe(l)}`).join(', ')}. Quem chegar a ${CABO_META} vence.`;
    const meio=quem=>`<div class="pMeio"><img class="pTorre" src="${PLACAR_TORRE}" alt="Torres" title="Torres: você à esquerda, ${quem} à direita">${C?`<span class="pCristal" title="${dicaC}">${J.cristal?'💎':'🏳'}<b style="color:${corC}">${C.v}/${META}</b></span>`:''}</div>`;
-   const rod=document.getElementById('rodape');rod.classList.toggle('tres',NP()>2);
+   const rod=document.getElementById('rodape');rod.classList.toggle('tres',NP()>2);rod.classList.toggle('quatro',NP()>3);
    rod.innerHTML=NP()>2
-     ?lado(0)+meio('os rivais')+`<div class="pDir">${lado(1)}${lado(2)}</div>`
+     ?lado(0)+meio('os rivais')+`<div class="pDir">${LADOS().slice(1).map(lado).join('')}</div>`
      :lado(0)+meio(`${ART(1)} ${NM(1)}`)+lado(1);
    // 1x1: a faixa cresce do meio para o lado de quem monta (você à esquerda, o rival à direita); chegou na ponta, venceu.
    // 1x1x1: só um lado tem cristal montado por vez, então a faixa cresce do meio para as duas pontas na cor desse lado.
