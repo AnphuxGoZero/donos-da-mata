@@ -463,6 +463,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 #saves.tela.ini .tituloJogo .tlDa::before{background:linear-gradient(90deg,#ffd36a00,#ffd36a)}
 #saves.tela.ini .tituloJogo .tlDa::after{background:linear-gradient(90deg,#ffd36a,#ffd36a00)}
 #saves.tela.ini>.menuIni{margin-bottom:clamp(24px,15vh,170px)}
+#saves.tela .versaoJogo{position:absolute;right:max(10px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom));width:auto;max-width:none;font-size:12px;color:#fff9;text-shadow:0 1px 3px #000;pointer-events:none}
 /* tela baixa (celular deitado): o título volta a uma linha só, e os botões ficam mais compactos */
 @media (max-height:560px){
   #saves.tela.ini .tituloJogo{flex-direction:row;justify-content:center;align-items:center;gap:.3em;margin-top:clamp(8px,5vh,40px)}
@@ -1712,6 +1713,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
+const VERSAO='1.01'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -1726,7 +1728,8 @@ function desenhaInicio(){
       <button class="grande" onclick="desenhaConfig()">Preparar Batalha</button>
       <button class="grande" onclick="abrirCarregar(true)" ${temSave?'':'disabled'}>Carregar Jogo</button>
       ${cfgInicio?'':'<button onclick="fecharSaves()">Voltar ao jogo</button>'}
-    </div>`;
+    </div>
+    <div class="versaoJogo">v${VERSAO}</div>`;
   poeArte(el,'inicio');
   el.classList.remove('cfg');el.classList.add('tela','ini');el.style.display='block';
 }
@@ -4911,7 +4914,7 @@ function menus(){
     // primeiro só os botões Magia e Força; cada um abre a sua lista. Já usada no turno, a opção some.
     const u=J.menuAlvo,e=ESP[u.esp],fase=J.menuAlvoFase;
     const efs=u.lado===0?SELOS_MAGIA.filter(([c])=>temEfeito(u,c)).map(([c])=>DESC_EFEITO[c].split(':')[0]):[];
-    let h=`<div class="mmTopo"><div><div class="tit" style="color:var(--p${u.lado})">${nome(u)}</div><div class="vez">Vida ${u.hp}/${e.hp} · ${mpHtml(0)}</div>${efs.length?`<div class="vez" style="color:#d6c2ff">${efs.join(' · ')}</div>`:''}</div><button class="mmX" onclick="J.menuAlvo=null;atualiza()" aria-label="Fechar">✕</button></div>`;
+    let h=`<div class="mmTopo"><div>${fase==='magia'?`<div class="tit" style="color:var(--p${u.lado})">Magia</div><div class="vez">${mpHtml(0)}</div>`:`<div class="tit" style="color:var(--p${u.lado})">${nome(u)}</div><div class="vez">Vida ${u.hp}/${e.hp} · ${mpHtml(0)}</div>`}${efs.length?`<div class="vez" style="color:#d6c2ff">${efs.join(' · ')}</div>`:''}</div><button class="mmX" onclick="J.menuAlvo=null;atualiza()" aria-label="Fechar">✕</button></div>`;
     const volta=u.lado===0?'':`<button onclick="J.menuAlvoFase=null;atualiza()">← Voltar</button>`; // criatura sua: só a lista, o ✕ fecha
     if(fase==='magia'){
       // mesmos cartões do menu de magias do mestre: ícone, nome e custo (a descrição fica no title)
