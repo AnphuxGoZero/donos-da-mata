@@ -255,7 +255,7 @@ button{touch-action:manipulation}
 .toque .soToque{display:block}.toque .soMouse{display:none}
 #btCancela{position:absolute;left:8px;bottom:8px;z-index:4;display:none;background:#3a2530ee;border-color:#a8565f;box-shadow:0 4px 14px #000a}
 #dica .dLin{display:flex;align-items:center;gap:5px;margin-top:5px}#dica .dSub{margin-top:5px;font-size:12px;color:var(--dim)}
-#dica .elIc{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:12px;border:1px solid #0008}
+#dica .tag{margin:0}
 #dica{position:fixed;z-index:9;display:none;max-width:min(300px,86vw);background:#0e1015f5;border:1px solid #4a5268;border-radius:8px;padding:8px 10px;font-size:13px;box-shadow:0 6px 20px #000c;pointer-events:none}
 .toque button{min-height:40px;padding:9px 12px}
 .toque h1 .bt{min-height:34px;min-width:38px;padding:2px 9px;font-size:16px;vertical-align:middle}
@@ -337,7 +337,6 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 #rodape .pMeio{display:flex;align-items:center;gap:6px}
 #rodape .pCristal{display:inline-flex;align-items:center;gap:3px;font-size:12px;white-space:nowrap}
 /* cabo de guerra do cristal: faixa fina na borda de baixo do placar, com um marco no meio */
-#rodape.cabo{padding-bottom:14px!important} /* espaço para a faixa não cobrir o placar */
 #rodape .pCabo{position:absolute;left:8px;right:8px;bottom:3px;height:9px;border-radius:5px;box-shadow:inset 0 0 0 1px #0006;background:#262a34;overflow:hidden}
 #rodape .pCabo i{position:absolute;top:0;bottom:0;transition:left .5s,right .5s,background .5s}
 #rodape .pCabo::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:3px;margin-left:-1.5px;background:#e8eaf0}
@@ -553,6 +552,33 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 #menuM .invG .custo{position:absolute;right:6px;top:4px;font-size:12px;color:var(--acc)}
 .paisagem #menuM.grade{width:min(640px,96%)!important}
 .paisagem #menuM .invG{grid-template-columns:repeat(6,1fr)}
+/* ---------- barra única: menu · relógio · mana · placar · zoom (o placar mora dentro do topo) ---------- */
+#topoMapa .nomeJogo,#topoMapa #vez,#topoMapa #zoomN,#topoMapa #rodape .nm{display:none} /* nomes: a bolinha da cor e o bloco aceso identificam; o nome fica na dica */
+#topoMapa:not(.x){grid-template-columns:auto auto minmax(0,1fr) auto;gap:10px}
+#topoMapa #rodape{display:grid;position:static;background:none;border:none;border-radius:0;padding:0;margin:0;min-width:0;box-shadow:none}
+#topoMapa.cabo{padding-bottom:15px!important} /* a faixa do cabo de guerra corre na borda de baixo da barra */
+#topoMapa .pCabo{left:10px;right:10px}
+#rodape .pLado{border-radius:7px;padding:3px 8px;transition:box-shadow .3s,background .3s}
+#rodape .pLado.vezDele{background:#ffffff1c;box-shadow:0 0 0 2px var(--pc),0 0 12px -1px var(--pc);animation:vezPulsa 2.2s ease-in-out infinite}
+@keyframes vezPulsa{50%{box-shadow:0 0 0 2px var(--pc),0 0 4px -1px var(--pc)}}
+#rodape .pManaBox{border-right:1px solid #ffffff30}
+/* celular em pé: a barra cresce com a faixa; o ⌖ desce para o canto do mapa; com 4 mestres tudo um pouco mais justo */
+.retrato #topoMapa:not(.x){height:auto;min-height:46px;grid-template-columns:auto auto minmax(0,1fr);gap:6px}
+.retrato #topoMapa #zoomUI{position:absolute;right:6px;top:calc(100% + 6px);z-index:3;background:#0e1015cc;border:1px solid #3c4356;border-radius:8px;padding:3px}
+.retrato #rodape .pManaBox{padding:2px 6px 2px 0}
+.retrato #rodape .pLado{padding:2px 5px}
+#topoMapa.quatro #rodape .pLado{gap:4px;padding:3px 4px}#topoMapa.quatro #rodape .pJog{gap:4px}#topoMapa.quatro #rodape .pManaBox{padding-left:4px;padding-right:8px}
+.retrato #topoMapa.quatro{gap:4px}
+.retrato #topoMapa.quatro #relogio{--q:26px}
+.retrato #topoMapa.tres .mpU,.retrato #topoMapa.tres #rodape .pNome{display:none} /* sem nome no celular, a bolinha some também: o número tem a cor do time */
+.retrato #topoMapa.tres #rodape .pLado{gap:3px;padding:2px 3px}.retrato #topoMapa.tres #rodape .pJog{gap:3px}
+.retrato #topoMapa.quatro .pTorMini{width:14px;height:14px}.retrato #topoMapa.quatro #rodape .pManaBox{padding:2px 4px 2px 0}.retrato #topoMapa.quatro{padding-left:4px;padding-right:4px}
+.retrato #topoMapa.quatro #rodape{gap:4px}
+.retrato #topoMapa.quatro #rodape .pLado{gap:3px;padding:2px 3px}
+/* celular deitado: continua como era (peças soltas sobre o mapa; o placar abre com o 📜) */
+.paisagem #topoMapa #vez{display:block}
+.paisagem #topoMapa #rodape{display:none}
+.paisagem #topoMapa #rodape.aberto{display:grid;position:fixed;background:var(--panel);border:1px solid #4a5268;border-radius:8px;padding:8px 10px}
 </style>
 </head>
 <body>
@@ -561,10 +587,10 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
   <div class="barra-mapa" id="topoMapa">
     <div><h1><span class="nomeJogo">Senhores da Guerra</span><button class="bt" id="btJogo" onclick="alternaMenuJogo(event)" title="Menu principal, salvar e carregar">☰</button></h1><div class="vez" id="vez"></div></div>
     <div id="relogio" title=""></div>
+    <div id="rodape"></div>
     <div id="zoomUI"><button onclick="mudaZoom(-1)" title="Afastar (−)">−</button><span id="zoomN">160%</span><button onclick="mudaZoom(1)" title="Aproximar (+)">+</button><button onclick="seguir(mestreDe(0),true)" title="Centralizar no seu mestre">⌖</button></div>
     <div id="menuJogo"></div>
   </div>
-  <div class="barra-mapa" id="rodape"></div>
   <div id="mapa"><canvas id="cv"></canvas><canvas id="cena" title="Clique para acelerar"></canvas><div id="menuM" class="flut"></div><div id="passar" class="flut"></div><div id="saves" class="flut"></div><div id="dicaMapa"></div><div id="alertaCerco"></div><button id="btCancela" onclick="cancelar()">✕ Cancelar</button></div>
   </div>
   <div id="lado"><div id="ladoIn">
@@ -927,7 +953,7 @@ function relogio(){
   const fz=Math.round(f.forca*100);
   // balão curto (abre ao tocar/clicar): turno e período, quem ganha e quem perde precisão, e o que vem depois
   const ganha=f.diurno?['fogo','planta']:['agua','arcano'],perde=f.diurno?['agua','arcano']:['fogo','planta'];
-  const ics=l=>l.map(x=>`<span class="elIc" style="background:${EL[x]}" title="${ELN[x]}">${EL_EMO[x]}</span>`).join('');
+  const ics=l=>l.map(tagEl).join(''); // nomes dos elementos nas cores deles (as mesmas etiquetas da ficha)
   el.dataset.dica=`<b>Turno ${J.turno} · ${f.nome}${dur>1?` ${parte}/${dur}`:''}</b>
     <div class="dLin">${ics(ganha)} <b style="color:#6ee08a">+${fz}%</b> precisão</div>
     <div class="dLin">${ics(perde)} <b style="color:#ff8a80">−${fz}%</b> precisão</div>
@@ -970,7 +996,6 @@ function modHora(esp){
   return (h==='dia')===f.diurno?f.forca:-f.forca;
 }
 const EL={fogo:'#e8663a',agua:'#3f8fd8',planta:'#4caf50',terra:'#a8814f',ar:'#6fc3dc',arcano:'#9b6be0'};
-const EL_EMO={fogo:'🔥',agua:'💧',planta:'🌿',terra:'🪨',ar:'💨',arcano:'✨'};
 const ELN={fogo:'Fogo',agua:'Água',planta:'Planta',terra:'Terra',ar:'Ar',arcano:'Arcano'};
 // quem vence quem (×1,5 de dano; no sentido contrário, ×0,75).
 // Arcano tem uma fraqueza a mais (é a elite cara, com Golpe Místico); Ar tem uma vantagem a mais (é frágil).
@@ -1867,7 +1892,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.21'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.23'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -4972,7 +4997,7 @@ function atualiza(){
   document.getElementById('vez').innerHTML=J.fim?'Fim de jogo':`${J.vez===0?'<span style="color:var(--p0)">Sua vez</span>':`<span style="color:var(--p${J.vez})">${ART(J.vez)} ${NM(J.vez)} está agindo…</span>`}`;
   // celular deitado: a reserva e o saldo de MP vão junto do turno, na barra do topo (o placar fica atrás do 📜)
   // celular em pé: só o turno (mana, monstros e torres ficam no placar abaixo do topo)
-  const mpCurto=l=>J.mp[l]>=MANA_MAX?`<span style="color:#ff6b6b;font-weight:700" title="Limite de mana (${MANA_MAX}). A renda acima disso se perde: gaste!">${J.mp[l]} MP máx</span>`:`${J.mp[l]} MP`;
+  const mpCurto=l=>J.mp[l]>=MANA_MAX?`<span style="color:#ff6b6b;font-weight:700" title="Limite de mana (${MANA_MAX}). A renda acima disso se perde: gaste!">${J.mp[l]} MP máx</span>`:`${J.mp[l]}<span class="mpU"> MP</span>`;
   if(RETRATO()&&!J.fim)document.getElementById('vez').innerHTML=`<span>${J.vez===0?'<span style="color:var(--p0)">Sua vez</span>':`<span style="color:var(--p${J.vez})">${NM(J.vez)} agindo…</span>`}</span>`;
   if(PAISAGEM()&&!J.fim){const sd=saldo(0);document.getElementById('vez').innerHTML+=` · ${mpHtml(0)} <b style="color:${sd>0?'#6ee08a':sd<0?'#ff8a80':'var(--txt)'}">${sd>=0?'+':'−'}${Math.abs(sd)}</b>`;}
   const minha=J.vez===0&&!J.ocupado&&!J.fim;
@@ -5002,14 +5027,17 @@ function atualiza(){
      // 1x1: espelhado (monstros · torres | ícone de torre | torres · monstros)
      // 3 ou 4 mestres: cada lado é um bloco próprio com bolinha · torres · monstros (sem o ícone do meio)
      if(NP()>2)partes.splice(-2,2,partes[partes.length-1],partes[partes.length-2]);
-     return `<div class="pLado lado${l}${ativo(l)?'':' fora'}"${ativo(l)?'':` title="${OM(l)} está fora da partida"`}>${(l&&NP()===2?partes.reverse():partes).join('')}</div>`;};
+     // de quem é a vez: o bloco acende na cor do time (substitui o texto "sua vez" / "fulano está agindo")
+     const vezDele=!J.fim&&J.vez===l;
+     return `<div class="pLado lado${l}${ativo(l)?'':' fora'}${vezDele?' vezDele':''}" style="--pc:var(--p${l})"${ativo(l)?` title="${vezDele?(l?OM(l)+' está jogando':'Sua vez'):(l?OM(l):'Você')}"`:` title="${OM(l)} está fora da partida"`}>${(l&&NP()===2?partes.reverse():partes).join('')}</div>`;};
    if(!PLACAR_TORRE)PLACAR_TORRE=iconePx(estiloIcone('torre'),'torre').toDataURL();
    // Torre do Cristal e Clássico (cabo de guerra das torres): o andamento aparece só na faixa da borda de baixo
    const C=J.cristal||J.cabo,META=J.cristal?CRISTAL_META:CABO_META,corC=C&&C.lado!=null?COR[C.lado]:'#9aa3ad';
    const dicaC=!C?'':J.cristal?`Cristal: ${C.v?`${C.v} de ${CRISTAL_META} montados para ${C.lado?OM(C.lado):'você'}`:'desmontado'}. Força por turno (1 por torre, ${CRISTAL_VALOR} pela do cristal): ${LADOS().filter(ativo).map(l=>`${l?NM(l):'você'} +${forcaCristal(l)}`).join(', ')}.`
      :`Cabo de guerra: ${C.v?`${C.v} de ${CABO_META} para ${C.lado?OM(C.lado):'você'}`:'empatado'}. No fim do turno, cada um puxa 1 por torre: ${LADOS().filter(ativo).map(l=>`${l?NM(l):'você'} +${torresDe(l)}`).join(', ')}. Quem chegar a ${CABO_META} vence.`;
    const meio=quem=>`<div class="pMeio"><img class="pTorre" src="${PLACAR_TORRE}" alt="Torres" title="Torres: você à esquerda, ${quem} à direita"></div>`;
-   const rod=document.getElementById('rodape');rod.classList.toggle('tres',NP()>2);rod.classList.toggle('cabo',!!C);rod.classList.toggle('quatro',NP()>3);
+   const rod=document.getElementById('rodape');rod.classList.toggle('tres',NP()>2);rod.classList.toggle('quatro',NP()>3);
+   {const tp=document.getElementById('topoMapa');tp.classList.toggle('cabo',!!C);tp.classList.toggle('tres',NP()>2);tp.classList.toggle('quatro',NP()>3);}
    // a mana fica num bloco próprio, à esquerda, separada do placar dos jogadores
    rod.innerHTML=`<div class="pManaBox">${manaHud()}</div>`+`<div class="pJog">${NP()>2
      ?LADOS().map(lado).join('')
