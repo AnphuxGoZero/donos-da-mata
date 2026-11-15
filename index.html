@@ -554,7 +554,8 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 .paisagem #menuM .invG{grid-template-columns:repeat(6,1fr)}
 /* ---------- barra única: menu · relógio · mana · placar · zoom (o placar mora dentro do topo) ---------- */
 #topoMapa .nomeJogo,#topoMapa #vez,#topoMapa #zoomN,#topoMapa #rodape .nm{display:none} /* nomes: a bolinha da cor e o bloco aceso identificam; o nome fica na dica */
-#topoMapa:not(.x){grid-template-columns:auto auto minmax(0,1fr) auto;gap:10px}
+#topoMapa:not(.x){grid-template-columns:auto auto minmax(0,1fr);gap:10px}
+#zoomUI{display:none!important} /* zoom e centralizar saíram: roda do mouse, pinça e teclas +/− continuam */
 #topoMapa #rodape{display:grid;position:static;background:none;border:none;border-radius:0;padding:0;margin:0;min-width:0;box-shadow:none}
 #topoMapa.cabo{padding-bottom:15px!important} /* a faixa do cabo de guerra corre na borda de baixo da barra */
 #topoMapa .pCabo{left:10px;right:10px}
@@ -564,12 +565,13 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 #rodape .pManaBox{border-right:1px solid #ffffff30}
 /* celular em pé: a barra cresce com a faixa; o ⌖ desce para o canto do mapa; com 4 mestres tudo um pouco mais justo */
 .retrato #topoMapa:not(.x){height:auto;min-height:46px;grid-template-columns:auto auto minmax(0,1fr);gap:6px}
-.retrato #topoMapa #zoomUI{position:absolute;right:6px;top:calc(100% + 6px);z-index:3;background:#0e1015cc;border:1px solid #3c4356;border-radius:8px;padding:3px}
 .retrato #rodape .pManaBox{padding:2px 6px 2px 0}
 .retrato #rodape .pLado{padding:2px 5px}
 #topoMapa.quatro #rodape .pLado{gap:4px;padding:3px 4px}#topoMapa.quatro #rodape .pJog{gap:4px}#topoMapa.quatro #rodape .pManaBox{padding-left:4px;padding-right:8px}
 .retrato #topoMapa.quatro{gap:4px}
-.retrato #topoMapa.quatro #relogio{--q:26px}
+.retrato #topoMapa.quatro #relogio{--q:38px}
+/* 4 mestres no celular em pé: jogadores empilhados de dois em dois */
+.retrato #topoMapa.quatro #rodape .pJog{display:grid;grid-template-columns:1fr 1fr;row-gap:3px;column-gap:4px}
 .retrato #topoMapa.tres .mpU,.retrato #topoMapa.tres #rodape .pNome{display:none} /* sem nome no celular, a bolinha some também: o número tem a cor do time */
 .retrato #topoMapa.tres #rodape .pLado{gap:3px;padding:2px 3px}.retrato #topoMapa.tres #rodape .pJog{gap:3px}
 .retrato #topoMapa.quatro .pTorMini{width:14px;height:14px}.retrato #topoMapa.quatro #rodape .pManaBox{padding:2px 4px 2px 0}.retrato #topoMapa.quatro{padding-left:4px;padding-right:4px}
@@ -1892,7 +1894,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.23'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.24'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
