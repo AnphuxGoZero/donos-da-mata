@@ -93,6 +93,12 @@ body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.4 system-ui,"Seg
 button.brilha{animation:brilha 1.6s ease-in-out infinite}
 @keyframes brilha{0%,100%{box-shadow:0 0 0 #f2c14e00}50%{box-shadow:0 0 10px 2px #f2c14eaa}}
 #passar .linha{justify-content:center;margin-top:8px}
+/* aviso de evolução no começo do turno: mesma caixa do meio do mapa, em verde (a cor do ▲ Evoluir) */
+#passar.evo{border-color:#3d7a4d;max-width:min(330px,90%);text-align:left}
+#passar.evo .evoTit{color:#9be8b0;font-weight:600;font-size:16px}
+#passar.evo .evoTx{font-size:13px;line-height:1.5;color:#c9c7bf;margin:6px 0 4px}
+#passar.evo .linha{flex-wrap:nowrap}#passar.evo .linha button{flex:1;padding:9px 0;font-size:14px}
+#passar.evo button.btEvo{background:#2f7a45;border-color:#6ee08a;color:#fff}#passar.evo button.btEvo:hover{background:#368a4f}
 canvas{width:100%;height:auto;display:block;background:#0e1015;border-radius:8px;cursor:pointer}
 #lado{width:310px;flex-shrink:0;display:flex;flex-direction:column;gap:10px}
 .cx{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px}
@@ -2053,7 +2059,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.41'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.42'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2216,7 +2222,11 @@ function inicioTurno(l){
   checaCerco(l);if(J.fim)return;
   seguir(mestreDe(l));
   if(J.avisoCerco)J.avisoCerco[l]=false;
+  // aviso de evolução: aparece quando a reserva CHEGA a EVO_CUSTO; depois de "Agora não", só volta
+  // se a mana cair abaixo do custo e subir de novo
+  if(l===0&&J.mp[0]<EVO_CUSTO)J.evoAvisado=false;
   cobrarMana(l);
+  if(l===0&&podeEvoluir(0)&&!J.evoAvisado){J.evoAvisado=true;J.avisoEvo=true;}
   if(l===0){J.passarDispensado=null;if(J.turno>1)setTimeout(()=>{if(J&&J.vez===0&&!J.fim)gravar('auto');},0);} // turno 1 não grava: "Novo jogo" sem querer não apaga o automático da partida anterior
   J.magiaUsada[l]=false;J.forcaUsada[l]=false;
   for(const u of J.un){
@@ -3291,11 +3301,14 @@ function avisoFimTurno(){
   // só avisa quando não resta nada: todas as criaturas agiram e não dá mais para invocar
   return turnoEsgotado();
 }
+function fechaAvisoEvo(){J.avisoEvo=false;atualiza();}
+function avisoEvoluir(){J.avisoEvo=false;J.insp=null;J.menuAlvo=null;abrirEvo();}
 function dispensarPassar(){J.passarDispensado=estadoAviso();atualiza();}
 async function clique(c,r){
   if(J.vez!==0||J.ocupado||J.fim)return;
   const k=K(c,r),alvo=unidadeEm(c,r),s=J.sel;
   // a ficha "presa" de um inimigo (ou de criatura sua que já agiu) solta a cada clique; clicar nela de novo só solta
+  if(J.avisoEvo){J.avisoEvo=false;} // clicar no mapa com o aviso de evolução aberto vale como "Agora não"
   const inspAntes=J.insp,menuAntes=J.menuAlvo;J.insp=null;J.menuAlvo=null;
   if(J.mg||J.fz){await cliqueMagia(k);return;}
   if(J.evo){sairEvo();return;} // menu Evoluir aberto: clicar no mapa volta ao mestre
@@ -3404,6 +3417,7 @@ async function forcaNoAlvo(el){
 }
 function cancelar(){
   if(J.vez!==0||J.ocupado)return;
+  if(J.avisoEvo){fechaAvisoEvo();return;}
   if(J.mg&&J.mg.fase!=='lista'){voltaListaMagia();return;}
   if(J.fz?.fase==='elem'){J.fz={fase:'alvo'};atualiza();return;}
   if(J.mg||J.fz){sairMagia();return;}
@@ -5502,8 +5516,13 @@ function menus(){
     poeHTML(mm,h);mm.style.width=fase==='magia'?'280px':fase?'260px':'220px';mm.style.display='block';posMenu(mm,u);
   }else mm.style.display='none';
 
-  // fim de turno: sem caixa sobre o mapa; quem avisa é o Encerrar turno dourado (veja atualiza)
-  ps.style.display='none';
+  // fim de turno: sem caixa sobre o mapa; quem avisa é o Encerrar turno dourado (veja atualiza).
+  // A caixa do meio do mapa serve ao aviso de evolução do começo do turno (espera a abertura e os combates)
+  const evoAviso=minha&&J.avisoEvo&&!J.intro&&!CENA&&podeEvoluir(0)&&!J.evo&&!J.mg&&!J.fz&&J.invHex==null&&!J.invocando;
+  if(evoAviso){
+    poeHTML(ps,`<div class="evoTit">▲ Evolução disponível</div><div class="evoTx">Sua reserva chegou a ${EVO_CUSTO} MP. Escolha uma criatura para evoluir permanentemente.</div><div class="linha"><button onclick="fechaAvisoEvo()">Agora não</button><button class="btEvo" onclick="avisoEvoluir()">▲ Evoluir</button></div>`);
+    ps.className='flut evo';ps.style.display='block';
+  }else{ps.style.display='none';ps.classList.remove('evo');}
   // no toque não há botão direito nem Esc: um botão no canto do mapa cancela (os menus já têm o próprio ✕ Fechar)
   document.getElementById('btCancela').style.display=
     TOQUE()&&minha&&mm.style.display==='none'&&(J.sel||J.invocando||J.invHex!=null||J.mg||J.fz||J.insp)?'block':'none';
