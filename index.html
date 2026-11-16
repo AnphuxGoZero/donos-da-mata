@@ -2022,7 +2022,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.31'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.32'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -3654,7 +3654,7 @@ async function invocacoesIA(l=1){
 // Usada por todo combate (ataque comum e Força). Não muda as regras: golpear() faz as contas de sempre
 // e chama cenaGolpe() a cada golpe só para mostrar. Sem tela (VEL=0 ou desligada), o combate segue igual.
 const CV_CENA=document.getElementById('cena'),cg=CV_CENA.getContext('2d');
-const CW=840,CH=560,CHAO=505,PAINEL_H=174,ARENA={x:12,y:12+PAINEL_H+8,w:816,h:CH-12-(12+PAINEL_H+8)};
+const CW=840,CH=560,CHAO=505,PAINEL_H=158,ARENA={x:12,y:12+PAINEL_H+8,w:816,h:CH-12-(12+PAINEL_H+8)};
 CV_CENA.width=CW*2;CV_CENA.height=CH*2;
 let CENA=null;
 const MODOS_CENA={sempre:'sempre',meus:'só nos seus ataques',nunca:'desligada'};
@@ -3686,7 +3686,7 @@ async function abreCena(a,d,op={}){
   const esq=a.lado===0?a:d,dir=esq===a?d:a;
   const pose=()=>({dx:0,dy:0,al:0,tre:0,luz:0});
   CENA={a,d,esq,dir,op,rapido:false,hp:new Map([[a,a.hp],[d,d.hp]]),pose:new Map([[a,pose()],[d,pose()]]),
-    dano:new Map([[a,0],[d,0]]),txt:[],efe:[],resultado:null,fade:0,fundo:fundoCena(esq,dir),
+    dano:new Map([[a,0],[d,0]]),golpes:new Map([[a,[]],[d,[]]]),txt:[],efe:[],resultado:null,fade:0,fundo:fundoCena(esq,dir),
     info:new Map([[a,infoCombate(a,d,1)],[d,op.revida?infoCombate(d,a,CONTRA):null]])};
   CV_CENA.style.display='block';
   requestAnimationFrame(desenhaCena);
@@ -3700,6 +3700,7 @@ async function cenaGolpe(a,d,acertou,dano){
   await tweenC(150,t=>pa.dx=lado*80*t*t);                       // investida
   const [x,y]=posCena(d),agora=performance.now();
   CENA.efe.push({x,y:y-90,t0:agora,cor:a.elemental?EL[ESP[a.esp].el]:'#ffffff',lado,elem:!!a.elemental});
+  CENA.golpes.get(a)?.push(acertou); // acende a bolinha do golpe no painel
   if(acertou){
     CENA.dano.set(a,CENA.dano.get(a)+dano);
     CENA.txt.push({txt:'-'+dano,x,y:y-170,cor:'#ff6b6b',t0:agora,tam:46});
@@ -3839,34 +3840,59 @@ function desenhaLutador(g,u,now){
   if(u.sono){g.save();g.fillStyle='#b9c6ff';g.font='bold 22px system-ui,sans-serif';g.fillText('z Z',x+S*.25,y-S*.85+Math.sin(now/300)*4);g.restore();}
 }
 // ----- painéis de cima: atacante e defensor -----
+// ícone do elemento: círculo na cor do elemento com um símbolo branco (chama, gota, folha, rocha, vento, estrela)
+function iconeElemento(g,el,cx,cy,r){
+  g.save();g.fillStyle=EL[el];g.beginPath();g.arc(cx,cy,r,0,Math.PI*2);g.fill();
+  g.strokeStyle='rgba(0,0,0,.45)';g.lineWidth=1.5;g.stroke();
+  g.translate(cx,cy);g.scale(r/10,r/10);g.fillStyle='#fff';g.strokeStyle='#fff';g.lineCap='round';g.lineJoin='round';
+  g.beginPath();
+  if(el==='fogo'){g.moveTo(0,-6.5);g.bezierCurveTo(4.5,-2,5,1.5,4,3.5);g.bezierCurveTo(3,6,-3,6,-4,3.5);g.bezierCurveTo(-5,1,-3,-1,-1.5,-2.5);g.bezierCurveTo(-1,0,0,1,1,1);g.bezierCurveTo(1,-1.5,0,-4,0,-6.5);g.fill();}
+  else if(el==='agua'){g.moveTo(0,-6.5);g.bezierCurveTo(3,-2.5,5,0,5,2.5);g.arc(0,2.5,5,0,Math.PI);g.bezierCurveTo(-5,0,-3,-2.5,0,-6.5);g.fill();}
+  else if(el==='planta'){g.moveTo(-5,5);g.bezierCurveTo(-6,-2,-1,-6,5.5,-5.5);g.bezierCurveTo(6,1,1,5.5,-5,5);g.fill();
+    g.strokeStyle=EL[el];g.lineWidth=1.2;g.beginPath();g.moveTo(-4,4);g.lineTo(3.5,-3.5);g.stroke();}
+  else if(el==='terra'){g.moveTo(-6,4.5);g.lineTo(-2,-3);g.lineTo(0,0);g.lineTo(2.5,-5);g.lineTo(6.5,4.5);g.closePath();g.fill();}
+  else if(el==='ar'){g.lineWidth=1.8;
+    g.moveTo(-6,-2.5);g.lineTo(2,-2.5);g.arc(2,-4.5,2,Math.PI/2,-Math.PI*.9,true);
+    g.moveTo(-6,1);g.lineTo(4,1);g.arc(4,3.2,2.2,-Math.PI/2,Math.PI*.9);
+    g.moveTo(-4.5,4.5);g.lineTo(0,4.5);g.stroke();}
+  else{for(let i=0;i<8;i++){const a=i*Math.PI/4-Math.PI/2,rr=i%2?2.4:6.5;i?g.lineTo(Math.cos(a)*rr,Math.sin(a)*rr):g.moveTo(Math.cos(a)*rr,Math.sin(a)*rr);}g.closePath();g.fill();}
+  g.restore();
+}
 function painelCena(g,u,x,y,w){
-  const e=ESP[u.esp],info=CENA.info.get(u),atac=u===CENA.a,cor=COR[u.lado];
+  // painel enxuto: a cor do nome já diz de quem é a criatura e o lado da tela diz quem ataca
+  const e=ESP[u.esp],info=CENA.info.get(u),cor=COR[u.lado];
   g.save();
   // letras grandes: a janela de combate é pequena e o desenho é reduzido na tela
   const F=(peso,px)=>`${peso} ${px}px system-ui,sans-serif`;
   g.fillStyle='#1d2029';g.strokeStyle='#3c4356';g.lineWidth=2;g.beginPath();g.roundRect(x,y,w,PAINEL_H,8);g.fill();g.stroke();
   g.fillStyle=cor;g.fillRect(x+2,y+2,7,PAINEL_H-4);
   g.textBaseline='top';
-  // linha 1: papel e dono · elemento e nível
-  g.fillStyle='#aab3c5';g.font=F(700,17);
-  g.fillText((atac?(CENA.op.forca?'FORÇA':'ATAQUE'):'DEFESA')+' · '+(u.lado===0?'VOCÊ':NM(u.lado).toUpperCase()),x+20,y+10);
-  const tagTxt=`${ELN[e.el]} · ${u.elemental?'Elemental':e.mestre?'Mestre':'Nv '+e.tier}`;
-  g.font=F(700,17);g.fillStyle=EL[e.el];g.beginPath();g.arc(x+w-16-g.measureText(tagTxt).width-11,y+19,6,0,Math.PI*2);g.fill();
-  g.fillStyle='#dfe4ee';g.textAlign='right';g.fillText(tagTxt,x+w-16,y+10);g.textAlign='left';
-  // linha 2: nome
-  g.fillStyle=cor;g.font=F('bold',32);g.fillText(e.nome,x+20,y+32);
-  // linha 3: golpes e dano por golpe · acerto à direita
+  // linha 1: nome
+  g.fillStyle=cor;g.font=F('bold',32);g.fillText(e.nome,x+20,y+8,w-36);
+  // linha 2: ícone do elemento + dano por golpe (e a seta de vantagem) à esquerda, acerto à direita.
+  // Embaixo do dano, uma bolinha por golpe: acendem verdes (acertou) ou se apagam (errou) durante a luta.
   if(info&&info.pode){
-    g.font=F(700,21);g.fillStyle='#eef0f5';g.fillText(`${info.n}× ${info.fx[0]}–${info.fx[1]}${atac?'':' revide'}`,x+20,y+74);
-    if(info.m!==1){g.fillStyle=info.m>1?'#6ee08a':'#ff8a80';g.font=F(700,18);g.fillText(info.m>1?'▲ vantagem':'▼ desvantagem',x+20,y+100);}
-    const c=info.ch;g.textAlign='right';g.fillStyle=c>=.6?'#6ee08a':c>=.35?'#e6c34a':'#ff8a80';g.font=F('bold',34);
-    g.fillText(Math.round(c*100)+'%',x+w-16,y+66);g.font=F(700,15);g.fillStyle='#aab3c5';g.fillText('acerto',x+w-16,y+102);g.textAlign='left';
-  }else{g.font=F(700,20);g.fillStyle='#aab3c5';g.fillText(info?(u.sono?'Dormindo: não revida':'Petrificado: não revida'):'Sem revide',x+20,y+74);}
+    iconeElemento(g,e.el,x+35,y+68,14);
+    g.font=F('bold',30);g.fillStyle='#eef0f5';const dt=`${info.fx[0]}–${info.fx[1]}`;g.fillText(dt,x+56,y+52);
+    if(info.m!==1){g.fillStyle=info.m>1?'#6ee08a':'#ff8a80';g.font=F('bold',24);g.fillText(info.m>1?'▲':'▼',x+56+g.measureText(dt).width+8+0,y+56);}
+    const res=CENA.golpes.get(u)||[];
+    for(let i=0;i<info.n;i++){
+      const px=x+29+i*21,py=y+95,r=res[i],extra=i>=GOLPES; // golpe a mais (Fúria) em laranja
+      g.beginPath();g.arc(px,py,7,0,Math.PI*2);
+      if(r===true){g.fillStyle='#6ee08a';g.fill();}
+      else if(r===false){g.fillStyle='#3a3f4c';g.fill();g.strokeStyle='#ff8a80';g.lineWidth=1.6;g.beginPath();g.moveTo(px-3.5,py-3.5);g.lineTo(px+3.5,py+3.5);g.moveTo(px+3.5,py-3.5);g.lineTo(px-3.5,py+3.5);g.stroke();}
+      else{g.strokeStyle=extra?'#ffb050':'#c7cedb';g.lineWidth=2;g.stroke();}
+    }
+    g.font=F(700,16);g.fillStyle=info.n>GOLPES?'#ffb050':'#8d96a8';
+    g.fillText(`${info.n} golpes`+(info.n>GOLPES?' · fúria':''),x+22+info.n*21,y+87);
+    const c=info.ch;g.textAlign='right';g.fillStyle=c>=.6?'#6ee08a':c>=.35?'#e6c34a':'#ff8a80';g.font=F('bold',30);
+    g.fillText(Math.round(c*100)+'%',x+w-16,y+52);g.font=F(700,15);g.fillStyle='#8d96a8';g.fillText('acerto',x+w-16,y+88);g.textAlign='left';
+  }else{iconeElemento(g,e.el,x+35,y+68,14);g.font=F(700,20);g.fillStyle='#aab3c5';g.fillText(info?(u.sono?'Dormindo: não revida':'Petrificado: não revida'):'Sem revide',x+56,y+58);}
   // vida (animada) com o número dentro da barra, e experiência logo abaixo
-  const hp=Math.max(0,CENA.hp.get(u)),fr=hp/e.hp,bx=x+20,bw=w-36,by=y+128;
+  const hp=Math.max(0,CENA.hp.get(u)),fr=hp/e.hp,bx=x+20,bw=w-36,by=y+112;
   g.fillStyle='#2a2d36';g.fillRect(bx,by,bw,24);g.fillStyle=fr>.5?'#5fd27a':fr>.25?'#e6c34a':'#e85a4f';g.fillRect(bx,by,bw*fr,24);
   g.font=F('bold',19);g.textAlign='center';g.lineWidth=4;g.strokeStyle='rgba(0,0,0,.7)';
-  const vt=`VIDA ${Math.round(hp)} / ${e.hp}`;g.strokeText(vt,bx+bw/2,by+2);g.fillStyle='#fff';g.fillText(vt,bx+bw/2,by+2);g.textAlign='left';
+  const vt=`${Math.round(hp)} / ${e.hp}`;g.strokeText(vt,bx+bw/2,by+2);g.fillStyle='#fff';g.fillText(vt,bx+bw/2,by+2);g.textAlign='left';
   if(e.evo){g.fillStyle='#2a2d36';g.fillRect(bx,by+28,bw,6);g.fillStyle='#9b6be0';g.fillRect(bx,by+28,bw*Math.min(1,u.xp/e.xp),6);}
   g.restore();
 }
