@@ -259,6 +259,11 @@ body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 button{touch-action:manipulation}
 .soToque{display:none}
 .toque .soToque{display:block}.toque .soMouse{display:none}
+/* bolinha ✦ colada na criatura sua selecionada: só aparece quando há magia que vale nela; abre a lista ali */
+#btMagiaU{position:absolute;z-index:3;display:none;width:28px;height:28px;min-height:0;margin:0;padding:0;border-radius:50%;transform:translate(-50%,-50%);
+  background:#2a2238f0;border:1.5px solid #c58cff;color:#e6d2ff;font-size:15px;line-height:1;box-shadow:0 2px 8px #000a}
+#btMagiaU:hover{background:#3a2e50}
+.toque #btMagiaU{width:34px;height:34px;font-size:17px}
 #btCancela{position:absolute;left:8px;bottom:8px;z-index:4;display:none;background:#3a2530ee;border-color:#a8565f;box-shadow:0 4px 14px #000a}
 #dica .dLin{display:flex;align-items:center;gap:5px;margin-top:5px}#dica .dSub{margin-top:5px;font-size:12px;color:var(--dim)}
 #dica .tag{margin:0}
@@ -653,7 +658,7 @@ html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
     <div id="zoomUI"><button onclick="mudaZoom(-1)" title="Afastar (−)">−</button><span id="zoomN">160%</span><button onclick="mudaZoom(1)" title="Aproximar (+)">+</button><button onclick="seguir(mestreDe(0),true)" title="Centralizar no seu mestre">⌖</button></div>
     <div id="menuJogo"></div>
   </div>
-  <div id="mapa"><canvas id="cv"></canvas><canvas id="cena" title="Clique para acelerar"></canvas><div id="menuM" class="flut"></div><div id="passar" class="flut"></div><div id="saves" class="flut"></div><div id="dicaMapa"></div><div id="alertaCerco"></div><button id="btCancela" onclick="cancelar()">✕ Cancelar</button></div>
+  <div id="mapa"><canvas id="cv"></canvas><canvas id="cena" title="Clique para acelerar"></canvas><div id="menuM" class="flut"></div><div id="passar" class="flut"></div><div id="saves" class="flut"></div><div id="dicaMapa"></div><div id="alertaCerco"></div><button id="btCancela" onclick="cancelar()">✕ Cancelar</button><button id="btMagiaU" onclick="magiaDaCriatura(event)" aria-label="Magias nesta criatura" title="Magias nesta criatura">✦</button></div>
   </div>
   <div id="lado"><div id="ladoIn">
     <canvas id="mini" title="Mini mapa: clique ou arraste para mover a câmera"></canvas>
@@ -2059,7 +2064,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.42'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.43'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2225,6 +2230,10 @@ function inicioTurno(l){
   // aviso de evolução: aparece quando a reserva CHEGA a EVO_CUSTO; depois de "Agora não", só volta
   // se a mana cair abaixo do custo e subir de novo
   if(l===0&&J.mp[0]<EVO_CUSTO)J.evoAvisado=false;
+  // conserto de partidas salvas antes da regra acima: criatura sua em cima de torre que ficou de outro lado
+  for(const u of J.un){const k=K(u.c,u.r);
+    if(u.lado===l&&u.dominado==null&&!ESP[u.esp].mestre&&J.ter[k]==='torre'&&J.dono[k]!==l){
+      J.dono[k]=l;log(`${nome(u)} retomou ${ehCristal(k)?'a Torre do Cristal':'a torre'} em que estava.`);}}
   cobrarMana(l);
   if(l===0&&podeEvoluir(0)&&!J.evoAvisado){J.evoAvisado=true;J.avisoEvo=true;}
   if(l===0){J.passarDispensado=null;if(J.turno>1)setTimeout(()=>{if(J&&J.vez===0&&!J.fim)gravar('auto');},0);} // turno 1 não grava: "Novo jogo" sem querer não apaga o automático da partida anterior
@@ -2629,6 +2638,9 @@ function checaCerco(l){
 // devolve o dono anterior (null = neutra) quando a torre muda de mãos; undefined se nada mudou
 function captura(u){
   const k=K(u.c,u.r);
+  // criatura dominada obedece ao outro mestre, mas não toma torre para ele: senão a torre (até a do Cristal)
+  // passava para o inimigo e não voltava quando a criatura era libertada, já em cima dela
+  if(u.dominado!=null)return;
   if(J.ter[k]==='torre'&&J.dono[k]!==u.lado){
     const antes=J.dono[k];
     J.dono[k]=u.lado;flutua(u,'Torre!',COR[u.lado]);
@@ -3350,12 +3362,7 @@ async function clique(c,r){
     }
     if(alvo===s){
       if(ehMestreSel())J.menuMestre='principal';
-      else{
-        // 2º toque na criatura selecionada: fecha o alcance e abre ao lado dela as magias que valem nela
-        // (sem magia possível, só cancela, como antes); o 3º toque fecha a lista
-        if(s.movido)s.agiu=true;desseleciona();
-        if(J.invocou?.[0]&&magiaPronta(s)){J.insp=s;J.menuAlvo=s;J.menuAlvoFase='magia';}
-      }
+      else{if(s.movido)s.agiu=true;desseleciona();} // 2º toque cancela (as magias ficam na bolinha ✦ ao lado dela)
       atualiza();return;
     }
     if(!alvo&&J.alc&&J.alc.dest.has(k)){
@@ -4707,7 +4714,7 @@ const RAMPA=[
   [[72,46,6],[228,165,32],[255,238,190]],    // âmbar (2º rival, com 3 ou 4 mestres)
   [[6,60,34],[40,196,112],[214,255,228]],    // verde (3º rival, só no 1x1x1x1)
 ];
-const atlasTime=[null,null,null,null];
+const atlasTime=[null,null,null,null],atlasPlano=[null,null,null,null];
 let atlasCinza=null; // versão cinza pronta (criaturas que já agiram), para não usar filtro a cada quadro
 // Versão em tons de cinza de um canvas. Feita pixel a pixel porque ctx.filter não existe no Safari (iPhone/iPad).
 function pintaCinza(g,src,brilho){
@@ -4795,7 +4802,7 @@ atlas.onload=()=>{
     atlasTime[l]=tingir(atlas,RAMPA[l]);
     if(l===0){atlasCinza=document.createElement('canvas');atlasCinza.width=atlas.width;atlasCinza.height=atlas.height;
       const g=atlasCinza.getContext('2d');pintaCinza(g,atlasTime[0],.85);}
-    document.documentElement.style.setProperty('--atlas'+l,`url(${atlasTime[l].toDataURL()})`);
+    atlasPlano[l]=atlasTime[l]; // sem contorno, no layout do atlas: fonte das figuras dos menus (iconeSpr)
   }
   // todas as criaturas ganham contorno escuro, para se destacarem de qualquer terreno
   for(const l of [0,1,2,3])atlasTime[l]=contornar(atlasTime[l],4,'#07080c');
@@ -4808,7 +4815,6 @@ if(ATLAS)atlas.src=ATLAS;
 const N_COR=72; // 18 monstros + 5 mestres + 1 vazio + 6 do estágio 0 + 17 dos segundos ramos + 4 da matilha do Fogo + 3 anfíbios + 3 artesãos + 2 da manada + 6 Solar/Lunar + 7 mortos-vivos
 const atlasCorImg=new Image();let atlasCor=null;
 atlasCorImg.onload=()=>{
-  document.documentElement.style.setProperty('--atlasCor',`url(${atlasCorImg.src})`);
   atlasCor=contornar(atlasCorImg,4,'#07080c');if(J)atualiza();
 };
 atlasCorImg.src=/*ATLAS_COR*/"img/atlas-cor.png?v=71ac626c";
@@ -4817,7 +4823,24 @@ function iconeSpr(esp,t,lado=0){
   const i=ORDEM_SPR.indexOf(spr(esp));
   if(i<0||!ATLAS)return `<span class="ponto" style="background:${COR[lado==='cor'?0:lado]}"></span>`;
   if(lado==='cor'&&!temCor(esp))lado=0; // lado 'cor' = versão colorida (sem cor de time)
-  return `<span class="spr" style="width:${t}px;height:${t}px;background-image:var(--atlas${lado==='cor'?'Cor':lado});background-size:${t*6}px ${t*ATL_LIN}px;background-position:-${(i%6)*t}px -${Math.floor(i/6)*t}px"></span>`;
+  const url=icoURL(i,lado);
+  if(!url)return `<span class="spr" style="width:${t}px;height:${t}px"></span>`; // atlas ainda carregando: o espaço fica reservado
+  return `<span class="spr" style="width:${t}px;height:${t}px;background-image:url(${url});background-size:100% 100%"></span>`;
+}
+// figura de um menu: cada célula do atlas vira uma imagem pequena (128×128), recortada uma vez e guardada.
+// Antes os menus usavam o atlas inteiro (768×1536) como fundo, e o navegador precisava decodificá-lo de novo
+// a cada vez que a tela de invocação abria: as figuras demoravam a aparecer.
+const ICO={};
+function icoURL(i,lado){
+  const key=i+'|'+lado;if(ICO[key])return ICO[key];
+  const src=lado==='cor'?(atlasCorImg.complete&&atlasCorImg.naturalWidth?atlasCorImg:null):atlasPlano[lado];
+  if(!src)return null;
+  const c=document.createElement('canvas');c.width=c.height=CEL;
+  c.getContext('2d').drawImage(src,(i%6)*CEL,Math.floor(i/6)*CEL,CEL,CEL,0,0,CEL,CEL);
+  // blob: endereço curto (um data URL deixaria o HTML do menu enorme)
+  const bin=atob(c.toDataURL('image/png').split(',')[1]),a=new Uint8Array(bin.length);
+  for(let j=0;j<bin.length;j++)a[j]=bin.charCodeAt(j);
+  return ICO[key]=URL.createObjectURL(new Blob([a],{type:'image/png'}));
 }
 // selo do elemento: bolinha com a inicial, para quem quiser ler vantagem no mapa
 const ELI={fogo:'F',agua:'Á',planta:'P',terra:'T',ar:'A',arcano:'✦'};
@@ -5069,6 +5092,7 @@ function desenha(now){
   }
   // menu flutuante acompanha a câmera
   const mm=document.getElementById('menuM');if(mm.style.display==='block'&&posMenu.u)posMenu(mm,posMenu.u);
+  posMagiaU();
   desenhaMini(cam);
   requestAnimationFrame(desenha);
 }
@@ -5354,6 +5378,17 @@ function atualiza(){
 }
 
 // ---------- Menus flutuantes ----------
+// bolinha ✦: no canto de cima, à direita da criatura selecionada (segue a câmera e a animação de andar)
+function posMagiaU(){
+  const b=document.getElementById('btMagiaU');if(b.style.display!=='block'||!J.sel)return;
+  const r=cv.getBoundingClientRect(),esc=r.width/TW,[x,y]=paraTela(...posUn(J.sel)),rz=R*CAM.z;
+  b.style.left=(x+rz*.62)*esc+'px';b.style.top=(y-rz*.62)*esc+'px';
+}
+function magiaDaCriatura(ev){
+  if(ev)ev.stopPropagation();
+  const s=J.sel;if(!s||s.lado!==0||J.vez!==0||J.ocupado||!magiaPronta(s))return;
+  desseleciona();J.insp=s;J.menuAlvo=s;J.menuAlvoFase='magia';atualiza();
+}
 function posMenu(el,u){
   posMenu.u=u;
   const b=cv.getBoundingClientRect(),esc=b.width/TW;
@@ -5524,6 +5559,9 @@ function menus(){
     ps.className='flut evo';ps.style.display='block';
   }else{ps.style.display='none';ps.classList.remove('evo');}
   // no toque não há botão direito nem Esc: um botão no canto do mapa cancela (os menus já têm o próprio ✕ Fechar)
+  const sm=J.sel,bm=document.getElementById('btMagiaU');
+  bm.style.display=minha&&sm&&sm.lado===0&&!ESP[sm.esp].mestre&&!sm.anim&&J.invocou?.[0]&&!J.menuAlvo&&mm.style.display==='none'&&magiaPronta(sm)?'block':'none';
+  posMagiaU();
   document.getElementById('btCancela').style.display=
     TOQUE()&&minha&&mm.style.display==='none'&&(J.sel||J.invocando||J.invHex!=null||J.mg||J.fz||J.insp)?'block':'none';
 }
