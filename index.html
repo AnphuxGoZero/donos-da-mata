@@ -1429,13 +1429,27 @@ function atkCat(c,t){
 
 // ---------- Mapa ----------
 // temas: nem todo terreno aparece em todo mapa; os raros só surgem no seu tema
+// riacho: chance de um córrego nascer ao lado das fortalezas de cada mestre e descer até perto do centro
+// (caminho de água para as criaturas aquáticas; ~43% dos mapas na média, mais na costa, pouco no deserto e no vulcão)
 const TEMAS=[
-  {nome:'Vale Temperado',peso:4,blobs:[['flor',6,7],['pedr',3,4],['mont',3,4]],rio:0.7,mar:2,pant:0.4},
-  {nome:'Costa das Ilhas',peso:2,blobs:[['flor',5,6],['pedr',2,4],['mont',2,3]],rio:0.3,mar:5,pant:0.5},
-  {nome:'Terras Áridas',peso:2,blobs:[['flor',2,5],['pedr',4,4],['mont',2,3],['dese',6,7]],rio:0.6,mar:1,pant:0},
-  {nome:'Caldeira Vulcânica',peso:1.5,blobs:[['mont',4,4],['pedr',4,4],['flor',3,5],['vulc',2,4]],rio:0.3,mar:1,pant:0.2},
-  {nome:'Fiorde Glacial',peso:1.5,blobs:[['mont',3,4],['flor',3,5],['pedr',2,4],['gelo',6,7]],rio:0.6,mar:2,pant:0},
+  {nome:'Vale Temperado',peso:4,blobs:[['flor',6,7],['pedr',3,4],['mont',3,4]],rio:0.7,mar:2,pant:0.4,riacho:0.55},
+  {nome:'Costa das Ilhas',peso:2,blobs:[['flor',5,6],['pedr',2,4],['mont',2,3]],rio:0.3,mar:5,pant:0.5,riacho:0.65},
+  {nome:'Terras Áridas',peso:2,blobs:[['flor',2,5],['pedr',4,4],['mont',2,3],['dese',6,7]],rio:0.6,mar:1,pant:0,riacho:0.15},
+  {nome:'Caldeira Vulcânica',peso:1.5,blobs:[['mont',4,4],['pedr',4,4],['flor',3,5],['vulc',2,4]],rio:0.3,mar:1,pant:0.2,riacho:0.2},
+  {nome:'Fiorde Glacial',peso:1.5,blobs:[['mont',3,4],['flor',3,5],['pedr',2,4],['gelo',6,7]],rio:0.6,mar:2,pant:0,riacho:0.45},
 ];
+// riacho: nasce a 2 casas do castelo (logo fora do anel de fortalezas), no lado virado para o alvo, e serpenteia até
+// ficar a 2 casas dele. Cada casa do caminho vira rio também nas cópias de imgs (simetria entre os mestres); o mar fica.
+function riacho(ter,rnd,de,alvo,imgs=p=>[p],pode=()=>true){
+  const anel=[];for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(d6c(c,r,...de)===2&&pode(c,r))anel.push([c,r]);
+  anel.sort((a,b)=>d6c(...a,...alvo)-d6c(...b,...alvo)+(rnd()-0.5)*1.2);
+  let [c,r]=anel[0];
+  for(let g=0;g<30&&d6c(c,r,...alvo)>2;g++){
+    for(const q of imgs([c,r]))if(dentro(...q)&&ter[K(...q)]!=='mar')ter[K(...q)]='rio';
+    const v=vizinhos(c,r).filter(p=>pode(...p));v.sort((a,b)=>d6c(...a,...alvo)-d6c(...b,...alvo)+(rnd()-0.5)*1.6);
+    [c,r]=v[0];
+  }
+}
 function gerarMapa(seed,np=2,cristal=false){
   if(np===3)return gerarMapa3(seed,cristal);
   if(np===4)return gerarMapa4(seed,cristal);
@@ -1465,6 +1479,7 @@ function gerarMapa(seed,np=2,cristal=false){
     }
     for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const [mc,mr]=espelho(c,r);if(dentro(mc,mr)&&K(c,r)<K(mc,mr))ter[K(mc,mr)]=ter[K(c,r)];}
     const f0=[2,6], f1=espelho(2,6);
+    if(rnd()<tema.riacho)riacho(ter,rnd,f0,CENTRO,p=>[p,espelho(...p)]);
     const dono=new Array(COLS*ROWS).fill(null);
     [[f0,0],[f1,1]].forEach(([[c,r],l])=>{
       // castelo no centro, anel de fortalezas em volta
@@ -1536,6 +1551,10 @@ function gerarMapa3(seed,cristal=false){
       ter[K(cc,cr)]='rio';
     }
     for(let r=meio+1;r<ROWS;r++)for(let c=0;c<COLS;c++)ter[K(c,r)]=ter[K(...esp3(c,r))];
+    if(rnd()<tema.riacho){ // os dois da esquerda espelhados; o da direita desce reto pelo eixo (mesmo comprimento)
+      riacho(ter,rnd,F3[0],CENTRO3,p=>[p,esp3(...p)],(c,r)=>r<meio);
+      for(let c=F3[2][0]-2;d6c(c,meio,...CENTRO3)>2;c--)if(ter[K(c,meio)]!=='mar')ter[K(c,meio)]='rio';
+    }
     const dono=new Array(COLS*ROWS).fill(null);
     F3.forEach(([c,r],l)=>{ter[K(c,r)]='cast';dono[K(c,r)]=l;for(const [a,b] of vizinhos(c,r)){ter[K(a,b)]='fort';dono[K(a,b)]=l;}});
     const dd=(c,r)=>F3.map(f=>d6c(c,r,...f));
@@ -1614,6 +1633,7 @@ function gerarMapa4(seed,cristal=false){
       }
     }
     for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const k=Math.min(...imgs(c,r).filter(p=>dentro(...p)).map(p=>K(...p)));ter[K(c,r)]=ter[k];}
+    if(rnd()<tema.riacho)riacho(ter,rnd,F4[0],CENTRO4,p=>imgs(...p),(c,r)=>c<meio&&r<meio);
     const dono=new Array(COLS*ROWS).fill(null);
     F4.forEach(([c,r],l)=>{ter[K(c,r)]='cast';dono[K(c,r)]=l;for(const [a,b] of vizinhos(c,r)){ter[K(a,b)]='fort';dono[K(a,b)]=l;}});
     const dd=(c,r)=>F4.map(f=>d6c(c,r,...f)); // [meu, vizinho da direita, diagonal, vizinho de baixo]
@@ -2078,7 +2098,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.50'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.51'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
