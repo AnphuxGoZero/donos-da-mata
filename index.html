@@ -2078,7 +2078,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.49'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.50'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2122,7 +2122,7 @@ function desenhaConfig(){
 }
 function comecarJogo(){gravaPrefs(cfgSel);fecharSaves();novoJogo(cfgSel);}
 // para onde cada desenho do atlas olha (1 = direita, -1 = esquerda; os de frente contam como direita)
-const OLHA_SPR={faisca:-1,brasador:1,pirolorde:1,gotim:1,corrente:1,abissal:1,broto:1,espinhal:-1,anciao:1,
+const OLHA_SPR={faisca:-1,brasador:1,pirolorde:1,gotim:1,corrente:1,abissal:1,broto:1,espinhal:1,anciao:1,
   cascalho:-1,pedregulho:1,monolito:1,penugem:-1,gaviao:1,tempestario:1,olho:-1,vigia:-1,oraculo:-1,
   arquimaga:1,barao:1,warlock:-1,wizard:-1,sorcerer:-1,
   brasa:1,girino:-1,argila:-1,semente:-1,ovoAlado:1,essencia:1,
@@ -4723,7 +4723,7 @@ const ORDEM_SPR=['faisca','brasador','pirolorde','gotim','corrente','abissal','b
   'esqGuerreiro','draugr','esqMago','lich','esqArqueiro','flecheiro', // 12ª linha: os esqueletos da Essência
   'barruco','terracoto','golemArgila','mandrago','sentinela','trent']; // 13ª linha: o barro da Argila e as raízes da Semente
 const ATL_LIN=13;
-const ATLAS=/*ATLAS*/"img/atlas.png?v=41e1bc5a"/*FIM_ATLAS*/;
+const ATLAS=/*ATLAS*/"img/atlas.png?v=66b2895d"/*FIM_ATLAS*/;
 const CEL=128;
 // estágio de evolução tem que ser legível só pelo tamanho: 0 mínimo, 1º pequeno, 2º médio, 3º grande (passa da borda do hexágono)
 const TAM_SPR=[21,28,40,56];
@@ -4858,7 +4858,7 @@ atlasCorImg.onload=()=>{
   FILA_ATLAS.push(()=>{atlasCor=contornar(atlasCorImg,4,'#07080c');if(J)atualiza();});
   if(FILA_ATLAS.length===1)rodaFilaAtlas();
 };
-atlasCorImg.src=/*ATLAS_COR*/"img/atlas-cor.png?v=e6063225";
+atlasCorImg.src=/*ATLAS_COR*/"img/atlas-cor.png?v=0b5258a8";
 const temCor=esp=>{const i=ORDEM_SPR.indexOf(spr(esp));return i>=0&&i<N_COR;};
 function iconeSpr(esp,t,lado=0){
   const i=ORDEM_SPR.indexOf(spr(esp));
