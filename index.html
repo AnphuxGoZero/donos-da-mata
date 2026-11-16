@@ -2022,7 +2022,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.29'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.30'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -5105,7 +5105,7 @@ function painelMana(){
   return h;
 }
 function previsao(){
-  const s=J.sel,h=J.hover||J.hoverInfo;if(!s||!h)return '';
+  const s=J.sel,h=J.hoverInfo||J.hover;if(!s||!h)return '';
   if(menuAberto())return '';
   const e=unidadeEm(...h);if(!e)return '';
   const hk=J.alvosSet.has(e.id)?K(s.c,s.r):J.alvosMove&&J.alvosMove.get(e.id);
@@ -5227,7 +5227,7 @@ function atualiza(){
   let inf=TELA_LIVRE()?'':dicaAcao;
   // fora do mapa, a ficha mostra a criatura presa ou selecionada (e o terreno dela); sem nenhuma, a última casa apontada
   const fixo=J.insp||J.sel;
-  const HV=J.hover||(fixo?[fixo.c,fixo.r]:J.hoverInfo);
+  const HV=J.hover?(J.hoverInfo||J.hover):(fixo?[fixo.c,fixo.r]:J.hoverInfo); // no mapa: a última casa onde o mouse parou
   const hu=HV&&unidadeEm(...HV);
   if(J.insp&&!J.un.includes(J.insp))J.insp=null;
   const mostra=hu||J.insp||J.sel;
@@ -5426,8 +5426,13 @@ function hexNoPonto(ev){
 // botão direito, roda) continua valendo para ele; no toque, segurar o dedo faz o papel de "apontar".
 let ultTipo='mouse'; // tipo do último ponteiro que tocou a página
 addEventListener('pointerdown',ev=>{ultTipo=ev.pointerType||'mouse';if(ultTipo!=='mouse')marcaToque();},true);
-cv.addEventListener('pointermove',ev=>{if(ev.pointerType!=='mouse')return;const h=hexNoPonto(ev);const a=J.hover;if((a&&h&&a[0]===h[0]&&a[1]===h[1])||(!a&&!h))return;J.hover=h;if(h)J.hoverInfo=h;atualiza();});
-cv.addEventListener('pointerleave',ev=>{if(ev.pointerType!=='mouse')return;J.hover=null;atualiza();});
+// mouse: a casa sob o cursor acende na hora, mas a ficha ao lado só troca quando o cursor para nela (~150 ms).
+// Assim, ao levar o mouse do mapa até a ficha, as casas cruzadas no caminho não tomam o lugar da que você queria ler.
+let tHoverInfo=null;
+cv.addEventListener('pointermove',ev=>{if(ev.pointerType!=='mouse')return;const h=hexNoPonto(ev);const a=J.hover;if((a&&h&&a[0]===h[0]&&a[1]===h[1])||(!a&&!h))return;J.hover=h;
+  clearTimeout(tHoverInfo);if(h)tHoverInfo=setTimeout(()=>{if(J&&J.hover===h){J.hoverInfo=h;atualiza();}},150);
+  atualiza();});
+cv.addEventListener('pointerleave',ev=>{if(ev.pointerType!=='mouse')return;clearTimeout(tHoverInfo);J.hover=null;atualiza();});
 let tBloq=0; // depois de arrastar, pinçar ou segurar o dedo, o "click" que vem em seguida não conta
 const bloqueiaClique=()=>{tBloq=performance.now()+300;};
 cv.addEventListener('click',ev=>{if(performance.now()<tBloq)return;const h=hexNoPonto(ev);if(!h)return;if(ultTipo!=='mouse')J.hoverInfo=h;clique(...h);});
