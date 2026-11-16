@@ -1073,10 +1073,12 @@ const VANT={
 };
 const vence=(a,d)=>!!VANT[a]&&VANT[a].includes(d);
 // tela de invocação: faixa "vence / perde" em cada cartão (o jogador ainda decide sozinho contra quem usar).
-// Começa ligada; o botão ▲▼ esconde ou mostra, e a escolha fica salva no navegador.
+// Começa desligada; o botão ▲▼ mostra ou esconde, e a escolha fica salva no navegador.
+// A partir do 4º turno o botão pisca até o jogador tocar nele pela primeira vez (para descobrir que existe).
 const VANT_INV_CHAVE='senhoresDoVeu.vantInv';
-let VANT_INV=(()=>{try{return localStorage.getItem(VANT_INV_CHAVE)!=='0';}catch(e){return true;}})();
-function alternaVantInv(ev){if(ev)ev.stopPropagation();VANT_INV=!VANT_INV;try{localStorage.setItem(VANT_INV_CHAVE,VANT_INV?'1':'0');}catch(e){}atualiza();}
+let VANT_INV=(()=>{try{return localStorage.getItem(VANT_INV_CHAVE)==='1';}catch(e){return false;}})();
+let VANT_INV_USADO=(()=>{try{return localStorage.getItem(VANT_INV_CHAVE)!=null;}catch(e){return false;}})();
+function alternaVantInv(ev){if(ev)ev.stopPropagation();VANT_INV=!VANT_INV;VANT_INV_USADO=true;try{localStorage.setItem(VANT_INV_CHAVE,VANT_INV?'1':'0');}catch(e){}atualiza();}
 const bolaEl=el=>`<i class="elD" style="background:${EL[el]}" title="${ELN[el]}">${ELI[el]}</i>`;
 function faixaVant(el){
   const v=VANT[el]||[],p=Object.keys(VANT).filter(a=>vence(a,el)),cel=TELA_LIVRE();
@@ -2058,7 +2060,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.45'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.46'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -5517,7 +5519,7 @@ function menus(){
   }else if(minha&&J.invHex!=null){
     const [hc,hr]=DK(J.invHex);
     // grade de cartões (desenho, nome, elemento e custo), sem rolagem; os números da criatura ficam na ficha, depois de invocar
-    let h=`<div class="mmTopo"><div><div class="tit" style="color:var(--p0)">Invocar</div><div class="vez">${mpHtml(0)}${J.turno>1?` · exército ${criaturas(0)}/${limite(0)}`:''}</div></div><div class="mmBts"><button class="btVant${VANT_INV?' on':''}" onclick="alternaVantInv(event)" aria-pressed="${VANT_INV}" title="${VANT_INV?'Esconder':'Mostrar'} de quem cada elemento vence e para quem perde">▲▼<span class="rot"> Vence/perde</span></button><button class="mmX" onclick="J.invHex=null;atualiza()" aria-label="Fechar">✕</button></div></div><div class="invG">`;
+    let h=`<div class="mmTopo"><div><div class="tit" style="color:var(--p0)">Invocar</div><div class="vez">${mpHtml(0)}${J.turno>1?` · exército ${criaturas(0)}/${limite(0)}`:''}</div></div><div class="mmBts"><button class="btVant${VANT_INV?' on':''}${!VANT_INV_USADO&&J.turno>=4?' brilha':''}" onclick="alternaVantInv(event)" aria-pressed="${VANT_INV}" title="${VANT_INV?'Esconder':'Mostrar'} de quem cada elemento vence e para quem perde">▲▼<span class="rot"> Vence/perde</span></button><button class="mmX" onclick="J.invHex=null;atualiza()" aria-label="Fechar">✕</button></div></div><div class="invG">`;
     for(const s of invocaveis(0)){
       const e=ESP[s],ok=J.mp[0]>=e.custo&&podeTerMais(0);
       h+=`<button onclick="escolherInvocacao('${s}')" ${ok?'':'disabled'}><b class="custo">${e.custo}</b>${iconeSpr(s,48,'cor')}<span class="nm">${e.nome}</span><small style="color:${EL[e.el]}">${ELN[e.el]}</small>${VANT_INV?faixaVant(e.el):''}</button>`;
