@@ -371,6 +371,21 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 #cercoCena .ccTropas{display:flex;justify-content:center;gap:4px}
 #cercoCena .ccTropas .spr{margin:0}
 #cercoCena .ccFrase{font-size:14px;font-weight:600;text-align:center;padding:0 8px;max-width:480px;text-shadow:0 1px 2px #000}
+/* introdução da partida: faixas de cinema, título e frase sobre o próprio mapa; tocar pula */
+#intro{position:fixed;inset:0;z-index:9;display:none;cursor:pointer;background:#000;transition:background 1s}
+#intro.aberto{display:block}#intro.claro{background:transparent}
+#intro::before,#intro::after{content:"";position:absolute;left:0;right:0;height:9vh;background:#000;transition:transform .6s}
+#intro::before{top:0}#intro::after{bottom:0}
+#intro.sai::before{transform:translateY(-100%)}#intro.sai::after{transform:translateY(100%)}
+#intro .inCaixa{position:absolute;left:0;right:0;top:9vh;display:flex;flex-direction:column;align-items:center;gap:6px;padding:2vh 16px 14px;background:rgba(0,0,0,.62);box-shadow:0 14px 22px 4px rgba(0,0,0,.62);opacity:0;transition:opacity .5s;text-align:center;pointer-events:none}
+#intro .inTit{font-family:"Pirata One",serif;font-size:min(56px,10vw);line-height:1;color:#dff4ff;letter-spacing:.02em;
+  text-shadow:0 0 18px #7fd8ff,0 3px 0 #0b1530,0 4px 12px #000;opacity:0;transform:translateY(-12px) scale(1.15);transition:opacity .5s,transform .5s}
+#intro .inTxt{font-size:clamp(16px,2.6vw,22px);font-weight:700;line-height:1.45;max-width:620px;color:#fff;
+  text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000,0 2px 6px #000;
+  opacity:0;transform:translateY(6px);transition:opacity .6s,transform .6s}
+#intro .vis{opacity:1!important;transform:none!important}
+#intro .inPular{position:absolute;right:12px;bottom:calc(9vh + 8px);font-size:12px;color:#fffa;text-shadow:0 1px 2px #000;pointer-events:none}
+#intro.sai .inCaixa,#intro.sai .inPular{opacity:0;transition:opacity .5s}
 #fichaDet{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:7;padding:8px}
 #fichaDet.aberto{display:flex}
 #fichaDet>.cx{width:min(420px,100%);max-height:85vh;max-height:85dvh;overflow:auto;font-size:12.5px;box-shadow:0 10px 40px #000c}
@@ -626,6 +641,7 @@ html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
     <div class="cx" id="caixaLog"><h2>Registro</h2><div id="log"></div></div>
   </div></div>
 </div>
+<div id="intro"><div class="inCaixa"><div class="inTit">O Cristal se partiu</div><div class="inTxt">Quem restaurá-lo governará estas terras.<br>Conquiste as torres e domine o centro para vencer.</div></div><div class="inPular">toque para pular</div></div>
 <div id="cercoCena" title=""><div class="ccCaixa"><div class="ccTela"><canvas class="ccTxt"></canvas></div><div class="cap"></div></div></div>
 <div id="fichaDet" onclick="if(event.target===this)fechaFicha()"><div class="cx"><div class="topoAj"><h2 id="fichaDetTit">Detalhes</h2><button onclick="fechaFicha()" title="Fechar (Esc)">✕</button></div><div id="fichaDetIn"></div></div></div>
 <div id="ajuda" onclick="if(event.target===this)fechaAjuda()"><div class="cx ajuda"><div class="topoAj"><h1>Como jogar</h1><button onclick="fechaAjuda()" title="Fechar (Esc)">✕</button></div>
@@ -732,6 +748,7 @@ function seguir(u,centrar=false){if(!u)return;CAM.alvo=u;CAM.centrar=centrar;CAM
 function posUn(u){if(u.px!=null)return [u.px,u.py];let [x,y]=centro(u.c,u.r);if(u.anim){const t=Math.min(1,(performance.now()-u.anim.t0)/u.anim.dur);x=u.anim.x0+(x-u.anim.x0)*t;y=u.anim.y0+(y-u.anim.y0)*t;}return [x,y];}
 function atualizaCam(now){
   const dt=Math.min(.05,(now-(CAM.t||now))/1000);CAM.t=now;
+  if(J.intro){camIntro(now);if(J.intro)return;}
   if(Math.abs(CAM.zAlvo-CAM.z)>.002)CAM.z+=(CAM.zAlvo-CAM.z)*(1-Math.exp(-dt*7));else CAM.z=CAM.zAlvo;
   const movendo=J.un.find(u=>u.anim);
   if(movendo){CAM.alvo=movendo;CAM.mao=false;}
@@ -1617,6 +1634,92 @@ function novoJogo(op=prefs()){
   if(J.cristal)log(`💎 Cabo de guerra: no fim de cada turno, cada mestre puxa 1 ponto por torre que controla; a Torre do Cristal, no centro, vale ${CRISTAL_VALOR}. Quem chegar a ${CRISTAL_META} vence.`);
   inicioTurno(0);
   atualiza();
+  comecaIntro();
+}
+// ---------- Introdução da partida ----------
+// Abre na Torre do Cristal com o cristal inteiro brilhando; um raio cai nele e ele se parte nos seis cacos
+// (o estado em que toda partida começa). A frase resume o objetivo, e a câmera viaja até o seu mestre.
+// Tocar, clicar ou Esc/Espaço/Enter pulam. Desenho em desenhaCristal (estouro dos cacos) e desenhaIntro (raios, clarão).
+const INTRO={raio:1500,quebra:900,tit:2300,txt:2900,viaja:6800,dViaja:1700,fim:8900}; // a frase fica ~4,8 s na tela
+function comecaIntro(){
+  const m=mestreDe(0);
+  if(!VEL||document.hidden||!J.cristal||!m){J.intro=null;return;}
+  const [tx,ty]=centro(...DK(J.cristal.k));
+  const zFim=CAM.zPref,zIni=Math.max(zFim*1.3,zBase()*2.4);
+  J.intro={t0:performance.now(),tx,ty:ty-R*.8,zIni,zFim,raios:[],tremor:0,etapa:0};
+  CAM.alvo=null;CAM.z=CAM.zAlvo=zIni;CAM.x=tx;CAM.y=ty-R*.8;
+  const el=document.getElementById('intro');
+  // título e frase centrados sobre o mapa (no PC, o painel lateral fica de fora)
+  const rc=cv.getBoundingClientRect(),cx=el.querySelector('.inCaixa');cx.style.left=Math.max(0,rc.left)+'px';cx.style.right=Math.max(0,innerWidth-rc.right)+'px';
+  el.className='aberto';el.querySelectorAll('.vis').forEach(e=>e.classList.remove('vis'));
+  el.onclick=fimIntro;
+  void el.offsetWidth;setTimeout(()=>el.classList.add('claro'),40); // o mapa surge do escuro
+  el.querySelector('.inPular').textContent=TOQUE()?'toque para pular':'clique ou Esc para pular';
+  const I=J.intro;setTimeout(()=>{if(J&&J.intro===I)fimIntro();},INTRO.fim+1500); // garantia, como nas cenas
+}
+const suave=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+// câmera da introdução: parada na torre (com uma leve aproximação e o tremor do raio), depois viaja até o mestre
+function camIntro(now){
+  const I=J.intro,t=now-I.t0,m=mestreDe(0);
+  if(!m){fimIntro();return;}
+  const el=document.getElementById('intro');
+  if(I.etapa===0&&t>=INTRO.tit){I.etapa=1;el.querySelector('.inTit').classList.add('vis');el.querySelector('.inCaixa').classList.add('vis');}
+  if(I.etapa===1&&t>=INTRO.txt){I.etapa=2;el.querySelector('.inTxt').classList.add('vis');}
+  if(I.etapa===2&&t>=INTRO.viaja+INTRO.dViaja*.55){I.etapa=3;el.classList.add('sai');}
+  if(t>=INTRO.fim){fimIntro();return;}
+  const zPerto=I.zIni*(1+.06*Math.min(1,t/INTRO.viaja));
+  let [mx,my]=centro(m.c,m.r);
+  const zA=CAM.z;CAM.z=I.zFim;mx=limX(mx);my=limY(my);CAM.z=zA; // onde a câmera vai parar no zoom do jogo
+  const v=suave(Math.min(1,Math.max(0,(t-INTRO.viaja)/INTRO.dViaja)));
+  CAM.z=zPerto+(I.zFim-zPerto)*v;
+  CAM.x=I.tx+(mx-I.tx)*v;CAM.y=I.ty+(my-I.ty)*v;
+  const tr=Math.max(0,1-(t-INTRO.raio)/450);
+  if(t>=INTRO.raio&&tr>0){CAM.x+=(Math.random()-.5)*7*tr/CAM.z;CAM.y+=(Math.random()-.5)*7*tr/CAM.z;}
+  CAM.alvo=null;CAM.parado=true;
+}
+function fimIntro(){
+  const el=document.getElementById('intro');
+  el.onclick=null;el.className='';
+  if(!J||!J.intro)return;
+  const pulou=performance.now()-J.intro.t0<INTRO.fim;
+  J.intro=null;
+  CAM.z=CAM.zAlvo=CAM.zPref;
+  const m=mestreDe(0);
+  if(m){const [x,y]=centro(m.c,m.r);CAM.x=x;CAM.y=y;limitaCam();if(!pulou)flutua(m,'Seu mestre','#f2c14e');}
+  CAM.alvo=null;
+}
+// raios, onda de choque e clarão da introdução (no mapa, por cima das unidades)
+function desenhaIntro(now){
+  const I=J.intro;if(!I)return;
+  const t=now-I.t0,[x,y]=centro(...DK(J.cristal.k)),cy=y-R*1.7,topo=CAM.y-TH/(2*CAM.z)-20;
+  // um raio forte no cristal e dois menores logo depois
+  for(const [ti,dx,forte] of [[INTRO.raio,0,true],[INTRO.raio+170,0,true],[INTRO.raio+420,-W*1.4,false],[INTRO.raio+600,W*1.7,false]]){
+    if(t<ti||t>ti+300)continue;
+    if(!I.raios[ti]){
+      const x1=x+dx,y1=forte?cy:cy+R*2.2,pts=[[x1+(Math.random()-.5)*W*2,topo]],n=12;
+      for(let i=1;i<=n;i++){const q=i/n;pts.push([pts[0][0]+(x1-pts[0][0])*q+(i<n?(Math.random()-.5)*W*.5:0),topo+(y1-topo)*q]);}
+      const galhos=[];for(let i=2;i<n-1;i++)if(Math.random()<.4){const [a,b]=pts[i],d=Math.random()<.5?-1:1;galhos.push([[a,b],[a+d*W*(.3+Math.random()*.3),b+R*.5],[a+d*W*(.5+Math.random()*.4),b+R*1.1]]);}
+      I.raios[ti]={pts,galhos};
+    }
+    const r=I.raios[ti],dt=t-ti,a=dt<60||(dt>120&&dt<170)?1:.45;
+    const linha=(p,cor,w)=>{ctx.strokeStyle=cor;ctx.lineWidth=w;ctx.beginPath();p.forEach(([u,v],i)=>i?ctx.lineTo(u,v):ctx.moveTo(u,v));ctx.stroke();};
+    ctx.save();ctx.globalAlpha=a;ctx.lineJoin='round';ctx.shadowColor='#7fd8ff';ctx.shadowBlur=14;
+    linha(r.pts,'#7fd8ff',forte?6:3.5);r.galhos.forEach(b=>linha(b,'#7fd8ff',2.5));
+    ctx.shadowBlur=0;linha(r.pts,'#ffffff',forte?2.2:1.4);r.galhos.forEach(b=>linha(b,'#ffffff',1));
+    ctx.restore();
+  }
+  // onda de choque saindo do cristal
+  const o=(t-INTRO.raio)/700;
+  if(o>0&&o<1){ctx.save();ctx.globalAlpha=(1-o)*.8;ctx.strokeStyle='#c9f1ff';ctx.lineWidth=3*(1-o)+1;
+    ctx.beginPath();ctx.ellipse(x,cy,6+o*W*2.2,(6+o*W*2.2)*.75,0,0,Math.PI*2);ctx.stroke();ctx.restore();}
+  // faíscas soltas pelo estouro
+  const f=(t-INTRO.raio)/1100;
+  if(f>0&&f<1)for(let i=0;i<22;i++){const ang=i*2.39996,v=(14+(i*37%23))*f*1.6,px=x+Math.cos(ang)*v,py=cy+Math.sin(ang)*v*.8+f*f*18;
+    ctx.globalAlpha=1-f;ctx.fillStyle=i%3?'#c9f1ff':'#ffffff';ctx.fillRect(px-1.2,py-1.2,2.4,2.4);}
+  ctx.globalAlpha=1;
+  // clarão da tela inteira no raio
+  const c=1-(t-INTRO.raio)/380;
+  if(c>0&&c<=1){ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle=`rgba(225,245,255,${c*.75})`;ctx.fillRect(0,0,cv.width,cv.height);ctx.restore();}
 }
 // ---------- Salvar / carregar ----------
 // Dois espaços no navegador (localStorage): 'manual' (botão Salvar) e 'auto' (início de cada turno seu).
@@ -1919,7 +2022,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.28'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.29'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -4756,7 +4859,10 @@ function selosMagia(u,x,y){
 // O cristal começa em 6 cacos cinzentos soltos; conforme alguém o monta, os cacos se juntam e ganham a cor desse lado.
 function desenhaCristal(now,porCima){
   const C=J.cristal;if(!C)return;
-  const [x,y]=centro(...DK(C.k)),p=Math.min(1,C.v/CRISTAL_META);
+  const [x,y]=centro(...DK(C.k));let p=Math.min(1,C.v/CRISTAL_META);
+  // introdução: o cristal começa inteiro e se parte quando o raio cai (estouro = 0..1 logo depois do raio)
+  const I=J.intro,ti=I?now-I.t0:0,estouro=I&&ti>=INTRO.raio?Math.min(1,(ti-INTRO.raio)/INTRO.quebra):I?0:null;
+  if(I)p=1-(1-Math.pow(1-estouro,3));
   ctx.save();
   if(!porCima){
     ctx.lineWidth=4;ctx.strokeStyle='rgba(10,12,16,.75)';ctx.beginPath();ctx.arc(x,y,R-5,0,Math.PI*2);ctx.stroke();
@@ -4769,7 +4875,7 @@ function desenhaCristal(now,porCima){
     ctx.imageSmoothingEnabled=false;ctx.drawImage(iconeCristal(),x-25.5,y+27.5-78,51,78);
     ctx.restore();return;
   }
-  const base=[150,158,170],alvo=C.lado!=null?rgbHex(COR[C.lado]):base,q=C.v>0?Math.min(1,.2+p):0;
+  const base=[150,158,170],alvo=I?[175,228,255]:C.lado!=null?rgbHex(COR[C.lado]):base,q=I?p:C.v>0?Math.min(1,.2+p):0;
   const mix=base.map((b,i)=>b+(alvo[i]-b)*q);
   const cy=y-R*1.7+Math.sin(now/650)*1.5; // entre as garras do topo da torre
   if(p>0){
@@ -4780,7 +4886,8 @@ function desenhaCristal(now,porCima){
   const V=[[0,-12],[6,-5],[6,5],[0,12],[-6,5],[-6,-5]],LUZ=[1.3,.8,.6,.72,1,1.45];
   for(let i=0;i<6;i++){
     const a=V[i],b=V[(i+1)%6],mx=(a[0]+b[0])/3,my=(a[1]+b[1])/3,ang=Math.atan2(my,mx);
-    const longe=(1-p)*(8+2*Math.sin(now/520+i*1.7)),gira=(1-p)*(.7*Math.sin(now/900+i*2.1)+(i%2?.5:-.5));
+    const bum=estouro?Math.sin(estouro*Math.PI)*(1-estouro*.4)*16:0; // os cacos voam para fora e voltam a pairar
+    const longe=(1-p)*(8+2*Math.sin(now/520+i*1.7))+bum,gira=(1-p)*(.7*Math.sin(now/900+i*2.1)+(i%2?.5:-.5))+bum*.12*(i%2?1:-1);
     ctx.save();ctx.translate(x+mx+Math.cos(ang)*longe,cy+my+Math.sin(ang)*longe*.8);ctx.rotate(gira);
     ctx.beginPath();ctx.moveTo(-mx,-my);ctx.lineTo(a[0]-mx,a[1]-my);ctx.lineTo(b[0]-mx,b[1]-my);ctx.closePath();
     ctx.fillStyle=`rgb(${mix.map(v=>Math.min(255,Math.round(v*LUZ[i]))).join(',')})`;ctx.fill();
@@ -4844,6 +4951,7 @@ function desenha(now){
   desenhaCristal(now,false);
   for(const u of [...J.un].sort((a,b)=>a.r-b.r))desenhaUnidade(u,now);
   desenhaCristal(now,true);
+  desenhaIntro(now);
   for(let i=fx.length-1;i>=0;i--){
     const f=fx[i],t=(now-f.t0)/f.dur;
     if(t>1){fx.splice(i,1);continue;}
@@ -5442,6 +5550,7 @@ cv.addEventListener('wheel',ev=>{ev.preventDefault();mudaZoom(ev.deltaY<0?1:-1);
 // botão direito cancela; no toque, o menu de contexto do toque longo só é suprimido (quem cancela é o botão ✕ da tela)
 cv.addEventListener('contextmenu',ev=>{ev.preventDefault();if(ultTipo==='mouse')cancelar();});
 addEventListener('keydown',ev=>{
+  if(J&&J.intro){ev.preventDefault();if(ev.key==='Escape'||ev.key===' '||ev.key==='Enter')fimIntro();return;}
   if(CENA&&(ev.key==='Escape'||ev.key===' '||ev.key==='Enter')){ev.preventDefault();toqueCena();return;}
   if(cenaCerco&&(ev.key==='Escape'||ev.key===' '||ev.key==='Enter')){ev.preventDefault();cenaCerco.fecha();return;}
   if(ev.key==='Escape'){if(document.getElementById('ajuda').classList.contains('aberto')){fechaAjuda();return;}if(fichaAberta!=null){fechaFicha();return;}cancelar();}
