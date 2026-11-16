@@ -315,6 +315,11 @@ html.pc,.pc body{height:100%;overflow:hidden}
 .pc #cv{position:absolute;inset:0;width:100%;height:100%}
 @media (min-width:1600px){.pc #lado{width:340px}}
 /* placar no PC: maior e proporcional à largura da tela (cresce de 1366 a 1920+) */
+/* registro: como no celular, só com o botão 📜; abre por cima da coluna da direita, logo abaixo dos botões */
+.pc #btLog{display:block;flex:none;font-size:15px}
+.pc #caixaLog{display:none}
+.pc #caixaLog.aberto{display:flex;position:absolute;left:0;right:0;top:var(--topoLog,50%);bottom:0;z-index:8;border-color:#4a5268;box-shadow:0 6px 30px #000d}
+.pc #caixaLog.aberto #log{overflow:auto}
 .pc #rodape{font-size:clamp(14px,.9vw,18px);padding:6px 14px;gap:clamp(12px,1.2vw,24px)}
 .pc #rodape .pLado{gap:clamp(14px,1.3vw,26px)}
 .pc #rodape .pNome .ponto{width:12px;height:12px}
@@ -641,7 +646,7 @@ html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
     <div class="cx" id="caixaLog"><h2>Registro</h2><div id="log"></div></div>
   </div></div>
 </div>
-<div id="intro"><div class="inCaixa"><div class="inTit">O Cristal se partiu</div><div class="inTxt">Quem restaurá-lo governará estas terras.<br>Conquiste as torres e domine o centro para vencer.</div></div><div class="inPular">toque para pular</div></div>
+<div id="intro"><div class="inCaixa"><div class="inTit">O Cristal se partiu</div><div class="inTxt in1">Quem restaurá-lo governará estas terras.</div><div class="inTxt in2">Conquiste as torres e domine o centro para vencer.</div></div><div class="inPular">toque para pular</div></div>
 <div id="cercoCena" title=""><div class="ccCaixa"><div class="ccTela"><canvas class="ccTxt"></canvas></div><div class="cap"></div></div></div>
 <div id="fichaDet" onclick="if(event.target===this)fechaFicha()"><div class="cx"><div class="topoAj"><h2 id="fichaDetTit">Detalhes</h2><button onclick="fechaFicha()" title="Fechar (Esc)">✕</button></div><div id="fichaDetIn"></div></div></div>
 <div id="ajuda" onclick="if(event.target===this)fechaAjuda()"><div class="cx ajuda"><div class="topoAj"><h1>Como jogar</h1><button onclick="fechaAjuda()" title="Fechar (Esc)">✕</button></div>
@@ -656,7 +661,7 @@ html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
       <p>Para invocar, clique numa construção sua (castelo, fortaleza ou torre) que esteja livre e ao lado do seu mestre. Elas ficam com borda dourada tracejada.</p>
       <p>Seu exército pode ter até 2 criaturas + 1 por torre que você controla. Ganhe torres (e MP) terminando o movimento sobre elas.</p>
       <p><b>Modos:</b> no <b>Duelo</b> você enfrenta um mestre. Na <b>Tríade</b> são três mestres, todos contra todos (você e dois controlados pelo computador), num mapa maior com três castelos. Na <b>Guerra Total</b> são quatro mestres, um castelo em cada canto do mapa. Quando um mestre cai ou tem o castelo cercado, ele sai da partida: o exército dele se desfaz e as construções dele ficam sem dono. Vence o último mestre de pé.</p>
-      <p><b>Cabo de guerra e Torre do Cristal:</b> além de derrotar o mestre ou cercar o castelo, dá para vencer pelas torres. No fim do seu turno você puxa o cabo de guerra 1 ponto por torre que controla, e cada rival faz o mesmo no turno dele. No centro do mapa fica a Torre do Cristal, que vale 3 pontos por turno para quem a controla, mas, ao contrário das outras torres, não cura quem está nela. Os cacos do cristal vão se juntando na cor de quem está na frente. Se o cabo está do lado de um rival, puxar primeiro desfaz a vantagem dele. Quem chegar a 50 vence na hora.</p>
+      <p><b>Cabo de guerra e Torre do Cristal:</b> além de derrotar o mestre ou cercar o castelo, dá para vencer pelas torres. No fim do seu turno você puxa o cabo de guerra 1 ponto por torre que controla, e cada rival faz o mesmo no turno dele. No centro do mapa fica a Torre do Cristal, que vale 3 pontos por turno para quem a controla (6 com três mestres e 9 com quatro), mas, ao contrário das outras torres, não cura quem está nela. Os cacos do cristal vão se juntando na cor de quem está na frente. Se o cabo está do lado de um rival, puxar primeiro desfaz a vantagem dele. Quem chegar a 50 vence na hora.</p>
       <p><b>Mana:</b> no início do turno você ganha +15 por torre e +5 por fortaleza ou castelo, e paga a manutenção das criaturas (3, 6 ou 10 por nível). A sobra vai para a reserva, que guarda no máximo 300 MP (o que passar disso se perde); o que faltar sai dela. Com a reserva zerada, as criaturas sem pagamento ficam enfraquecidas (selo roxo) e, se o déficit continuar, uma delas debanda a cada turno.</p>
       <p><b>Dicas:</b> use Gatos Alados, rápidos e voadores, para tomar torres neutras logo no início. Não deixe criaturas paradas à toa, porque elas custam manutenção. Tomar torres do mestre inimigo corta a renda dele e o limite do exército.</p>
       <p><b>Evoluir na criação:</b> quando sua reserva chega a 200 MP, o menu do mestre ganha <b>Evoluir</b>. Escolha uma criatura inicial e o jogo oferece duas formas de estágio 1, conforme o que seu exército mais viveu na partida (horário dos ataques, dano feito e sofrido, terrenos, turnos parados ou correndo, feridos, abates). A escolhida custa 200 MP e fica fixa: daí em diante, invocar aquela criatura já traz a forma evoluída, pelo custo dela.</p>
@@ -817,7 +822,9 @@ function ajustaTela(forca=false){
   const pc=!ret&&!pai&&matchMedia('(min-width:901px)').matches;
   const mudouModo=ret!==RETRATO()||pai!==PAISAGEM();
   de.classList.toggle('retrato',ret);de.classList.toggle('paisagem',pai);de.classList.toggle('pc',pc);
-  FOLGA=pai?{t:48,b:108}:{t:0,b:0};
+  // celular em pé: folgas do tamanho da dica (até 2 linhas, em cima) e do botão Cancelar (embaixo),
+  // para os dois ficarem na faixa preta além da borda do mapa
+  FOLGA=pai?{t:48,b:108}:ret?{t:52,b:52}:{t:0,b:0};
   let th=VH,rv=RES;
   if(ret||pai||pc){
     const m=document.getElementById('mapa'),w=m.clientWidth,h=m.clientHeight;
@@ -1631,7 +1638,7 @@ function novoJogo(op=prefs()){
     log(`Seu mestre: ${NM(0)}. Mestre inimigo: ${NM(1)}.`);
   }
   if(J.cabo)log(`🏳 Cabo de guerra: no fim de cada turno, cada mestre puxa 1 ponto por torre que controla. Quem chegar a ${CABO_META} vence.`);
-  if(J.cristal)log(`💎 Cabo de guerra: no fim de cada turno, cada mestre puxa 1 ponto por torre que controla; a Torre do Cristal, no centro, vale ${CRISTAL_VALOR}. Quem chegar a ${CRISTAL_META} vence.`);
+  if(J.cristal)log(`💎 Cabo de guerra: no fim de cada turno, cada mestre puxa 1 ponto por torre que controla; a Torre do Cristal, no centro, vale ${valorCristal()}. Quem chegar a ${CRISTAL_META} vence.`);
   inicioTurno(0);
   atualiza();
   comecaIntro();
@@ -1640,7 +1647,7 @@ function novoJogo(op=prefs()){
 // Abre na Torre do Cristal com o cristal inteiro brilhando; um raio cai nele e ele se parte nos seis cacos
 // (o estado em que toda partida começa). A frase resume o objetivo, e a câmera viaja até o seu mestre.
 // Tocar, clicar ou Esc/Espaço/Enter pulam. Desenho em desenhaCristal (estouro dos cacos) e desenhaIntro (raios, clarão).
-const INTRO={raio:1500,quebra:900,tit:2300,txt:2900,viaja:6800,dViaja:1700,fim:8900}; // a frase fica ~4,8 s na tela
+const INTRO={raio:1500,quebra:900,tit:2300,txt:3100,txt2:4700,viaja:7600,dViaja:1700,fim:9700}; // as frases entram uma de cada vez; a última fica ~2,8 s na tela
 function comecaIntro(){
   const m=mestreDe(0);
   if(!VEL||document.hidden||!J.cristal||!m){J.intro=null;return;}
@@ -1664,8 +1671,9 @@ function camIntro(now){
   if(!m){fimIntro();return;}
   const el=document.getElementById('intro');
   if(I.etapa===0&&t>=INTRO.tit){I.etapa=1;el.querySelector('.inTit').classList.add('vis');el.querySelector('.inCaixa').classList.add('vis');}
-  if(I.etapa===1&&t>=INTRO.txt){I.etapa=2;el.querySelector('.inTxt').classList.add('vis');}
-  if(I.etapa===2&&t>=INTRO.viaja+INTRO.dViaja*.2){I.etapa=3;el.classList.add('sai');}
+  if(I.etapa===1&&t>=INTRO.txt){I.etapa=2;el.querySelector('.in1').classList.add('vis');}
+  if(I.etapa===2&&t>=INTRO.txt2){I.etapa=3;el.querySelector('.in2').classList.add('vis');}
+  if(I.etapa===3&&t>=INTRO.viaja+INTRO.dViaja*.2){I.etapa=4;el.classList.add('sai');}
   if(t>=INTRO.fim){fimIntro();return;}
   const zPerto=I.zIni*(1+.06*Math.min(1,t/INTRO.viaja));
   let [mx,my]=centro(m.c,m.r);
@@ -2022,7 +2030,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.35'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.39'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2101,9 +2109,12 @@ function torresDe(l){let n=0;J.ter.forEach((t,k)=>{if(t==='torre'&&J.dono[k]===l
 // No fim do turno de cada lado, ele puxa 1 ponto por torre que controla; a do cristal vale CRISTAL_VALOR (igual ao cabo do Clássico).
 // Puxar um cristal que está montado para um rival primeiro o desmonta; passando de zero, ele começa a montar para quem puxa.
 let CRISTAL_META=50,CRISTAL_VALOR=3; // let: o simulador testa outros valores
+// cada rival puxa contra quem está na frente: com mais mestres, a torre do centro vale mais (3 / 6 / 9),
+// senão só avança quem tem mais torres que todos os rivais somados
+const valorCristal=()=>CRISTAL_VALOR*(NP()-1);
 const ehCristal=k=>!!(J&&J.cristal)&&J.cristal.k===k;
 const nomeTer=k=>ehCristal(k)?'Torre do Cristal':TER[J.ter[k]].nome;
-const forcaCristal=l=>torresDe(l)+(J.dono[J.cristal.k]===l?CRISTAL_VALOR-1:0);
+const forcaCristal=l=>torresDe(l)+(J.dono[J.cristal.k]===l?valorCristal()-1:0);
 function puxaCristal(l){
   const C=J.cristal;if(!C||J.fim)return;
   const f=forcaCristal(l),quem=l?OM(l):'Você';if(!f)return;
@@ -5115,7 +5126,7 @@ function abreTerreno(k,refId){
   let dono='';
   if(ehConstrucao(t))dono=`<div class="vez">${J.dono[k]==null?'Sem dono':J.dono[k]===0?'Sua':OM(J.dono[k])+' controla'} · +${RENDA_TER[t]} MP por turno para quem controla</div>`;
   const html=`<div class="terTopo"><span class="terHex" style="background:${TER[t].cor}"></span><div><strong style="font-size:15px">${nomeTer(k)}</strong>${dono}</div></div>
-    <p class="terDesc">${TER_DICA[t]}</p>${ehCristal(k)?`<p class="terDesc" style="color:#bfe3ff">💎 No fim do turno, cada mestre puxa o cristal 1 ponto por torre que controla, e quem controla esta torre puxa ${CRISTAL_VALOR} por ela. Puxar um cristal de um rival primeiro o desfaz. Vence quem montar ${CRISTAL_META}. Ao contrário das outras torres, não cura quem está nela. Agora: ${J.cristal.v?`${J.cristal.v}/${CRISTAL_META} para ${J.cristal.lado?OM(J.cristal.lado):'você'}`:'desmontado'}.</p>`:''}
+    <p class="terDesc">${TER_DICA[t]}</p>${ehCristal(k)?`<p class="terDesc" style="color:#bfe3ff">💎 No fim do turno, cada mestre puxa o cristal 1 ponto por torre que controla, e quem controla esta torre puxa ${valorCristal()} por ela. Puxar um cristal de um rival primeiro o desfaz. Vence quem montar ${CRISTAL_META}. Ao contrário das outras torres, não cura quem está nela. Agora: ${J.cristal.v?`${J.cristal.v}/${CRISTAL_META} para ${J.cristal.lado?OM(J.cristal.lado):'você'}`:'desmontado'}.</p>`:''}
     <table class="terTab"><thead><tr><th>Tipo de criatura</th><th title="Pontos de movimento gastos para entrar na casa">Mov.</th><th title="Chance de o golpe inimigo errar">Evasão</th>${gelo?'<th>Ataque</th>':''}</tr></thead><tbody>${linhas}</tbody></table>${verTodos}
     <p class="vez" style="margin:6px 0 0">Mov. = pontos gastos para entrar. Evasão = chance de o golpe inimigo errar.${resto.length?' Primeiro, os tipos do seu exército':''}${ref?`${resto.length?'; em':' Em'} destaque: ${ESP[ref.esp].nome}`:''}${resto.length||ref?'.':''}</p>`;
   abreDet('Terreno',html);
@@ -5230,7 +5241,7 @@ function atualiza(){
    if(!PLACAR_TORRE)PLACAR_TORRE=iconePx(estiloIcone('torre'),'torre').toDataURL();
    // Torre do Cristal e Clássico (cabo de guerra das torres): o andamento aparece só na faixa da borda de baixo
    const C=J.cristal||J.cabo,META=J.cristal?CRISTAL_META:CABO_META,corC=C&&C.lado!=null?COR[C.lado]:'#9aa3ad';
-   const dicaC=!C?'':J.cristal?`Cristal: ${C.v?`${C.v} de ${CRISTAL_META} montados para ${C.lado?OM(C.lado):'você'}`:'desmontado'}. Força por turno (1 por torre, ${CRISTAL_VALOR} pela do cristal): ${LADOS().filter(ativo).map(l=>`${l?NM(l):'você'} +${forcaCristal(l)}`).join(', ')}.`
+   const dicaC=!C?'':J.cristal?`Cristal: ${C.v?`${C.v} de ${CRISTAL_META} montados para ${C.lado?OM(C.lado):'você'}`:'desmontado'}. Força por turno (1 por torre, ${valorCristal()} pela do cristal): ${LADOS().filter(ativo).map(l=>`${l?NM(l):'você'} +${forcaCristal(l)}`).join(', ')}.`
      :`Cabo de guerra: ${C.v?`${C.v} de ${CABO_META} para ${C.lado?OM(C.lado):'você'}`:'empatado'}. No fim do turno, cada um puxa 1 por torre: ${LADOS().filter(ativo).map(l=>`${l?NM(l):'você'} +${torresDe(l)}`).join(', ')}. Quem chegar a ${CABO_META} vence.`;
    const meio=quem=>`<div class="pMeio"><img class="pTorre" src="${PLACAR_TORRE}" alt="Torres" title="Torres: você à esquerda, ${quem} à direita"></div>`;
    const rod=document.getElementById('rodape');rod.classList.toggle('tres',NP()>2);rod.classList.toggle('quatro',NP()>3);
@@ -5648,7 +5659,9 @@ addEventListener('resize',ajustaTela);
 if(window.ResizeObserver)new ResizeObserver(()=>ajustaTela()).observe(document.getElementById('mapa'));
 // registro (celular em pé): abre por cima do jogo com o botão 📜 e fecha ao tocar fora
 // (deitado, o placar completo abre junto, porque também não fica na tela)
-function alternaLog(ev){ev.stopPropagation();const a=document.getElementById('caixaLog').classList.toggle('aberto');document.getElementById('rodape').classList.toggle('aberto',a);}
+function alternaLog(ev){ev.stopPropagation();const cx=document.getElementById('caixaLog'),a=cx.classList.toggle('aberto');
+  // PC: a caixa começa logo abaixo da linha do Encerrar turno
+  const lf=document.getElementById('linhaFim');if(a&&cx.offsetParent===lf.offsetParent)cx.style.setProperty('--topoLog',(lf.offsetTop+lf.offsetHeight+8)+'px');document.getElementById('rodape').classList.toggle('aberto',a);}
 addEventListener('click',ev=>{if(ev.target.closest&&ev.target.closest('#caixaLog,#rodape.aberto'))return;
   document.getElementById('caixaLog').classList.remove('aberto');document.getElementById('rodape').classList.remove('aberto');});
 
