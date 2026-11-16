@@ -687,7 +687,7 @@ html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
         <li><b>Semente:</b> evolui à Noite → Mandrago. Senão, turnos parada ou na floresta → Dríade; andando 2+ casas ou na planície → Filhote da Selva.</li>
         <li><b>Ovo Alado:</b> evolui ferido (metade da vida ou menos) → Cocatriz, da linhagem Solar na Manhã ou no Dia, ou Lunar no Entardecer ou à Noite; com mais da metade da vida → Gato Alado. A linhagem Solar luta melhor de dia (como Fogo e Planta) e a Lunar à noite (como Água e Arcano); o resto do Ar é neutro ao horário.</li>
         <li><b>Gato Alado:</b> turnos terminados numa construção sua contam para o Grifo; cada torre capturada vale 3 para o Anzu.</li>
-        <li><b>Dríade</b> (estágio 1 da Semente): cada turno terminado ao lado de 2 ou mais criaturas aliadas (a manada) conta para a Caipora; com 2 ou mais → Caipora. Senão → Curupira.</li>
+        <li><b>Dríade</b> (estágio 1 da Semente): terminou pelo menos 1 turno ao lado de 2 ou mais criaturas aliadas (a manada) → Caipora. Senão → Curupira.</li>
         <li><b>Essência:</b> viu 2 criaturas caírem a até 2 casas (derrubadas por outros), ou 1 e está ferida (metade da vida ou menos) → Caveira; senão, derrubou um inimigo sem levar dano em até 3 turnos depois de nascer → Espada; senão → Cumacanga.</li>
         <li><b>Caveira</b> (estágio 1 da Essência): viu 3 ou mais criaturas caírem a até 2 casas (derrubadas por outros) → Esqueleto Mago. Senão, evoluir com 40% da vida ou menos → Esqueleto Guerreiro. Senão, viu 2 caírem → Esqueleto Mago; menos que isso → Esqueleto Arqueiro. O Arqueiro e o Flecheiro Maldito atacam a 2 casas: quem só luta corpo a corpo não revida.</li>
       </ul>
@@ -1222,9 +1222,9 @@ const RAMOS={
   // a mandrágora se arranca do chão à noite: evoluir à Noite → Mandrago (~⅕, como o Diabrete do Fogo)
   semente:{para:['broto','filhote','mandrago'],dica:'Evoluir à Noite → Mandrago. Senão: turnos parada ou na floresta → Dríade; andando 2+ casas ou na planície → Filhote da Selva.',
     pontos:u=>faseAtual().nome==='Noite'?[-1,-1,1]:[hist(u).parado+turnosEm(u,'flor'),hist(u).correu+turnosEm(u,'plan'),-1]},
-  // a Caipora anda com a manada: turno terminado ao lado de 2+ criaturas aliadas conta para ela (ramo raro)
-  broto:{para:['espinhal','caipora'],dica:'Cada turno terminado ao lado de 2 ou mais criaturas aliadas (a manada) conta para a Caipora; com 2 ou mais → Caipora. Senão → Curupira.',
-    pontos:u=>(hist(u).bando||0)>=2?[0,1]:[1,0]},
+  // a Caipora anda com a manada: basta 1 turno terminado ao lado de 2+ criaturas aliadas (~40% das Dríades; a Dríade já é rara)
+  broto:{para:['espinhal','caipora'],dica:'Terminou pelo menos 1 turno ao lado de 2 ou mais criaturas aliadas (a manada) → Caipora. Senão → Curupira.',
+    pontos:u=>(hist(u).bando||0)>=1?[0,1]:[1,0]},
   // Grifo, o guardião: cada turno terminado numa construção sua; Anzu, o ladrão: cada torre capturada vale 3
   penugem:{para:['gaviao','anzu'],dica:'Cada turno terminado numa construção sua (torre, fortaleza, castelo) conta para o Grifo; cada torre capturada vale 3 para o Anzu.',
     pontos:u=>[hist(u).guarda||0,(hist(u).torre||0)*3]},
@@ -2078,7 +2078,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.47'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.48'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
