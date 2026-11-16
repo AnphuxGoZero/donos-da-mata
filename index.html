@@ -170,12 +170,12 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 
 #relogio{--q:60px;flex:none;position:relative;padding:calc(var(--q)*.24) calc(var(--q)*.22) 0}
 #relogio .quadros{position:relative;display:block;width:var(--q);height:var(--q)}
-#relogio .quadro{width:var(--q);height:var(--q);border-radius:7px;border:2px solid #c9a24a;box-shadow:0 0 0 2px #2a1d0e,0 2px 8px rgba(0,0,0,.5);image-rendering:pixelated;display:block}
+#relogio .quadro{width:var(--q);height:var(--q);border-radius:50%;object-fit:cover;border:2px solid #c9a24a;box-shadow:0 0 0 2px #2a1d0e,0 2px 8px rgba(0,0,0,.5);image-rendering:pixelated;display:block}
 #relogio .quadro.novo{position:absolute;left:0;top:0;opacity:0;box-shadow:none}
 #relogio .quadro.novo.mostra{opacity:1;transition:opacity .7s ease}
 #relogio .trilha{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none}
 #relogio .trilha path{fill:none;stroke-width:7;stroke-linecap:round;opacity:.85}
-#relogio .astro{transform-box:view-box;transform-origin:72px 152px;transition:transform .8s cubic-bezier(.4,.1,.3,1)}
+#relogio .astro{transform-box:view-box;transform-origin:72px 74px;transition:transform .8s cubic-bezier(.4,.1,.3,1)}
 #relogio .astro .sol{fill:#ffd84f;stroke:#f08a2a;stroke-width:3}
 #relogio .astro .lua{opacity:0}#relogio .astro .lua circle{fill:#f2f0d8;stroke:#1a2050;stroke-width:2.5}#relogio .astro .lua .sombra{fill:#1a2050;stroke:none}
 #relogio .astro.noite .sol{opacity:0}#relogio .astro.noite .lua{opacity:1}
@@ -569,7 +569,6 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 .retrato #rodape .pLado{padding:2px 5px}
 #topoMapa.quatro #rodape .pLado{gap:4px;padding:3px 4px}#topoMapa.quatro #rodape .pJog{gap:4px}#topoMapa.quatro #rodape .pManaBox{padding-left:4px;padding-right:8px}
 .retrato #topoMapa.quatro{gap:4px}
-.retrato #topoMapa.quatro #relogio{--q:38px}
 /* 4 mestres no celular em pé: jogadores empilhados de dois em dois */
 .retrato #topoMapa.quatro #rodape .pJog{display:grid;grid-template-columns:1fr 1fr;row-gap:3px;column-gap:4px}
 .retrato #topoMapa.tres .mpU,.retrato #topoMapa.tres #rodape .pNome{display:none} /* sem nome no celular, a bolinha some também: o número tem a cor do time */
@@ -581,6 +580,24 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 .paisagem #topoMapa #vez{display:block}
 .paisagem #topoMapa #rodape{display:none}
 .paisagem #topoMapa #rodape.aberto{display:grid;position:fixed;background:var(--panel);border:1px solid #4a5268;border-radius:8px;padding:8px 10px}
+/* ---------- relógio redondo no meio da barra, montado sobre o marco do cabo de guerra ---------- */
+html:not(.paisagem) #topoMapa:not(.x){grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:center}
+html:not(.paisagem) #topoMapa>div:first-child{grid-area:1/1;justify-self:start;z-index:1}
+html:not(.paisagem) #topoMapa #relogio{grid-area:1/2;align-self:end;z-index:3;--q:52px}
+html.retrato #topoMapa:not(.x) #relogio{--q:44px}
+html:not(.paisagem) #topoMapa.cabo #relogio{margin-bottom:-17px} /* passa um pouco da faixa */
+html:not(.paisagem) #topoMapa #rodape{display:contents}
+#topoMapa .pCabo{z-index:2}
+#rodape .pAla{display:flex;align-items:center;gap:10px;min-width:0}
+#rodape .pGrupo{display:flex;align-items:center;gap:inherit;min-width:0}
+html:not(.paisagem) #rodape .alaE{grid-area:1/1;justify-content:flex-end;padding-left:var(--menuW,40px)}
+html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
+#rodape .alaD .pManaBox{margin-left:auto;border-right:none;border-left:1px solid #ffffff30;padding:2px 2px 2px 10px}
+.retrato #rodape .alaD .pManaBox{padding:2px 0 2px 6px}
+.retrato #rodape .pAla{gap:5px}
+.retrato #topoMapa.tres #rodape .pGrupo{flex-direction:column;align-items:stretch;gap:3px} /* 3 ou 4 mestres no celular: dois a dois, empilhados */
+.paisagem #topoMapa #rodape.aberto{grid-template-columns:auto;gap:6px}
+.paisagem #topoMapa #rodape.aberto.cabo,.paisagem #topoMapa.cabo #rodape.aberto{padding-bottom:17px}.paisagem #rodape .pLado,.paisagem #rodape .pManaBox{flex:none}
 </style>
 </head>
 <body>
@@ -938,7 +955,7 @@ function pintaFase(i){
 function iconeFase(i){return ICONE_FASE[i]||(ICONE_FASE[i]=pintaFase(i));}
 // trilha do relógio: cúpula achatada logo acima do quadro (círculo de raio 140 com centro abaixo dele, em unidades
 // do viewBox 144×124, onde o quadro ocupa 22..122 × 24..124), da esquerda (Manhã) para a direita (fim da Noite)
-const RELO_CX=72,RELO_CY=152,RELO_R=140,RELO_A0=117.2,RELO_PASSO=9.07,RELO_COR=['#f7bb6c','#6fb4ee','#dc5a55','#4a5cc0'];
+const RELO_CX=72,RELO_CY=74,RELO_R=64,RELO_A0=170,RELO_PASSO=160/6,RELO_COR=['#f7bb6c','#6fb4ee','#dc5a55','#4a5cc0'];
 function relogio(){
   const i=faseIdx(),f=FASES[i],dir=J.cicloDir,prox=FASES[(i+dir+4)%4];
   const el=document.getElementById('relogio');
@@ -1894,7 +1911,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.24'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.25'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -5025,7 +5042,7 @@ function atualiza(){
      const partes=[
        `<span class="pNome"><span class="ponto" style="background:var(--p${l})"></span><span class="nm">${l?NM(l):'Você'}</span></span>`,
        it(l,'pMon',`${iconeSpr(INVOCAVEIS[0],document.documentElement.classList.contains('pc')?Math.round(Math.min(30,Math.max(22,innerWidth*.0145))):18,l)}${criaturas(l)}`,`Criaturas no exército ${l?doM(l):'seu'}: ${criaturas(l)} (limite ${limite(l)}: 2 + 1 por torre)`),
-       it(l,'pTor',`${NP()>2?`<img class="pTorMini" src="${PLACAR_TORRE}" alt="">`:''}<b>${torresDe(l)}</b>`,l?`Torres ${doM(l)}`:'Suas torres')];
+       it(l,'pTor',`<img class="pTorMini" src="${PLACAR_TORRE}" alt=""><b>${torresDe(l)}</b>`,l?`Torres ${doM(l)}`:'Suas torres')];
      // 1x1: espelhado (monstros · torres | ícone de torre | torres · monstros)
      // 3 ou 4 mestres: cada lado é um bloco próprio com bolinha · torres · monstros (sem o ícone do meio)
      if(NP()>2)partes.splice(-2,2,partes[partes.length-1],partes[partes.length-2]);
@@ -5040,10 +5057,9 @@ function atualiza(){
    const meio=quem=>`<div class="pMeio"><img class="pTorre" src="${PLACAR_TORRE}" alt="Torres" title="Torres: você à esquerda, ${quem} à direita"></div>`;
    const rod=document.getElementById('rodape');rod.classList.toggle('tres',NP()>2);rod.classList.toggle('quatro',NP()>3);
    {const tp=document.getElementById('topoMapa');tp.classList.toggle('cabo',!!C);tp.classList.toggle('tres',NP()>2);tp.classList.toggle('quatro',NP()>3);}
-   // a mana fica num bloco próprio, à esquerda, separada do placar dos jogadores
-   rod.innerHTML=`<div class="pManaBox">${manaHud()}</div>`+`<div class="pJog">${NP()>2
-     ?LADOS().map(lado).join('')
-     :lado(0)+meio(`${ART(1)} ${NM(1)}`)+lado(1)}</div>`;
+   // o relógio fica no meio da barra (em cima do marco do cabo de guerra): metade dos jogadores de cada lado; a sua mana na ponta direita
+   const esq=NP()>2?[0,1]:[0],dir=LADOS().filter(l=>!esq.includes(l)),grupo=ls=>`<div class="pGrupo">${ls.map(lado).join('')}</div>`;
+   rod.innerHTML=`<div class="pAla alaE">${grupo(esq)}</div><div class="pAla alaD">${grupo(dir)}<div class="pManaBox">${manaHud()}</div></div>`;
    // 1x1: a faixa cresce do meio para o lado de quem monta (você à esquerda, o rival à direita); chegou na ponta, venceu.
    // 1x1x1: só um lado tem cristal montado por vez, então a faixa cresce do meio para as duas pontas na cor desse lado.
    if(C){const q=50-C.v/META*50,tres=NP()>2;
