@@ -569,6 +569,16 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 #menuM .invG .spr{margin:0 0 2px}
 #menuM .invG .nm{font-weight:600;font-size:13px;line-height:1.2}
 #menuM .invG small{font-size:11.5px}
+#menuM .invG .vp{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;margin-top:3px;padding-top:4px;border-top:1px solid #3c4356;font-size:11px;line-height:1}
+#menuM .invG .vp .ln{display:flex;align-items:center;gap:2px;white-space:nowrap}
+#menuM .invG .vp .up{color:#9dffb8;margin-right:2px}#menuM .invG .vp .dn{color:#ffb0a8;margin-right:2px}
+#menuM .invG .elD{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;border:1px solid #111;color:#fff;font-size:9px;font-weight:700;font-style:normal}
+.retrato #menuM .invG .vp,.paisagem #menuM .invG .vp{flex-direction:row;justify-content:center;gap:5px}
+.paisagem #menuM .invG .vp{flex-direction:column;gap:2px}
+#menuM .mmBts{display:flex;gap:6px;align-items:flex-start}
+#menuM .btVant{width:auto;margin:0;padding:3px 8px;line-height:1.2;font-size:12px;color:#c9c7bf}
+#menuM .btVant.on{border-color:#8a6ab0;color:#e6d2ff}
+.retrato #menuM .btVant .rot,.paisagem #menuM .btVant .rot{display:none}
 #menuM .invG .custo{position:absolute;right:6px;top:4px;font-size:12px;color:var(--acc)}
 .paisagem #menuM.grade{width:min(640px,96%)!important}
 .paisagem #menuM .invG{grid-template-columns:repeat(6,1fr)}
@@ -1059,6 +1069,17 @@ const VANT={
   ar:['planta','terra'],
 };
 const vence=(a,d)=>!!VANT[a]&&VANT[a].includes(d);
+// tela de invocação: faixa "vence / perde" em cada cartão (o jogador ainda decide sozinho contra quem usar).
+// Começa ligada; o botão ▲▼ esconde ou mostra, e a escolha fica salva no navegador.
+const VANT_INV_CHAVE='senhoresDoVeu.vantInv';
+let VANT_INV=(()=>{try{return localStorage.getItem(VANT_INV_CHAVE)!=='0';}catch(e){return true;}})();
+function alternaVantInv(ev){if(ev)ev.stopPropagation();VANT_INV=!VANT_INV;try{localStorage.setItem(VANT_INV_CHAVE,VANT_INV?'1':'0');}catch(e){}atualiza();}
+const bolaEl=el=>`<i class="elD" style="background:${EL[el]}" title="${ELN[el]}">${ELI[el]}</i>`;
+function faixaVant(el){
+  const v=VANT[el]||[],p=Object.keys(VANT).filter(a=>vence(a,el)),cel=TELA_LIVRE();
+  const ln=(cls,rot,els)=>`<span class="ln"><span class="${cls}">${rot}</span>${els.map(bolaEl).join('')}</span>`;
+  return `<span class="vp">${ln('up',cel?'▲':'vence',v)}${ln('dn',cel?'▼':'perde',p)}</span>`;
+}
 function multEl(a,d){if(vence(a,d))return 1.5;if(vence(d,a))return 0.75;return 1;}
 const perdePara=el=>Object.keys(VANT).filter(x=>vence(x,el));
 function montaTabVant(){
@@ -1237,7 +1258,9 @@ function anotaTurno(u){
   const aliados=vizinhos(u.c,u.r).filter(([c,r])=>J.un.some(o=>o!==u&&o.lado===u.lado&&o.c===c&&o.r===r&&!ESP[o.esp].mestre)).length;
   if(aliados>=2)h.bando=(h.bando||0)+1;if(aliados>=1)h.bando1=(h.bando1||0)+1;
 }
-const INVOCAVEIS=['brasa','semente','girino','argila','ovoAlado','essencia'];
+// ordem pensada para a grade de 3 colunas da invocação: cada fileira é um ciclo, cada um vence o da direita
+// e o da ponta direita vence o da esquerda (Fogo > Planta > Água > Fogo; Arcano > Ar > Terra > Arcano)
+const INVOCAVEIS=['brasa','semente','girino','essencia','ovoAlado','argila'];
 // ---------- Evolução na criação ----------
 // Com EVO_CUSTO MP na reserva, o menu do mestre ganha "Evoluir": ele fixa uma forma de estágio 1 para uma das
 // criaturas iniciais e, dali em diante, invocar aquela criatura já traz a forma escolhida (pelo custo dela).
@@ -2030,7 +2053,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.39'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.40'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -4806,16 +4829,20 @@ function seloVant(m,x,y){
 }
 // quem é a referência dos selos neste quadro: sua criatura selecionada (selos nos inimigos)
 // ou o inimigo preso/apontado (selos nas suas criaturas, dizendo se elas o vencem)
+// (vale para todos os rivais, também os lados 2 e 3 das partidas de 3 ou 4 mestres; e para a sua criatura que já agiu,
+// que ao ser tocada fica só na ficha, sem seleção)
 let refVant=null;
 function atualizaRefVant(){
   refVant=null;if(!J||J.fim)return;
-  if(J.sel&&J.sel.lado===0){refVant={u:J.sel,em:1};return;}
+  if(J.sel&&J.sel.lado===0){refVant={u:J.sel,meu:true};return;}
   const e=(J.hover&&unidadeEm(...J.hover))||J.insp;
-  if(e&&e.lado!==0&&J.un.includes(e))refVant={u:e,em:0};
+  if(e&&e.lado!==0&&J.un.includes(e)){refVant={u:e,meu:false};return;}
+  if(J.insp&&J.insp.lado===0&&J.un.includes(J.insp))refVant={u:J.insp,meu:true};
 }
 function multVant(u){
-  if(!refVant||u.lado!==refVant.em)return 1;
-  const a=refVant.em===1?refVant.u:u,d=refVant.em===1?u:refVant.u;
+  if(!refVant||u===refVant.u)return 1;
+  if(refVant.meu?u.lado===0:u.lado!==0)return 1; // selos só no outro lado: nos rivais (sua criatura) ou nas suas (rival)
+  const a=refVant.meu?refVant.u:u,d=refVant.meu?u:refVant.u;
   return multEl(ESP[a.esp].el,ESP[d.esp].el);
 }
 function seloEl(el,x,y){
@@ -5432,10 +5459,10 @@ function menus(){
   }else if(minha&&J.invHex!=null){
     const [hc,hr]=DK(J.invHex);
     // grade de cartões (desenho, nome, elemento e custo), sem rolagem; os números da criatura ficam na ficha, depois de invocar
-    let h=`<div class="mmTopo"><div><div class="tit" style="color:var(--p0)">Invocar</div><div class="vez">${mpHtml(0)}${J.turno>1?` · exército ${criaturas(0)}/${limite(0)}`:''}</div></div><button class="mmX" onclick="J.invHex=null;atualiza()" aria-label="Fechar">✕</button></div><div class="invG">`;
+    let h=`<div class="mmTopo"><div><div class="tit" style="color:var(--p0)">Invocar</div><div class="vez">${mpHtml(0)}${J.turno>1?` · exército ${criaturas(0)}/${limite(0)}`:''}</div></div><div class="mmBts"><button class="btVant${VANT_INV?' on':''}" onclick="alternaVantInv(event)" aria-pressed="${VANT_INV}" title="${VANT_INV?'Esconder':'Mostrar'} de quem cada elemento vence e para quem perde">▲▼<span class="rot"> Vence/perde</span></button><button class="mmX" onclick="J.invHex=null;atualiza()" aria-label="Fechar">✕</button></div></div><div class="invG">`;
     for(const s of invocaveis(0)){
       const e=ESP[s],ok=J.mp[0]>=e.custo&&podeTerMais(0);
-      h+=`<button onclick="escolherInvocacao('${s}')" ${ok?'':'disabled'}><b class="custo">${e.custo}</b>${iconeSpr(s,48,'cor')}<span class="nm">${e.nome}</span><small style="color:${EL[e.el]}">${ELN[e.el]}</small></button>`;
+      h+=`<button onclick="escolherInvocacao('${s}')" ${ok?'':'disabled'}><b class="custo">${e.custo}</b>${iconeSpr(s,48,'cor')}<span class="nm">${e.nome}</span><small style="color:${EL[e.el]}">${ELN[e.el]}</small>${VANT_INV?faixaVant(e.el):''}</button>`;
     }
     h+=`</div>${podeTerMais(0)?'':`<div class="vez">${motivoLimite()}</div>`}`;
     // Evoluir: o mesmo do menu do mestre, ao alcance de quem está escolhendo o que invocar
