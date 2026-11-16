@@ -598,6 +598,13 @@ html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
 .retrato #topoMapa.tres #rodape .pGrupo{flex-direction:column;align-items:stretch;gap:3px} /* 3 ou 4 mestres no celular: dois a dois, empilhados */
 .paisagem #topoMapa #rodape.aberto{grid-template-columns:auto;gap:6px}
 .paisagem #topoMapa #rodape.aberto.cabo,.paisagem #topoMapa.cabo #rodape.aberto{padding-bottom:17px}.paisagem #rodape .pLado,.paisagem #rodape .pManaBox{flex:none}
+/* celular deitado: relógio no meio do topo, montado sobre a faixa do cabo de guerra (o placar completo continua no 📜) */
+.paisagem #topoMapa #relogio{--q:40px;position:absolute;left:50%;top:-4px;transform:translateX(-50%);z-index:3}
+.paisagem #topoMapa #rodape:not(.aberto){display:contents}
+.paisagem #rodape:not(.aberto) .pAla{display:none}
+.paisagem #rodape:not(.aberto) .pCabo{left:50%;right:auto;top:34px;bottom:auto;width:min(320px,42vw);transform:translateX(-50%);z-index:2;box-shadow:inset 0 0 0 1px #0006,0 1px 5px #000c}
+.paisagem #topoMapa>div:first-child{max-width:calc(50% - min(160px,21vw) - 10px)}
+.paisagem #dicaMapa{top:58px}
 </style>
 </head>
 <body>
@@ -1912,7 +1919,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.27'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.28'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
