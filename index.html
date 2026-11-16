@@ -683,8 +683,8 @@ html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
         <li><b>Brasa:</b> evolui no Dia → Salamandra; à Noite → Diabrete; na Manhã ou no Entardecer → Filhote Infernal.</li>
         <li><b>Cão Infernal</b> (estágio 2 do Filhote Infernal): turno em que ataca sem sair do lugar (ou andando só 1 casa) conta para o Cerberus; turno em que galopa 3 ou mais casas conta para a Mula sem Cabeça.</li>
         <li><b>Girino:</b> terminou 3 ou mais turnos em terra firme (fora de construções), e mais em terra do que na água → Sapinho; senão, evolui com mais da metade da vida → Boto Rosa, ferido (metade ou menos) → Cavalo Marinho.</li>
-        <li><b>Argila:</b> turno parada (sem andar) vale 1 ponto e turno em pedreira ou montanha vale 3: com 4 pontos ou mais → Gnomo. Senão, apanhou mais do que bateu no estágio → Troll; bateu mais do que apanhou → Homem Lagarto.</li>
-        <li><b>Semente:</b> turnos parada ou na floresta → Dríade; andando 2+ casas ou na planície → Filhote da Selva.</li>
+        <li><b>Argila:</b> turno parada (sem andar) vale 1 ponto e turno em pedreira ou montanha vale 3: com 4 pontos ou mais → Gnomo. Terminou 2 ou mais turnos à beira d'água (ao lado de rio, mar ou pântano) → Barruco; se valer os dois, vence o que passou mais da meta. Senão, apanhou mais do que bateu no estágio → Troll; bateu mais do que apanhou → Homem Lagarto.</li>
+        <li><b>Semente:</b> evolui à Noite → Mandrago. Senão, turnos parada ou na floresta → Dríade; andando 2+ casas ou na planície → Filhote da Selva.</li>
         <li><b>Ovo Alado:</b> evolui ferido (metade da vida ou menos) → Cocatriz, da linhagem Solar na Manhã ou no Dia, ou Lunar no Entardecer ou à Noite; com mais da metade da vida → Gato Alado. A linhagem Solar luta melhor de dia (como Fogo e Planta) e a Lunar à noite (como Água e Arcano); o resto do Ar é neutro ao horário.</li>
         <li><b>Gato Alado:</b> turnos terminados numa construção sua contam para o Grifo; cada torre capturada vale 3 para o Anzu.</li>
         <li><b>Dríade</b> (estágio 1 da Semente): cada turno terminado ao lado de 2 ou mais criaturas aliadas (a manada) conta para a Caipora; com 2 ou mais → Caipora. Senão → Curupira.</li>
@@ -1183,6 +1183,15 @@ const ESP={
   lich:{nome:'Lich',cat:'vooBaixo',el:'arcano',hp:52,atk:25,def:4,mov:4,alc:1,forma:'olho',tier:3},
   esqArqueiro:{nome:'Esqueleto Arqueiro',cat:'terPeq',el:'arcano',hp:34,atk:13,def:2,mov:3,alc:2,xp:95,evo:'flecheiro',forma:'olho',tier:2},
   flecheiro:{nome:'Flecheiro Maldito',cat:'terPeq',el:'arcano',hp:50,atk:19,def:3,mov:4,alc:2,forma:'olho',tier:3},
+  // quarto ramo da Argila: o barro da beira d'água, moldado e queimado até virar um golem (ramo raro, um pouco mais forte).
+  barruco:{nome:'Barruco',cat:'terPeq',el:'terra',hp:46,atk:11,def:6,mov:3,alc:1,custo:60,xp:50,evo:'terracoto',forma:'pedra',tier:1},
+  terracoto:{nome:'Terracoto',cat:'terPeq',el:'terra',hp:66,atk:16,def:9,mov:3,alc:1,xp:95,evo:'golemArgila',forma:'pedra',tier:2},
+  golemArgila:{nome:'Golem de Argila',cat:'terGra',el:'terra',hp:104,atk:23,def:11,mov:3,alc:1,forma:'pedra',tier:3},
+  // terceiro ramo da Semente: a raiz que se arranca à noite e vira árvore andante. A Planta luta pior à noite,
+  // então é um ramo raro (~⅕) e um pouco mais forte: ataque alto no começo, muralha lenta no fim
+  mandrago:{nome:'Mandrago',cat:'terPeq',el:'planta',hp:38,atk:11,def:3,mov:3,alc:1,custo:40,xp:40,evo:'sentinela',forma:'folha',tier:1},
+  sentinela:{nome:'Sentinela',cat:'terPeq',el:'planta',hp:62,atk:15,def:6,mov:3,alc:1,xp:85,evo:'trent',forma:'folha',tier:2},
+  trent:{nome:'Trent',cat:'terGra',el:'planta',hp:102,atk:20,def:9,mov:3,alc:1,forma:'folha',tier:3},
 };
 // qual desenho do atlas a espécie usa (arte: opcional, para emprestar o desenho de outra espécie)
 function spr(esp){return (ESP[esp]&&ESP[esp].arte)||esp;}
@@ -1204,11 +1213,15 @@ const RAMOS={
       terra=tot-agua-turnosEm(u,'cast','fort','torre');
       return terra>=3&&terra>agua?[0,0,1]:u.hp>ESP[u.esp].hp/2?[1,0,0]:[0,1,0];}},
   // o artesão trabalha parado e cava a pedra: turno parada vale 1, turno em pedreira/montanha (a mina) vale 3; com 4+ vira Gnomo
-  // (ramo raro, ~¼). Senão: apanhou mais → Troll; bateu mais → Homem Lagarto
-  argila:{para:['cascalho','homemLagarto','gnomo'],dica:'Turno parada (sem andar) vale 1 ponto e turno em pedreira ou montanha vale 3: com 4 pontos ou mais → Gnomo. Senão, apanhou mais do que bateu neste estágio → Troll; bateu mais do que apanhou → Homem Lagarto.',
-    pontos:u=>(hist(u).parado||0)+3*turnosEm(u,'pedr','mont')>=4?[0,0,1]:[hist(u).sofrido||0,hist(u).feito||0,-1]},
-  semente:{para:['broto','filhote'],dica:'Turnos parada ou na floresta → Dríade; andando 2+ casas ou na planície → Filhote da Selva.',
-    pontos:u=>[hist(u).parado+turnosEm(u,'flor'),hist(u).correu+turnosEm(u,'plan')]},
+  // (ramo raro). O barro nasce na margem: 2+ turnos terminados à beira d'água (ao lado de rio, mar ou pântano) → Barruco (ramo raro).
+  // Os dois valendo: vence quem passou mais da sua meta. Senão: apanhou mais → Troll; bateu mais → Homem Lagarto
+  argila:{para:['cascalho','homemLagarto','gnomo','barruco'],dica:'Turno parada (sem andar) vale 1 ponto e turno em pedreira ou montanha vale 3: com 4 pontos ou mais → Gnomo. Terminou 2 ou mais turnos à beira d’água (ao lado de rio, mar ou pântano) → Barruco. Se valer os dois, vence o que passou mais da meta. Senão, apanhou mais do que bateu neste estágio → Troll; bateu mais do que apanhou → Homem Lagarto.',
+    pontos:u=>{const h=hist(u),g=(h.parado||0)+3*turnosEm(u,'pedr','mont'),b=h.beira||0;
+      if(g>=4||b>=2)return [-1,-1,g>=4?g/4:0,b>=2?b/2:0];
+      return [h.sofrido||0,h.feito||0,-1,-1];}},
+  // a mandrágora se arranca do chão à noite: evoluir à Noite → Mandrago (~⅕, como o Diabrete do Fogo)
+  semente:{para:['broto','filhote','mandrago'],dica:'Evoluir à Noite → Mandrago. Senão: turnos parada ou na floresta → Dríade; andando 2+ casas ou na planície → Filhote da Selva.',
+    pontos:u=>faseAtual().nome==='Noite'?[-1,-1,1]:[hist(u).parado+turnosEm(u,'flor'),hist(u).correu+turnosEm(u,'plan'),-1]},
   // a Caipora anda com a manada: turno terminado ao lado de 2+ criaturas aliadas conta para ela (ramo raro)
   broto:{para:['espinhal','caipora'],dica:'Cada turno terminado ao lado de 2 ou mais criaturas aliadas (a manada) conta para a Caipora; com 2 ou mais → Caipora. Senão → Curupira.',
     pontos:u=>(hist(u).bando||0)>=2?[0,1]:[1,0]},
@@ -1231,7 +1244,7 @@ const RAMOS={
     pontos:u=>{const m=hist(u).mortes||0;
       return m>=3?[0,1,0]:u.hp<=ESP[u.esp].hp*.4?[1,0,0]:m>=2?[0,1,0]:[0,0,1];}},
 };
-const novaHist=()=>({ter:{},passos:0,p0:0,parado:0,correu:0,torre:0,guarda:0,abates:0,feito:0,sofrido:0,mordidas:0,m0:0,firme:0,galope:0,bando:0,bando1:0,mortes:0});
+const novaHist=()=>({ter:{},passos:0,p0:0,parado:0,correu:0,torre:0,guarda:0,abates:0,feito:0,sofrido:0,mordidas:0,m0:0,firme:0,galope:0,bando:0,bando1:0,mortes:0,beira:0});
 function hist(u){return u.h||(u.h=novaHist());}
 const turnosEm=(u,...ts)=>ts.reduce((s,t)=>s+(hist(u).ter[t]||0),0);
 // ramos empatados no topo dos pontos (um só = esse vence; vários = sorteio entre eles)
@@ -1262,7 +1275,11 @@ function anotaTurno(u){
   if(ehConstrucao(t)&&J.dono[K(u.c,u.r)]===u.lado)h.guarda=(h.guarda||0)+1;
   const aliados=vizinhos(u.c,u.r).filter(([c,r])=>J.un.some(o=>o!==u&&o.lado===u.lado&&o.c===c&&o.r===r&&!ESP[o.esp].mestre)).length;
   if(aliados>=2)h.bando=(h.bando||0)+1;if(aliados>=1)h.bando1=(h.bando1||0)+1;
+  if(beiraDagua(u))h.beira=(h.beira||0)+1;
 }
+// terminou o turno em terra, com rio, mar ou pântano ao lado (ramo do Barruco)
+const AGUA_TER=['rio','mar','pant'];
+const beiraDagua=u=>!AGUA_TER.includes(terDe(u))&&vizinhos(u.c,u.r).some(([c,r])=>AGUA_TER.includes(J.ter[K(c,r)]));
 // ordem pensada para a grade de 3 colunas da invocação: cada fileira é um ciclo, cada um vence o da direita
 // e o da ponta direita vence o da esquerda (Fogo > Planta > Água > Fogo; Arcano > Ar > Terra > Arcano)
 const INVOCAVEIS=['brasa','semente','girino','essencia','ovoAlado','argila'];
@@ -1272,7 +1289,7 @@ const INVOCAVEIS=['brasa','semente','girino','essencia','ovoAlado','argila'];
 // As duas opções saem do histórico da partida (J.hj: o que o exército daquele mestre mais viveu até agora).
 // Escolhida, a forma fica fixa até o fim da partida.
 const EVO_CUSTO=200;
-const novaHj=()=>({atkDia:0,atkNoite:0,atkCresp:0,feito:0,sofrido:0,abates:0,torre:0,ter:{},parado:0,correu:0,saudavel:0,ferido:0,feridoDia:0,feridoNoite:0,perdas:0});
+const novaHj=()=>({atkDia:0,atkNoite:0,atkCresp:0,feito:0,sofrido:0,abates:0,torre:0,ter:{},parado:0,correu:0,saudavel:0,ferido:0,feridoDia:0,feridoNoite:0,perdas:0,beira:0});
 function hj(l){J.hj=J.hj||[];return J.hj[l]||(J.hj[l]=novaHj());}
 const contaHj=u=>u&&!u.elemental&&!ESP[u.esp].mestre&&u.dominado==null; // só as criaturas do próprio mestre
 const hjTer=(h,...ts)=>ts.reduce((s,t)=>s+(h.ter[t]||0),0);
@@ -1283,6 +1300,7 @@ function anotaJogo(u){
   let p=hu.passos-(u.pj||0);if(p<0)p=hu.passos;u.pj=hu.passos; // a história do estágio zera ao evoluir
   h.ter[t]=(h.ter[t]||0)+1;if(p===0)h.parado++;else if(p>=2)h.correu++;
   if(u.hp>ESP[u.esp].hp/2)h.saudavel++;else{h.ferido++;if(faseAtual().diurno)h.feridoDia++;else h.feridoNoite++;}
+  if(beiraDagua(u))h.beira=(h.beira||0)+1;
 }
 // pontos de cada ramo pelo histórico da partida, na ordem de RAMOS[base].para: [pontos, motivo]
 const EVO_HJ={
@@ -1290,9 +1308,9 @@ const EVO_HJ={
   girino:h=>{const tot=Object.values(h.ter).reduce((a,b)=>a+b,0),terra=tot-hjTer(h,'rio','mar','pant','cast','fort','torre');
     return [[h.saudavel*.4,`${h.saudavel} turnos terminados com mais da metade da vida`],[h.ferido,`${h.ferido} turnos terminados feridos`],[terra*.3,`${terra} turnos em terra firme`]];},
   argila:h=>{const mina=hjTer(h,'pedr','mont');
-    return [[h.sofrido/8,`${h.sofrido} de dano sofrido`],[h.feito/8,`${h.feito} de dano causado`],[(h.parado+3*mina)*.5,`${h.parado} turnos parados e ${mina} em pedreira ou montanha`]];},
+    return [[h.sofrido/8,`${h.sofrido} de dano sofrido`],[h.feito/8,`${h.feito} de dano causado`],[(h.parado+3*mina)*.5,`${h.parado} turnos parados e ${mina} em pedreira ou montanha`],[(h.beira||0)*.8,`${h.beira||0} turnos à beira d'água`]];},
   semente:h=>{const f=hjTer(h,'flor'),pl=hjTer(h,'plan');
-    return [[h.parado+f,`${h.parado} turnos parados e ${f} na floresta`],[h.correu+pl,`${h.correu} turnos correndo e ${pl} na planície`]];},
+    return [[h.parado+f,`${h.parado} turnos parados e ${f} na floresta`],[h.correu+pl,`${h.correu} turnos correndo e ${pl} na planície`],[h.atkNoite*.7,`${h.atkNoite} ataques à Noite`]];},
   ovoAlado:h=>[[h.saudavel*.4,`${h.saudavel} turnos terminados com mais da metade da vida`],[h.feridoDia,`${h.feridoDia} turnos feridos de dia`],[h.feridoNoite,`${h.feridoNoite} turnos feridos de noite`]],
   essencia:h=>[[h.parado*.3,`${h.parado} turnos de vigia (parados)`],[h.abates*2,`${h.abates} inimigos derrubados`],[(h.perdas||0)*1.5,`${h.perdas||0} criaturas suas derrubadas`]],
 };
@@ -2060,7 +2078,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.46'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.47'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2113,7 +2131,8 @@ const OLHA_SPR={faisca:-1,brasador:1,pirolorde:1,gotim:1,corrente:1,abissal:1,br
   anzu:1,quimera:1,espada:1,armamentario:1,armadura:1,
   filhoteInf:-1,caoInfernal:-1,cerberus:-1,mulaSemCabeca:-1,sapinho:-1,bullywug:1,bullete:1,gnomo:-1,forjador:-1,golem:-1,caipora:1,hordaFloresta:1,
   cocatrizSol:-1,harpiaSol:-1,esfingeSol:1,cocatrizLua:-1,harpiaLua:1,esfingeLua:1,
-  caveira:-1,esqGuerreiro:-1,draugr:1,esqMago:1,lich:1,esqArqueiro:1,flecheiro:1};
+  caveira:-1,esqGuerreiro:-1,draugr:1,esqMago:1,lich:1,esqArqueiro:1,flecheiro:1,
+  barruco:-1,terracoto:-1,golemArgila:1,mandrago:1,sentinela:1,trent:1};
 // lado do tabuleiro: você começa à esquerda (olha para a direita), o Necromancer à direita (olha para a esquerda)
 function viraPara(u,x){const dx=x-centro(u.c,u.r)[0];if(Math.abs(dx)>1)u.dir=Math.sign(dx);}
 function criaUnidade(esp,lado,c,r){const u={id:nid++,esp,lado,c,r,dir:c<COLS/2?1:-1,hp:ESP[esp].hp,xp:0,movido:false,agiu:false};J.un.push(u);return u;}
@@ -4690,7 +4709,7 @@ function forma(f,x,y,s){
     ctx.lineTo(x+s*.32,y);ctx.lineTo(x+s*.65,y-s*.35);ctx.lineTo(x+s*.65,y+s*.4);ctx.closePath();ctx.fill();
   }
 }
-// ---------- Sprites (atlas 6x12 de células 128px; editar arte/atlas.png direto) ----------
+// ---------- Sprites (atlas 6x13 de células 128px; editar arte/atlas.png direto) ----------
 const ORDEM_SPR=['faisca','brasador','pirolorde','gotim','corrente','abissal','broto','espinhal','anciao',
   'cascalho','pedregulho','monolito','penugem','gaviao','tempestario','olho','vigia','oraculo',
   'arquimaga','barao','warlock','wizard','sorcerer',null, // 4ª linha do atlas: os mestres (Summoner, Necromancer, Warlock, Wizard, Sorcerer)
@@ -4701,9 +4720,10 @@ const ORDEM_SPR=['faisca','brasador','pirolorde','gotim','corrente','abissal','b
   'caoInfernal','cerberus','mulaSemCabeca','sapinho','bullywug','bullete', // 9ª linha: o fim da matilha do Fogo e os anfíbios da Água
   'gnomo','forjador','golem','caipora','hordaFloresta','cocatrizSol', // 10ª linha: os artesãos da Terra, a manada da Planta
   'harpiaSol','esfingeSol','cocatrizLua','harpiaLua','esfingeLua','caveira', // 11ª linha: as linhagens Solar e Lunar do Ar e a Caveira
-  'esqGuerreiro','draugr','esqMago','lich','esqArqueiro','flecheiro']; // 12ª linha: os esqueletos da Essência
-const ATL_LIN=12;
-const ATLAS=/*ATLAS*/"img/atlas.png?v=b8c6ce3f"/*FIM_ATLAS*/;
+  'esqGuerreiro','draugr','esqMago','lich','esqArqueiro','flecheiro', // 12ª linha: os esqueletos da Essência
+  'barruco','terracoto','golemArgila','mandrago','sentinela','trent']; // 13ª linha: o barro da Argila e as raízes da Semente
+const ATL_LIN=13;
+const ATLAS=/*ATLAS*/"img/atlas.png?v=60b4da36"/*FIM_ATLAS*/;
 const CEL=128;
 // estágio de evolução tem que ser legível só pelo tamanho: 0 mínimo, 1º pequeno, 2º médio, 3º grande (passa da borda do hexágono)
 const TAM_SPR=[21,28,40,56];
@@ -4832,13 +4852,13 @@ atlas.onload=()=>{
 if(ATLAS)atlas.src=ATLAS;
 // ----- monstros coloridos (arte/atlas_cor.png, mesmo layout do atlas; só as 18 criaturas) -----
 // usados onde a cor do time não importa: tela de combate e menu de invocação. Mestres continuam do atlas do time.
-const N_COR=72; // 18 monstros + 5 mestres + 1 vazio + 6 do estágio 0 + 17 dos segundos ramos + 4 da matilha do Fogo + 3 anfíbios + 3 artesãos + 2 da manada + 6 Solar/Lunar + 7 mortos-vivos
+const N_COR=78; // 18 monstros + 5 mestres + 1 vazio + 6 do estágio 0 + 17 dos segundos ramos + 4 da matilha do Fogo + 3 anfíbios + 3 artesãos + 2 da manada + 6 Solar/Lunar + 7 mortos-vivos + 3 do barro + 3 das raízes
 const atlasCorImg=new Image();let atlasCor=null;
 atlasCorImg.onload=()=>{
   FILA_ATLAS.push(()=>{atlasCor=contornar(atlasCorImg,4,'#07080c');if(J)atualiza();});
   if(FILA_ATLAS.length===1)rodaFilaAtlas();
 };
-atlasCorImg.src=/*ATLAS_COR*/"img/atlas-cor.png?v=71ac626c";
+atlasCorImg.src=/*ATLAS_COR*/"img/atlas-cor.png?v=ff73f718";
 const temCor=esp=>{const i=ORDEM_SPR.indexOf(spr(esp));return i>=0&&i<N_COR;};
 function iconeSpr(esp,t,lado=0){
   const i=ORDEM_SPR.indexOf(spr(esp));
