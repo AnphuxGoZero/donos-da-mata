@@ -2053,7 +2053,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.40'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.41'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -5439,7 +5439,8 @@ function menus(){
     const invPq=!podeTerMais(0)?'exército cheio':!invocaveis(0).some(s=>ESP[s].custo<=J.mp[0])?'MP insuficiente':!hexesInvocacao(0).size?'sem construção livre ao lado':'';
     // 1º turno: só o botão (o tamanho do exército é detalhe para depois); um impedimento ainda aparece
     h+=acao('✚','#f2c14e','Invocar',invPq||(J.turno>1?`exército ${criaturas(0)}/${limite(0)}`:''),"invocarRapido()",invOk,invPq?dicaInvocar():'Escolhe uma construção livre e abre a lista de criaturas.',J.invocou?.[0]?'':' pisca');
-    if(J.turno>3&&!m.movido&&J.alc&&J.alc.dest.size>1)h+=acao('➜','#7fc4ff','Mover',`até ${movDe(m)} casas`,"menuMestre('mover')",true);
+    // Mover só aparece quando o mestre consegue atacar alguém (parado ou andando até ele); antes disso só ocupava espaço
+    if(!m.movido&&!m.agiu&&J.alc&&J.alc.dest.size>1&&temAlvos())h+=acao('➜','#7fc4ff','Mover',`até ${movDe(m)} casas`,"menuMestre('mover')",true);
     if(!m.agiu&&temAlvos())h+=acao('⚔','#ff8a80','Atacar',`${J.alvosSet.size+J.alvosMove.size} ao alcance`,"menuMestre('atacar')",true);
     // Evoluir: aparece quando a reserva chega a EVO_CUSTO e ainda há criatura inicial sem forma fixada
     if(podeEvoluir(0))h+=acao('▲','#6ee08a','Evoluir',`${EVO_CUSTO} MP`,'abrirEvo()',true,'Fixa a forma de estágio 1 de uma criatura inicial: dali em diante ela já nasce evoluída. As opções vêm do que seu exército mais viveu na partida.');
