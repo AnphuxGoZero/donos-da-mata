@@ -1,6 +1,6 @@
 // Service worker de "Senhores da Guerra": deixa o jogo instalável e jogável sem internet.
 //
-// Estratégia: rede primeiro, cache como reserva.
+// Estratégia: rede primeiro, cache como reserva (as imagens com ?v=<hash> vêm direto do cache: não mudam).
 //  - com internet, o jogo sempre abre na versão mais nova publicada (e ela vai para o cache);
 //  - sem internet, ou se a rede demorar demais, abre a última versão guardada.
 // Por isso não é preciso mexer neste arquivo a cada atualização do jogo: basta publicar o index.html novo.
@@ -25,8 +25,29 @@ self.addEventListener('activate', ev => {
 self.addEventListener('fetch', ev => {
   const req = ev.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
-  ev.respondWith(redePrimeiro(req));
+  // imagens com ?v=<hash> nunca mudam naquele endereço (a versão nova ganha outro hash): vêm direto do cache
+  ev.respondWith(new URL(req.url).searchParams.has('v') ? cacheVersionado(req) : redePrimeiro(req));
 });
+
+async function cacheVersionado(req) {
+  const cache = await caches.open(CACHE);
+  const guardado = await cache.match(req); // com o ?v= exato: hash diferente = arquivo novo, vai à rede
+  if (guardado) return guardado;
+  let resp;
+  try { resp = await fetch(req); }
+  catch (e) { // sem internet: serve a versão guardada que houver, mesmo de outro ?v=
+    const outra = await cache.match(req, { ignoreSearch: true });
+    if (outra) return outra;
+    throw e;
+  }
+  if (resp.ok) {
+    cache.put(req, resp.clone());
+    // tira do cache as versões antigas do mesmo arquivo (outros ?v=)
+    const base = req.url.split('?')[0];
+    for (const k of await cache.keys()) if (k.url.split('?')[0] === base && k.url !== req.url) cache.delete(k);
+  }
+  return resp;
+}
 
 async function redePrimeiro(req) {
   const cache = await caches.open(CACHE);
