@@ -2022,7 +2022,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.34'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.35'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -3262,7 +3262,7 @@ async function clique(c,r){
   if(J.vez!==0||J.ocupado||J.fim)return;
   const k=K(c,r),alvo=unidadeEm(c,r),s=J.sel;
   // a ficha "presa" de um inimigo (ou de criatura sua que já agiu) solta a cada clique; clicar nela de novo só solta
-  const inspAntes=J.insp;J.insp=null;J.menuAlvo=null;
+  const inspAntes=J.insp,menuAntes=J.menuAlvo;J.insp=null;J.menuAlvo=null;
   if(J.mg||J.fz){await cliqueMagia(k);return;}
   if(J.evo){sairEvo();return;} // menu Evoluir aberto: clicar no mapa volta ao mestre
   if(J.invocando){
@@ -3303,7 +3303,12 @@ async function clique(c,r){
     }
     if(alvo===s){
       if(ehMestreSel())J.menuMestre='principal';
-      else{if(s.movido)s.agiu=true;desseleciona();}
+      else{
+        // 2º toque na criatura selecionada: fecha o alcance e abre ao lado dela as magias que valem nela
+        // (sem magia possível, só cancela, como antes); o 3º toque fecha a lista
+        if(s.movido)s.agiu=true;desseleciona();
+        if(J.invocou?.[0]&&magiaPronta(s)){J.insp=s;J.menuAlvo=s;J.menuAlvoFase='magia';}
+      }
       atualiza();return;
     }
     if(!alvo&&J.alc&&J.alc.dest.has(k)){
@@ -3319,6 +3324,8 @@ async function clique(c,r){
   // criatura sua sob efeito ruim (Sono, Petrificar…) ou que já agiu (✓): abre ao lado dela as magias que ajudam,
   // como Despertar, Cura ou Novo Fôlego (tocar de novo fecha)
   const jaAgiu=u=>u.agiu&&!ESP[u.esp].mestre;
+  // lista de magias aberta nesta criatura: tocar nela de novo só fecha (não volta a mostrar o alcance)
+  if(alvo&&alvo===menuAntes){desseleciona();atualiza();return;}
   if(alvo&&alvo.lado===0&&alvo!==inspAntes&&(afetada(alvo)||jaAgiu(alvo))&&J.invocou?.[0]&&magiaPronta(alvo)){
     desseleciona();J.insp=alvo;J.menuAlvo=alvo;J.menuAlvoFase='magia';atualiza();return; // direto na lista: na criatura sua não há Força
   }
