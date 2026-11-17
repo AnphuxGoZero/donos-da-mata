@@ -425,7 +425,7 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 #intro .inTxt{font-size:clamp(16px,2.6vw,22px);font-weight:700;line-height:1.45;max-width:620px;color:#fff;
   text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000,0 2px 6px #000;
   opacity:0;transform:translateY(6px);transition:opacity .6s,transform .6s}
-#intro .inSeguir{margin-top:8px;font-size:clamp(14px,2.2vw,17px);font-weight:700;color:#f2c14e;letter-spacing:.04em;text-shadow:0 1px 3px #000;opacity:0;transition:opacity .4s}
+#intro .inSeguir{position:absolute;left:0;right:0;bottom:calc(9vh + 18px);text-align:center;pointer-events:none;font-size:clamp(15px,2.4vw,18px);font-weight:700;color:#f2c14e;letter-spacing:.04em;text-shadow:0 1px 3px #000;opacity:0;transition:opacity .4s}
 #intro .inSeguir.pisca{opacity:1;animation:inSeguir 1.3s ease-in-out infinite}
 @keyframes inSeguir{0%,100%{opacity:1}50%{opacity:.35}}
 #intro .vis{opacity:1!important;transform:none!important}
@@ -709,7 +709,7 @@ html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
     <div class="cx" id="caixaLog"><h2>Registro</h2><div id="log"></div></div>
   </div></div>
 </div>
-<div id="intro"><div class="inCaixa"><div class="inTit">O Cristal se partiu</div><div class="inTxt in1">Quem restaurá-lo governará estas terras.</div><div class="inTxt in2">Conquiste as torres e domine o centro para vencer.</div><div class="inSeguir">toque para começar</div></div><div class="inPular">toque para pular</div></div>
+<div id="intro"><div class="inCaixa"><div class="inTit">O Cristal se partiu</div><div class="inTxt in1">Quem restaurá-lo governará estas terras.</div><div class="inTxt in2">Conquiste as torres e domine o centro para vencer.</div></div><div class="inSeguir">toque para começar</div><div class="inPular">toque para pular</div></div>
 <div id="cercoCena" title=""><div class="ccAviso"></div><div class="ccCaixa"><div class="ccTela"><canvas class="ccTxt"></canvas><div class="ccCeuTxt"></div></div><div class="cap"></div></div></div>
 <div id="fichaDet" onclick="if(event.target===this)fechaFicha()"><div class="cx"><div class="topoAj"><h2 id="fichaDetTit">Detalhes</h2><button onclick="fechaFicha()" title="Fechar (Esc)">✕</button></div><div id="fichaDetIn"></div></div></div>
 <div id="ajuda" onclick="if(event.target===this)fechaAjuda()"><div class="cx ajuda"><div class="topoAj"><h1>Como jogar</h1><button onclick="fechaAjuda()" title="Fechar (Esc)">✕</button></div>
@@ -1804,7 +1804,7 @@ function novoJogo(op=prefs()){
 // Abre na Torre do Cristal com o cristal inteiro brilhando; um raio cai nele e ele se parte nos seis cacos
 // (o estado em que toda partida começa). A frase resume o objetivo, e a câmera viaja até o seu mestre.
 // Depois das frases a cena espera um toque (clique, Espaço, Enter) para viajar; Esc pula tudo. Desenho em desenhaCristal (estouro dos cacos) e desenhaIntro (raios, clarão).
-const INTRO={raio:1500,quebra:900,tit:2300,txt:3100,txt2:4700,espera:5400,viaja:7600,dViaja:1700,fim:9700};
+const INTRO={dicaToque:5000,raio:1500,quebra:900,tit:2300,txt:3100,txt2:4700,espera:5400,viaja:7600,dViaja:1700,fim:9700};
 // as frases entram uma de cada vez; depois da última a cena PARA (em INTRO.espera) e espera um toque:
 // só então a câmera viaja até o mestre (o jogador lê no seu tempo)
 function comecaIntro(){
@@ -1816,7 +1816,7 @@ function comecaIntro(){
   CAM.alvo=null;CAM.z=CAM.zAlvo=zIni;CAM.x=tx;CAM.y=ty-R*.8;
   const el=document.getElementById('intro');
   // título e frase centrados sobre o mapa (no PC, o painel lateral fica de fora)
-  const rc=cv.getBoundingClientRect(),cx=el.querySelector('.inCaixa');cx.style.left=Math.max(0,rc.left)+'px';cx.style.right=Math.max(0,innerWidth-rc.right)+'px';
+  const rc=cv.getBoundingClientRect();for(const e of el.querySelectorAll('.inCaixa,.inSeguir')){e.style.left=Math.max(0,rc.left)+'px';e.style.right=Math.max(0,innerWidth-rc.right)+'px';}
   el.className='aberto';el.querySelectorAll('.vis').forEach(e=>e.classList.remove('vis'));
   el.onclick=toqueIntro;
   void el.offsetWidth;setTimeout(()=>el.classList.add('claro'),40); // o mapa surge do escuro
@@ -1847,7 +1847,8 @@ function camIntro(now){
   if(I.etapa===2&&t>=INTRO.txt2){I.etapa=3;el.querySelector('.in2').classList.add('vis');}
   if(!I.seguiu&&t>=INTRO.espera){ // parada: o tempo da cena não anda até o toque
     I.t0=now-INTRO.espera;
-    if(!I.esperando){I.esperando=true;el.querySelector('.inSeguir').classList.add('pisca');}
+    if(!I.esperando){I.esperando=true;I.esperaDesde=now;}
+    if(!I.dica&&now-I.esperaDesde>=INTRO.dicaToque){I.dica=true;el.querySelector('.inSeguir').classList.add('pisca');} // a dica só aparece se o jogador demorar
     if(I.etapa<3){if(I.etapa<1){el.querySelector('.inTit').classList.add('vis');el.querySelector('.inCaixa').classList.add('vis');}
       el.querySelector('.in1').classList.add('vis');el.querySelector('.in2').classList.add('vis');I.etapa=3;}
   }
@@ -2209,7 +2210,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.55'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.56'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
