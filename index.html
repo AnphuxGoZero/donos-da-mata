@@ -214,7 +214,7 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 .vantLinha i{font-style:normal;color:#fff;font-size:10.5px;padding:0 6px;border-radius:8px;line-height:16px}
 .vantLinha span+span,.vantLinha i+span{margin-left:3px} /* altura reservada: o registro não pula quando a ficha muda */
 #btFim{flex:1;padding:12px;font-size:15px;font-weight:600;letter-spacing:.02em}
-#btFim.tutTrava:disabled{opacity:1;cursor:default;background:#1b1f29;border-style:dashed;border-color:#4a5268;color:#c9cfdc}
+#btFim.tutTrava{visibility:hidden} /* tutorial: o botão só aparece depois das duas invocações (o espaço fica reservado: nada pula) */
 #btFim.brilha,#btFim.brilha:hover:not(:disabled){background:#a87a22;border-color:#f2c14e;color:#fff;animation:brilhaFim 1.6s ease-in-out infinite}
 @keyframes brilhaFim{0%,100%{box-shadow:0 0 0 0 #f2c14e00}50%{box-shadow:0 0 14px 3px #f2c14ecc}}
 /* jogador parado na própria vez: o Encerrar turno chama atenção aos poucos (ocio1 → ocio3) */
@@ -396,6 +396,11 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 .retrato.introHud #linhaFim,.retrato.introHud #info{animation:hudVoltaBaixo .9s ease-out both}
 @keyframes hudVoltaCima{from{opacity:0;transform:translateY(-24px)}to{opacity:1;transform:none}}
 @keyframes hudVoltaBaixo{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:none}}
+/* celular deitado: o mapa já ocupa a tela; na abertura os painéis por cima dele somem e voltam esmaecendo
+   (só opacidade: transformar o #linhaFim mudaria a referência do 👣 fixo dentro dele) */
+.paisagem.introCheia #topoMapa,.paisagem.introCheia #linhaFim,.paisagem.introCheia #info,.paisagem.introCheia #alertaCerco{opacity:0;pointer-events:none}
+.paisagem.introHud #topoMapa,.paisagem.introHud #linhaFim,.paisagem.introHud #info,.paisagem.introHud #alertaCerco{animation:hudSurge .9s ease-out both}
+@keyframes hudSurge{from{opacity:0}to{opacity:1}}
 .retrato #cv{position:absolute;inset:0;width:100%;height:100%}
 .retrato #menuM{max-height:58vh;max-height:58dvh}
 #dicaMapa{position:absolute;left:6px;right:6px;top:6px;z-index:2;pointer-events:none}
@@ -429,7 +434,11 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
   text-align:center;line-height:1.35;font-size:max(13px,calc(var(--cw) / 24));font-weight:600;color:#fff;text-shadow:0 1px 3px #000,0 0 8px #000;pointer-events:none;opacity:0;transition:opacity .4s}
 #cercoCena .ccCeuTxt:empty{display:none}
 #cercoCena .ccCeuTxt.vis{opacity:1}
-#cercoCena .avTit{font-family:"Pirata One",serif;font-size:min(clamp(28px,6vw,44px),8.5vh);line-height:1.05;letter-spacing:.02em;text-shadow:0 3px 0 #000,0 0 18px currentColor}
+#cercoCena .avTit{font-family:"Pirata One",serif;font-size:min(clamp(28px,6vw,44px),8.5vh);}
+.paisagem #cercoCena .avTit{font-size:min(30px,7.5vh)}
+.paisagem #cercoCena .ccCeuTxt{font-size:11.5px;line-height:1.25;padding:3px 8px}
+.paisagem #cercoCena{gap:8px}
+#cercoCena .avTit{line-height:1.05;letter-spacing:.02em;text-shadow:0 3px 0 #000,0 0 18px currentColor}
 #cercoCena .avTit.ouro{color:#ffd76c}#cercoCena .avTit.roxo{color:#d6b4ff}#cercoCena .avTit.verm{color:#ff9a6a}
 #cercoCena .avSub{margin-top:6px;font-size:clamp(14px,2.4vw,17px);font-weight:600;line-height:1.4;color:#fff;text-shadow:0 1px 3px #000,0 0 8px #000}
 
@@ -1790,7 +1799,7 @@ const MODOS={'1x1':2,'1x1x1':3,'1x1x1x1':4};
 const NOME_MODO=[,,'Duelo','Tríade','Guerra Total']; // pelo número de mestres
 // preferências do novo jogo (mestre escolhido), lembradas no navegador
 const PREFS_CHAVE='senhoresDoVeu.prefs';
-// Tutorial do 1º turno (só nas primeiras partidas): o Encerrar turno fica travado, mostrando "Invoque 2 criaturas (x/2)",
+// Tutorial do 1º turno (só nas primeiras partidas): o Encerrar turno fica escondido
 // até o jogador invocar duas criaturas ou não conseguir invocar mais nada. Conta quantas vezes ele completou; com TUT_VEZES, some.
 const TUT_CHAVE='senhoresDoVeu.tutInv',TUT_VEZES=3;
 const tutorialPendente=()=>{try{return (+localStorage.getItem(TUT_CHAVE)||0)<TUT_VEZES;}catch(e){return false;}};
@@ -1841,7 +1850,7 @@ const INTRO={dicaToque:5000,raio:1500,quebra:900,tit:2300,txt:3100,txt2:4700,esp
 function comecaIntro(){
   const m=mestreDe(0);
   if(!VEL||document.hidden||!J.cristal||!m){J.intro=null;return;}
-  if(RETRATO()){document.documentElement.classList.add('introCheia');ajustaTela(true);}
+  if(RETRATO()||PAISAGEM()){document.documentElement.classList.add('introCheia');ajustaTela(true);} // celular: só o mapa na abertura
   const [tx,ty]=centro(...DK(J.cristal.k));
   const zFim=CAM.zPref,zIni=Math.max(zFim*1.3,zBase()*2.4);
   J.intro={t0:performance.now(),tx,ty:ty-R*.8,zIni,zFim,raios:[],tremor:0,etapa:0};
@@ -2250,7 +2259,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.62'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.63'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2675,7 +2684,7 @@ function rodaCena(o){
   // tela baixa (celular deitado): o quadro encolhe para caber junto com o título de cima e as tropas de baixo
   {const avEl=el.querySelector('.ccAviso'),capEl=el.querySelector('.cap');
    const resto=(avEl.innerHTML?avEl.offsetHeight+14:0)+(capEl.innerHTML?capEl.offsetHeight+8:0)+40; // bordas, folgas e margem
-   const cabe=(innerHeight-resto)/H;if(esc>cabe)esc=Math.max(1,cabe);}
+   const cabe=(innerHeight*(PAISAGEM()?.8:1)-resto)/H;if(esc>cabe)esc=Math.max(1,cabe);} // deitado: usa ~80% da altura, com folga em volta
   const cw=Math.round(CC_W*esc),ch=Math.round(H*esc);
   // a pixel art é desenhada num quadro pequeno fora da tela (160×108) e ampliada sem suavizar para o canvas visível,
   // que tem a resolução real da tela; o texto vai direto nele, nítido
@@ -5747,7 +5756,7 @@ function atualiza(){
   bt.textContent=J.fim?'Fim de jogo':J.vez===0?'Encerrar turno':J.pular?`Vez ${doM(J.vez)}…`:`⏩ Pular vez ${doM(J.vez)}`;
   bt.title=J.vez!==0&&!J.fim?'Pula as animações dos rivais e vai direto para a sua vez':'';
   {const trava=tutTrava();bt.classList.toggle('tutTrava',trava);
-   if(trava){bt.disabled=true;bt.textContent=`Invoque 2 criaturas (${J.tut.n}/2)`;bt.title='Toque no seu mestre e invoque duas criaturas';}
+   if(trava){bt.disabled=true;bt.title='';}
    else if(minha&&J.tut&&J.turno===1)bt.classList.add('brilha');} // tutorial cumprido: o botão já brilha
   // celular deitado: a ficha do rodapé termina antes do 👣/✦/figurinha (canto de baixo); sem eles, vai até a borda
   if(document.documentElement.classList.contains('paisagem')){
