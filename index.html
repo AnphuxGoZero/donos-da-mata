@@ -396,6 +396,16 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 #intro .vis{opacity:1!important;transform:none!important}
 #intro .inPular{position:absolute;right:12px;bottom:calc(9vh + 8px);font-size:12px;color:#fffa;text-shadow:0 1px 2px #000;pointer-events:none}
 #intro.sai .inCaixa,#intro.sai .inPular{opacity:0!important;transition:opacity 1s ease-in!important} /* .vis usa !important: a saída também */
+#compart{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
+#compart.aberto{display:flex}
+#compart>.cx{width:min(340px,100%);text-align:center;padding:14px 18px 16px;box-shadow:0 10px 40px #000c}
+#compart .topoAj{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+#compart .topoAj h2{margin:0}
+#compart .topoAj button{min-height:0;padding:4px 10px}
+#compart .qr{display:block;width:100%;max-width:260px;margin:0 auto;border-radius:8px;background:#fff}
+#compart .url{margin:10px 0 2px;font-size:12.5px;word-break:break-all;color:var(--txt)}
+#compart .linha{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+#saves.tela .btCompart{position:absolute;left:max(10px,env(safe-area-inset-left));bottom:max(6px,env(safe-area-inset-bottom));width:auto;max-width:none;padding:5px 12px;font-size:13px;opacity:.9}
 #fichaDet{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:7;padding:8px}
 #fichaDet.aberto{display:flex}
 #fichaDet>.cx{width:min(420px,100%);max-height:85vh;max-height:85dvh;overflow:auto;font-size:12.5px;box-shadow:0 10px 40px #000c}
@@ -700,6 +710,12 @@ html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
       <p class="soToque"><b>Instalar como app:</b> no Android, abra o menu ☰ e toque em "Instalar como app" (ou use "Adicionar à tela inicial" no menu do navegador). No iPhone, toque em Compartilhar e depois em "Adicionar à Tela de Início". O jogo passa a abrir em tela cheia e funciona sem internet.</p>
     </div></div>
 <div id="dica"></div>
+<div id="compart" onclick="if(event.target===this)fechaCompart()"><div class="cx"><div class="topoAj"><h2>Compartilhar</h2><button onclick="fechaCompart()" title="Fechar (Esc)">✕</button></div>
+  <div class="vez">Aponte a câmera do celular para o código e abra o jogo.</div>
+  <div id="compartQr" style="margin-top:10px"></div>
+  <div class="url" id="compartUrl"></div>
+  <div class="linha"><button id="btCopiaLink" onclick="copiaLink()">📋 Copiar link</button><button id="btShareNat" class="pri" onclick="compartNativo()" hidden>↗ Enviar…</button></div>
+</div></div>
 <div id="fim"><div class="cx"><h1 id="fimTxt"></h1><p id="fimSub" class="vez"></p><button class="pri" onclick="abreConfig()">Jogar de novo</button></div></div>
 
 <script>
@@ -2100,7 +2116,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.52'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.53'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2116,6 +2132,7 @@ function desenhaInicio(){
       <button class="grande" onclick="abrirCarregar(true)" ${temSave?'':'disabled'}>Carregar Jogo</button>
       ${cfgInicio?'':'<button onclick="fecharSaves()">Voltar ao jogo</button>'}
     </div>
+    <button class="btCompart" onclick="abreCompart()" title="Mostra um QR code com o link do jogo">▦ Compartilhar</button>
     <div class="versaoJogo">v${VERSAO}</div>`;
   poeArte(el,'inicio');
   el.classList.remove('cfg');el.classList.add('tela','ini');el.style.display='block';
@@ -5320,6 +5337,72 @@ function previsao(){
   }else txt+='<br>Sem revide';
   return `<div class="prev">${txt}</div>`;
 }
+// ===== Compartilhar: QR code do link público (gerado aqui mesmo, sem biblioteca, funciona offline) =====
+const URL_JOGO='https://anphuxgozero.github.io/senhores-do-veu/';
+// QR modo byte, correção M, versões 1 a 6 (até 106 bytes); devolve a matriz de módulos (true = escuro)
+function geraQR(txt){
+  const dados=[...new TextEncoder().encode(txt)];
+  const TAB=[null,[10,1,16],[16,1,28],[26,1,44],[18,2,32],[24,2,43],[16,4,27]],ALI=[null,[],[6,18],[6,22],[6,26],[6,30],[6,34]];
+  let v=1;while(v<=6&&TAB[v][1]*TAB[v][2]<dados.length+2)v++;
+  if(v>6)return null;
+  const [ecN,nB,dN]=TAB[v],cap=nB*dN,N=17+4*v;
+  // bits: modo 0100, contagem (8 bits), bytes, terminador, completa com EC/11
+  const bits=[],pb=(x,n)=>{for(let i=n-1;i>=0;i--)bits.push(x>>>i&1);};
+  pb(4,4);pb(dados.length,8);dados.forEach(b=>pb(b,8));pb(0,Math.min(4,cap*8-bits.length));while(bits.length%8)bits.push(0);
+  const cw=[];for(let i=0;i<bits.length;i+=8)cw.push(parseInt(bits.slice(i,i+8).join(''),2));
+  for(let k=0;cw.length<cap;k++)cw.push(k%2?0x11:0xEC);
+  // Reed-Solomon em GF(256)
+  const mul=(x,y)=>{let z=0;for(let i=7;i>=0;i--){z=(z<<1)^((z>>>7)*0x11D);z^=((y>>>i)&1)*x;}return z;};
+  const div=Array(ecN).fill(0);div[ecN-1]=1;let raiz=1;
+  for(let i=0;i<ecN;i++){for(let j=0;j<ecN;j++){div[j]=mul(div[j],raiz);if(j+1<ecN)div[j]^=div[j+1];}raiz=mul(raiz,2);}
+  const resto=bl=>{const r=Array(ecN).fill(0);for(const b of bl){const f=b^r.shift();r.push(0);div.forEach((c,i)=>r[i]^=mul(c,f));}return r;};
+  const blocos=[],ecs=[];for(let b=0;b<nB;b++){const bl=cw.slice(b*dN,(b+1)*dN);blocos.push(bl);ecs.push(resto(bl));}
+  const fim=[];for(let i=0;i<dN;i++)blocos.forEach(bl=>fim.push(bl[i]));for(let i=0;i<ecN;i++)ecs.forEach(e=>fim.push(e[i]));
+  // matriz e padrões fixos
+  const M=[...Array(N)].map(()=>Array(N).fill(false)),F=[...Array(N)].map(()=>Array(N).fill(false));
+  const pf=(x,y,d)=>{M[y][x]=d;F[y][x]=true;};
+  for(let i=0;i<N;i++){pf(6,i,i%2===0);pf(i,6,i%2===0);}
+  for(const [cx,cy] of [[3,3],[N-4,3],[3,N-4]])for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){const x=cx+dx,y=cy+dy,d=Math.max(Math.abs(dx),Math.abs(dy));if(x>=0&&x<N&&y>=0&&y<N)pf(x,y,d!==2&&d!==4);}
+  const al=ALI[v];al.forEach((ay,i)=>al.forEach((ax,j)=>{if((i===0&&j===0)||(i===0&&j===al.length-1)||(i===al.length-1&&j===0))return;for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++)pf(ax+dx,ay+dy,Math.max(Math.abs(dx),Math.abs(dy))!==1);}));
+  const formato=mask=>{const d=mask;let r=d;for(let i=0;i<10;i++)r=(r<<1)^((r>>>9)*0x537);const b=(d<<10|r)^0x5412,g=i=>(b>>>i&1)===1;
+    for(let i=0;i<=5;i++)pf(8,i,g(i));pf(8,7,g(6));pf(8,8,g(7));pf(7,8,g(8));for(let i=9;i<15;i++)pf(14-i,8,g(i));
+    for(let i=0;i<8;i++)pf(N-1-i,8,g(i));for(let i=8;i<15;i++)pf(8,N-15+i,g(i));pf(8,N-8,true);};
+  formato(0);
+  // dados em zigue-zague
+  let k=0;for(let dir=N-1;dir>=1;dir-=2){if(dir===6)dir=5;for(let vt=0;vt<N;vt++)for(let j=0;j<2;j++){const x=dir-j,y=((dir+1)&2)===0?N-1-vt:vt;if(!F[y][x]){M[y][x]=k<fim.length*8&&((fim[k>>>3]>>>(7-(k&7)))&1)===1;k++;}}}
+  // máscara: escolhe a de menor penalidade (regras de sequências, blocos 2x2 e equilíbrio)
+  const MS=[(x,y)=>(x+y)%2===0,(x,y)=>y%2===0,(x,y)=>x%3===0,(x,y)=>(x+y)%3===0,(x,y)=>(Math.floor(x/3)+Math.floor(y/2))%2===0,(x,y)=>x*y%2+x*y%3===0,(x,y)=>(x*y%2+x*y%3)%2===0,(x,y)=>((x+y)%2+x*y%3)%2===0];
+  const aplica=m=>{for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(!F[y][x]&&MS[m](x,y))M[y][x]=!M[y][x];};
+  const pena=()=>{let p=0,esc=0;
+    for(let a=0;a<2;a++)for(let i=0;i<N;i++){let run=1;for(let j=1;j<=N;j++){const c=j<N&&(a?M[j][i]===M[j-1][i]:M[i][j]===M[i][j-1]);if(c)run++;else{if(run>=5)p+=run-2;run=1;}}}
+    for(let y=0;y<N-1;y++)for(let x=0;x<N-1;x++){const c=M[y][x];if(c===M[y][x+1]&&c===M[y+1][x]&&c===M[y+1][x+1])p+=3;}
+    for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(M[y][x])esc++;
+    return p+Math.floor(Math.abs(esc*20-N*N*10)/(N*N))*10;};
+  let melhor=0,menor=1e9;for(let m=0;m<8;m++){aplica(m);formato(m);const p=pena();if(p<menor){menor=p;melhor=m;}aplica(m);}
+  aplica(melhor);formato(melhor);
+  return M;
+}
+function qrSVG(txt){
+  const M=geraQR(txt);if(!M)return '';
+  const N=M.length,q=4;let d='';
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(M[y][x])d+=`M${x+q},${y+q}h1v1h-1z`;
+  return `<svg class="qr" viewBox="0 0 ${N+2*q} ${N+2*q}" shape-rendering="crispEdges" role="img" aria-label="QR code do link do jogo"><rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+}
+function abreCompart(){
+  fechaMenuJogo();
+  document.getElementById('compartQr').innerHTML=qrSVG(URL_JOGO);
+  document.getElementById('compartUrl').textContent=URL_JOGO;
+  document.getElementById('btCopiaLink').textContent='📋 Copiar link';
+  document.getElementById('btShareNat').hidden=!navigator.share;
+  document.getElementById('compart').classList.add('aberto');
+}
+function fechaCompart(){document.getElementById('compart').classList.remove('aberto');}
+async function copiaLink(){
+  const bt=document.getElementById('btCopiaLink');
+  try{await navigator.clipboard.writeText(URL_JOGO);bt.textContent='✓ Copiado';}
+  catch(e){const r=document.createRange();r.selectNodeContents(document.getElementById('compartUrl'));const s=getSelection();s.removeAllRanges();s.addRange(r);bt.textContent='Selecionado: copie';}
+}
+function compartNativo(){if(navigator.share)navigator.share({title:'Senhores da Guerra',text:'Jogue Senhores da Guerra no navegador:',url:URL_JOGO}).catch(()=>{});}
 function abreAjuda(){fechaMenuJogo();document.getElementById('ajuda').classList.add('aberto');}
 function fechaAjuda(){document.getElementById('ajuda').classList.remove('aberto');}
 function alternaMenuJogo(ev){ev.stopPropagation();document.getElementById('menuJogo').classList.toggle('aberto');}
@@ -5345,6 +5428,7 @@ function atualiza(){
     <button onclick="fechaMenuJogo();abrirCarregar()" ${J.ocupado?'disabled':''}>📂 Carregar</button>
     <button onclick="fechaMenuJogo();alternaLog(event)">📜 Registro</button>
     <button onclick="abreAjuda()">❓ Como jogar</button>
+    <button onclick="abreCompart()" title="QR code com o link do jogo">▦ Compartilhar</button>
     <button onclick="event.stopPropagation();mudaModoCena()" title="Tela que mostra cada combate">⚔ Tela de combate: ${MODOS_CENA[modoCena()]}</button>
     ${pedidoInstalar?'<button onclick="fechaMenuJogo();instalarApp()" title="Coloca o jogo na tela inicial, em tela cheia e jogável sem internet">⤓ Instalar como app</button>':''}`;
   // placar logo abaixo do topo (PC e celular): [sua mana (+saldo)] | placar dos jogadores
@@ -5758,7 +5842,7 @@ addEventListener('keydown',ev=>{
   if(J&&J.intro){ev.preventDefault();if(ev.key==='Escape'||ev.key===' '||ev.key==='Enter')fimIntro();return;}
   if(CENA&&(ev.key==='Escape'||ev.key===' '||ev.key==='Enter')){ev.preventDefault();toqueCena();return;}
   if(cenaCerco&&(ev.key==='Escape'||ev.key===' '||ev.key==='Enter')){ev.preventDefault();cenaCerco.fecha();return;}
-  if(ev.key==='Escape'){if(document.getElementById('ajuda').classList.contains('aberto')){fechaAjuda();return;}if(fichaAberta!=null){fechaFicha();return;}cancelar();}
+  if(ev.key==='Escape'){if(document.getElementById('compart').classList.contains('aberto')){fechaCompart();return;}if(document.getElementById('ajuda').classList.contains('aberto')){fechaAjuda();return;}if(fichaAberta!=null){fechaFicha();return;}cancelar();}
   const P={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[ev.key];
   if(P){ev.preventDefault();CAM.x+=P[0]*50/CAM.z;CAM.y+=P[1]*50/CAM.z;CAM.mao=true;limitaCam();}
   if(ev.key==='+'||ev.key==='=')mudaZoom(1);if(ev.key==='-')mudaZoom(-1);
