@@ -396,16 +396,21 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 #intro .vis{opacity:1!important;transform:none!important}
 #intro .inPular{position:absolute;right:12px;bottom:calc(9vh + 8px);font-size:12px;color:#fffa;text-shadow:0 1px 2px #000;pointer-events:none}
 #intro.sai .inCaixa,#intro.sai .inPular{opacity:0!important;transition:opacity 1s ease-in!important} /* .vis usa !important: a saída também */
-#compart{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
-#compart.aberto{display:flex}
-#compart>.cx{width:min(340px,100%);text-align:center;padding:14px 18px 16px;box-shadow:0 10px 40px #000c}
-#compart .topoAj{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-#compart .topoAj h2{margin:0}
-#compart .topoAj button{min-height:0;padding:4px 10px}
+#compart,#instalar{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
+#compart.aberto,#instalar.aberto{display:flex}
+#compart>.cx,#instalar>.cx{width:min(340px,100%);text-align:center;padding:14px 18px 16px;box-shadow:0 10px 40px #000c}
+#compart .topoAj,#instalar .topoAj{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+#compart .topoAj h2,#instalar .topoAj h2{margin:0}
+#compart .topoAj button,#instalar .topoAj button{min-height:0;padding:4px 10px}
 #compart .qr{display:block;width:100%;max-width:260px;margin:0 auto;border-radius:8px;background:#fff}
 #compart .url{margin:10px 0 2px;font-size:12.5px;word-break:break-all;color:var(--txt)}
-#compart .linha{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
-#saves.tela .btCompart{position:absolute;left:max(10px,env(safe-area-inset-left));bottom:max(6px,env(safe-area-inset-bottom));width:auto;max-width:none;padding:5px 12px;font-size:13px;opacity:.9}
+#compart .linha,#instalar .linha{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+#saves.tela .rodIni{position:absolute;left:max(10px,env(safe-area-inset-left));bottom:max(6px,env(safe-area-inset-bottom));width:auto;max-width:none;display:flex;gap:8px;flex-wrap:wrap}
+#saves.tela .rodIni button{padding:5px 12px;font-size:13px;opacity:.9}
+#instalar .passos{text-align:left;margin:10px 0 0;padding-left:22px;font-size:13.5px;line-height:1.5}
+#instalar .passos li{margin:6px 0}
+#instalar .icShare{display:inline-block;vertical-align:-4px;width:18px;height:20px}
+#instalar .obs{margin-top:10px;font-size:12px}
 #fichaDet{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:7;padding:8px}
 #fichaDet.aberto{display:flex}
 #fichaDet>.cx{width:min(420px,100%);max-height:85vh;max-height:85dvh;overflow:auto;font-size:12.5px;box-shadow:0 10px 40px #000c}
@@ -716,6 +721,11 @@ html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
   <div class="url" id="compartUrl"></div>
   <div class="linha"><button id="btCopiaLink" onclick="copiaLink()">📋 Copiar link</button><button id="btShareNat" class="pri" onclick="compartNativo()" hidden>↗ Enviar…</button></div>
 </div></div>
+<div id="instalar" onclick="if(event.target===this)fechaInstalar()"><div class="cx"><div class="topoAj"><h2>Instalar como app</h2><button onclick="fechaInstalar()" title="Fechar (Esc)">✕</button></div>
+  <div class="vez">O jogo vai para a tela inicial, abre em tela cheia e funciona sem internet.</div>
+  <div id="instalarIn"></div>
+  <div class="linha"><button class="pri" onclick="fechaInstalar()">Entendi</button></div>
+</div></div>
 <div id="fim"><div class="cx"><h1 id="fimTxt"></h1><p id="fimSub" class="vez"></p><button class="pri" onclick="abreConfig()">Jogar de novo</button></div></div>
 
 <script>
@@ -733,9 +743,36 @@ if(matchMedia('(pointer:coarse)').matches)document.documentElement.classList.add
 let pedidoInstalar=null; // convite de instalação que o navegador oferece (Chrome/Edge); vira um item do menu ☰
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))
   addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});
-addEventListener('beforeinstallprompt',ev=>{ev.preventDefault();pedidoInstalar=ev;if(J)atualiza();});
-addEventListener('appinstalled',()=>{pedidoInstalar=null;if(J)atualiza();});
-async function instalarApp(){const p=pedidoInstalar;if(!p)return;pedidoInstalar=null;p.prompt();try{await p.userChoice;}catch(e){}atualiza();}
+// redesenha o que mostra o botão de instalar (menu ☰ e tela inicial)
+const redesenhaInstalar=()=>{if(J)atualiza();const el=document.getElementById('saves');if(el&&el.classList.contains('ini')&&el.style.display==='block')desenhaInicio();};
+addEventListener('beforeinstallprompt',ev=>{ev.preventDefault();pedidoInstalar=ev;redesenhaInstalar();});
+addEventListener('appinstalled',()=>{pedidoInstalar=null;redesenhaInstalar();});
+async function instalarApp(){const p=pedidoInstalar;if(!p)return;pedidoInstalar=null;p.prompt();try{await p.userChoice;}catch(e){}redesenhaInstalar();}
+// Botão "Instalar app": no celular (ou onde o navegador oferece instalar), se o jogo ainda não está aberto como app.
+// Android/Chrome: abre o pedido de instalação do navegador. iPhone/iPad: a Apple não deixa um site instalar sozinho,
+// então o botão mostra o caminho (Compartilhar → Adicionar à Tela de Início).
+const UA=navigator.userAgent;
+const IOS=/iPhone|iPad|iPod/.test(UA)||(/Macintosh/.test(UA)&&navigator.maxTouchPoints>1);
+const ANDROID=/Android/.test(UA);
+const APP_ABERTO=()=>matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||navigator.standalone===true;
+const podeInstalar=()=>!APP_ABERTO()&&/^https?:$/.test(location.protocol)&&(!!pedidoInstalar||IOS||ANDROID);
+function botaoInstalar(){
+  fechaMenuJogo();
+  if(pedidoInstalar){instalarApp();return;}
+  const dentroDeApp=/FBAN|FBAV|Instagram|Line\/|TikTok|Twitter/i.test(UA); // navegador embutido de rede social: não instala
+  const icShare='<svg class="icShare" viewBox="0 0 18 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-label="ícone Compartilhar"><path d="M9 12V1M5 5l4-4 4 4"/><path d="M6 8H3v11h12V8h-3"/></svg>';
+  let h;
+  if(dentroDeApp)h=`<ol class="passos"><li>Você abriu o jogo por dentro de outro app. Toque no menu dele (<b>⋯</b>) e escolha <b>Abrir no navegador</b>${IOS?' (Safari)':' (Chrome)'}.</li><li>Lá, toque de novo em <b>📲 Instalar app</b>.</li></ol>`;
+  else if(IOS){
+    const safari=!/CriOS|FxiOS|EdgiOS|OPiOS/.test(UA);
+    h=`<ol class="passos"><li>Toque no botão <b>Compartilhar</b> ${icShare} ${safari?'na barra do Safari (embaixo no iPhone, em cima no iPad; se a barra sumiu, toque no fim da tela para ela voltar)':'na barra de endereço do navegador'}.</li>
+      <li>Role a lista e toque em <b>Adicionar à Tela de Início</b>.</li><li>Toque em <b>Adicionar</b>. O ícone do jogo aparece na tela inicial.</li></ol>
+      ${safari?'':'<div class="vez obs">Se a opção não aparecer, abra o jogo no Safari e repita.</div>'}`;
+  }else h=`<ol class="passos"><li>Toque no menu do navegador (<b>⋮</b>, no canto de cima).</li><li>Toque em <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.</li><li>Confirme. O ícone do jogo aparece na tela inicial.</li></ol>`;
+  document.getElementById('instalarIn').innerHTML=h;
+  document.getElementById('instalar').classList.add('aberto');
+}
+function fechaInstalar(){document.getElementById('instalar').classList.remove('aberto');}
 // ---------- Geometria hexagonal (pointy-top, linhas ímpares deslocadas) ----------
 const COLS=17, R=27, W=Math.sqrt(3)*R, PAD=10, LIM_EXERCITO=30;
 let ROWS=13; // 13 linhas no 1x1; 17 com 3 ou 4 mestres (ver defineLinhas)
@@ -2116,7 +2153,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.53'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.54'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2132,7 +2169,7 @@ function desenhaInicio(){
       <button class="grande" onclick="abrirCarregar(true)" ${temSave?'':'disabled'}>Carregar Jogo</button>
       ${cfgInicio?'':'<button onclick="fecharSaves()">Voltar ao jogo</button>'}
     </div>
-    <button class="btCompart" onclick="abreCompart()" title="Mostra um QR code com o link do jogo">▦ Compartilhar</button>
+    <div class="rodIni"><button onclick="abreCompart()" title="Mostra um QR code com o link do jogo">▦ Compartilhar</button>${podeInstalar()?'<button onclick="botaoInstalar()" title="Coloca o jogo na tela inicial do celular, em tela cheia e jogável sem internet">📲 Instalar app</button>':''}</div>
     <div class="versaoJogo">v${VERSAO}</div>`;
   poeArte(el,'inicio');
   el.classList.remove('cfg');el.classList.add('tela','ini');el.style.display='block';
@@ -5430,7 +5467,7 @@ function atualiza(){
     <button onclick="abreAjuda()">❓ Como jogar</button>
     <button onclick="abreCompart()" title="QR code com o link do jogo">▦ Compartilhar</button>
     <button onclick="event.stopPropagation();mudaModoCena()" title="Tela que mostra cada combate">⚔ Tela de combate: ${MODOS_CENA[modoCena()]}</button>
-    ${pedidoInstalar?'<button onclick="fechaMenuJogo();instalarApp()" title="Coloca o jogo na tela inicial, em tela cheia e jogável sem internet">⤓ Instalar como app</button>':''}`;
+    ${podeInstalar()?'<button onclick="fechaMenuJogo();botaoInstalar()" title="Coloca o jogo na tela inicial, em tela cheia e jogável sem internet">📲 Instalar como app</button>':''}`;
   // placar logo abaixo do topo (PC e celular): [sua mana (+saldo)] | placar dos jogadores
   // 1x1: espelhado, nome · monstros · torres | ícone de torre | torres · monstros · nome; 3 ou 4 mestres: um bloco por jogador
   // o cerco só aparece como alerta sobre o mapa
@@ -5842,7 +5879,7 @@ addEventListener('keydown',ev=>{
   if(J&&J.intro){ev.preventDefault();if(ev.key==='Escape'||ev.key===' '||ev.key==='Enter')fimIntro();return;}
   if(CENA&&(ev.key==='Escape'||ev.key===' '||ev.key==='Enter')){ev.preventDefault();toqueCena();return;}
   if(cenaCerco&&(ev.key==='Escape'||ev.key===' '||ev.key==='Enter')){ev.preventDefault();cenaCerco.fecha();return;}
-  if(ev.key==='Escape'){if(document.getElementById('compart').classList.contains('aberto')){fechaCompart();return;}if(document.getElementById('ajuda').classList.contains('aberto')){fechaAjuda();return;}if(fichaAberta!=null){fechaFicha();return;}cancelar();}
+  if(ev.key==='Escape'){if(document.getElementById('instalar').classList.contains('aberto')){fechaInstalar();return;}if(document.getElementById('compart').classList.contains('aberto')){fechaCompart();return;}if(document.getElementById('ajuda').classList.contains('aberto')){fechaAjuda();return;}if(fichaAberta!=null){fechaFicha();return;}cancelar();}
   const P={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[ev.key];
   if(P){ev.preventDefault();CAM.x+=P[0]*50/CAM.z;CAM.y+=P[1]*50/CAM.z;CAM.mao=true;limitaCam();}
   if(ev.key==='+'||ev.key==='=')mudaZoom(1);if(ev.key==='-')mudaZoom(-1);
