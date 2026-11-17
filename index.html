@@ -224,10 +224,7 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 #btFim.ocio3{animation:ocioFim3 .8s ease-in-out infinite;z-index:3}
 @keyframes ocioFim2{0%,100%{transform:scale(1);box-shadow:0 0 0 0 #f2c14e00}50%{transform:scale(1.04);box-shadow:0 0 18px 5px #f2c14edd}}
 @keyframes ocioFim3{0%,100%{transform:scale(1);box-shadow:0 0 0 0 #f2c14e00;background:#a87a22}50%{transform:scale(1.08);box-shadow:0 0 26px 9px #ffd76cee;background:#d39b2a}}
-#btFim.ocio3::after{content:attr(data-dica);position:absolute;bottom:calc(100% + 12px);right:0;white-space:nowrap;background:#f2c14e;color:#1a1408;font-size:13px;font-weight:700;padding:6px 10px;border-radius:6px;box-shadow:0 4px 14px #000a;pointer-events:none;animation:dicaFim 1s ease-in-out infinite}
-#btFim.ocio3.dicaAbaixo::after{bottom:auto;top:calc(100% + 12px)}
-@keyframes dicaFim{0%,100%{translate:0 0}50%{translate:0 -5px}}
-@media (prefers-reduced-motion:reduce){#btFim.ocio1,#btFim.ocio2,#btFim.ocio3,#btFim.ocio3::after{animation:none}#btFim.ocio2,#btFim.ocio3{box-shadow:0 0 18px 5px #f2c14edd}}
+@media (prefers-reduced-motion:reduce){#btFim.ocio1,#btFim.ocio2,#btFim.ocio3{animation:none}#btFim.ocio2,#btFim.ocio3{box-shadow:0 0 18px 5px #f2c14edd}}
 #linhaFim{display:flex;gap:6px;flex:none}
 /* atalho da Magia ao lado do Encerrar turno: só aparece quando dá para lançar; brilha quando há magia com alvo */
 #btMagia{display:none;flex:none;color:#d9b8ff;border-color:#6a4a8a;font-size:15px}
@@ -2210,7 +2207,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.56'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.57'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -3705,8 +3702,6 @@ const telaPorCima=()=>!!(CENA||cenaCerco||J.intro||['ajuda','compart','instalar'
 function poeOcio(n){
   const bt=document.getElementById('btFim');if(!bt)return;
   if(n!==ocio.nivel){ocio.nivel=n;for(let i=1;i<=3;i++)bt.classList.toggle('ocio'+i,n===i);}
-  if(n===3){const abaixo=bt.getBoundingClientRect().top<60; // botão no alto da tela (celular deitado): balão embaixo
-    bt.classList.toggle('dicaAbaixo',abaixo);bt.dataset.dica=`${abaixo?'⬆ ':''}${TOQUE()?'Toque':'Clique'} aqui para encerrar o turno${abaixo?'':' ⬇'}`;}
 }
 setInterval(()=>{
   if(!J||J.fim||J.vez!==0||J.ocupado){ocio.seg=0;ocio.assin='';poeOcio(0);return;}
