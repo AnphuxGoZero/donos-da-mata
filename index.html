@@ -1779,7 +1779,7 @@ const PREFS_CHAVE='senhoresDoVeu.prefs';
 function prefs(){let p=null;try{p=JSON.parse(localStorage.getItem(PREFS_CHAVE));}catch(e){}
   p=p||{};if(!ORDENS[p.ordem])p.ordem='coro';if(!MODOS[p.modo])p.modo='1x1';delete p.cristal;p.manaBase=0;return p;}
 function gravaPrefs(p){try{localStorage.setItem(PREFS_CHAVE,JSON.stringify(p));}catch(e){}}
-function novoJogo(op=prefs()){
+function novoJogo(op=prefs(),semIntro=false){ // semIntro: a partida de fundo, atrás da tela inicial, não tem abertura
   garanteAtlas();
   if(VEL_PULO!=null){VEL=VEL_PULO;VEL_PULO=null;} // saiu no meio de um pulo da vez do rival
   document.getElementById('fim').style.display='none';
@@ -1809,7 +1809,7 @@ function novoJogo(op=prefs()){
   if(J.cristal)log(`💎 Cabo de guerra: no fim de cada turno, cada mestre puxa 1 ponto por torre que controla; a Torre do Cristal, no centro, vale ${valorCristal()}. Quem chegar a ${CRISTAL_META} vence.`);
   inicioTurno(0);
   atualiza();
-  comecaIntro();
+  if(!semIntro)comecaIntro();
 }
 // ---------- Introdução da partida ----------
 // Abre na Torre do Cristal com o cristal inteiro brilhando; um raio cai nele e ele se parte nos seis cacos
@@ -2230,10 +2230,11 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.58'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.59'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
+  if(J&&J.intro)fimIntro(); // a abertura nunca fica rodando atrás (ou por cima) da tela inicial
   fechaMenuJogo();document.getElementById('fim').style.display='none';
   cfgSel={...prefs()};cfgInicio=inicio||!J||J.fim;desenhaInicio();
 }
@@ -3716,7 +3717,7 @@ function escolherInvocacao(esp){
 // botão de baixo: na sua vez encerra o turno; na vez dos rivais, pula as animações até voltar a sua vez
 function cliqueFim(){if(J.vez===0)fimTurno();else pularRival();}
 // Jogador parado na própria vez (nada muda no jogo: ninguém anda, ataca, invoca ou gasta mana):
-// o Encerrar turno vai chamando atenção em 3 níveis. No 1º turno começa mais cedo (quem ainda não achou o botão);
+// o Encerrar turno vai chamando atenção em 3 níveis (só quando já não dá para invocar). No 1º turno começa mais cedo (quem ainda não achou o botão);
 // com tudo já feito no turno, também. Telas por cima (ajuda, menus, cenas) pausam a contagem.
 const OCIO_SEG={primeiro:[10,20,35],normal:[30,60,90]};
 let ocio={seg:0,assin:'',nivel:0};
@@ -3732,6 +3733,7 @@ setInterval(()=>{
   const a=assinaturaJogo();
   if(a!==ocio.assin){ocio.assin=a;ocio.seg=0;poeOcio(0);return;}
   if(document.hidden||telaPorCima())return; // pausa, sem zerar
+  if(mestreDe(0)&&podeInvocarAlgo()){ocio.seg=0;poeOcio(0);return;} // ainda dá para pôr monstros em jogo: o botão não chama atenção
   ocio.seg++;
   const lim=OCIO_SEG[J.turno<=1?'primeiro':'normal'].map(t=>turnoEsgotado()?t/2:t);
   poeOcio(ocio.seg>=lim[2]?3:ocio.seg>=lim[1]?2:ocio.seg>=lim[0]?1:0);
@@ -6126,7 +6128,7 @@ addEventListener('click',ev=>{if(ev.target.closest&&ev.target.closest('#caixaLog
   document.getElementById('caixaLog').classList.remove('aberto');document.getElementById('rodape').classList.remove('aberto');});
 
 montaTabVant();
-novoJogo();
+novoJogo(prefs(),true);
 abreConfig(true);
 requestAnimationFrame(desenha);
 </script>
