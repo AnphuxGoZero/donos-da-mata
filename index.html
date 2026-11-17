@@ -214,6 +214,7 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 .vantLinha i{font-style:normal;color:#fff;font-size:10.5px;padding:0 6px;border-radius:8px;line-height:16px}
 .vantLinha span+span,.vantLinha i+span{margin-left:3px} /* altura reservada: o registro não pula quando a ficha muda */
 #btFim{flex:1;padding:12px;font-size:15px;font-weight:600;letter-spacing:.02em}
+#btFim.tutTrava:disabled{opacity:1;cursor:default;background:#1b1f29;border-style:dashed;border-color:#4a5268;color:#c9cfdc}
 #btFim.brilha,#btFim.brilha:hover:not(:disabled){background:#a87a22;border-color:#f2c14e;color:#fff;animation:brilhaFim 1.6s ease-in-out infinite}
 @keyframes brilhaFim{0%,100%{box-shadow:0 0 0 0 #f2c14e00}50%{box-shadow:0 0 14px 3px #f2c14ecc}}
 /* jogador parado na própria vez: o Encerrar turno chama atenção aos poucos (ocio1 → ocio3) */
@@ -1776,6 +1777,11 @@ const MODOS={'1x1':2,'1x1x1':3,'1x1x1x1':4};
 const NOME_MODO=[,,'Duelo','Tríade','Guerra Total']; // pelo número de mestres
 // preferências do novo jogo (mestre escolhido), lembradas no navegador
 const PREFS_CHAVE='senhoresDoVeu.prefs';
+// Tutorial do 1º turno (só nas primeiras partidas): o Encerrar turno fica travado, mostrando "Invoque 2 criaturas (x/2)",
+// até o jogador invocar duas criaturas ou não conseguir invocar mais nada. Conta quantas vezes ele completou; com TUT_VEZES, some.
+const TUT_CHAVE='senhoresDoVeu.tutInv',TUT_VEZES=3;
+const tutorialPendente=()=>{try{return (+localStorage.getItem(TUT_CHAVE)||0)<TUT_VEZES;}catch(e){return false;}};
+const tutTrava=()=>!!(J&&J.tut&&J.turno===1&&J.vez===0&&!J.fim&&J.tut.n<2&&mestreDe(0)&&podeInvocarAlgo());
 function prefs(){let p=null;try{p=JSON.parse(localStorage.getItem(PREFS_CHAVE));}catch(e){}
   p=p||{};if(!ORDENS[p.ordem])p.ordem='coro';if(!MODOS[p.modo])p.modo='1x1';delete p.cristal;p.manaBase=0;return p;}
 function gravaPrefs(p){try{localStorage.setItem(PREFS_CHAVE,JSON.stringify(p));}catch(e){}}
@@ -1796,6 +1802,7 @@ function novoJogo(op=prefs(),semIntro=false){ // semIntro: a partida de fundo, a
      cristal:m.cristal!=null?{k:m.cristal,v:0,lado:null}:null,cabo:m.cristal!=null?null:{v:0,lado:null},evoFixa:Array.from({length:np},()=>({})),hj:Array.from({length:np},novaHj),
      ...estadoMagiaNovo(ordens,0)}; // mana só pela renda (padrão do jogo)
   m.f.forEach((f,l)=>criaUnidade(ORDENS[ordens[l]].esp,l,...f));
+  J.tut=!semIntro&&tutorialPendente()?{n:0}:null;
   zoomInicio(true);
   {const [x,y]=centro(...m.f0);CAM.x=x;CAM.y=y;CAM.alvo=null;limitaCam();}
   if(np>2){
@@ -2230,7 +2237,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.59'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.60'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -3070,6 +3077,7 @@ function invocar(l,esp,c,r){
   J.mp[l]-=ESP[esp].custo;
   const u=criaUnidade(esp,l,c,r);u.movido=true;u.agiu=true;seguir(u);
   (J.invocou||(J.invocou=[]))[l]=true; // a Magia do menu do mestre só aparece depois da primeira invocação
+  if(l===0&&J.tut&&J.turno===1)J.tut.n++;
   flutua(u,'Invocado','#f2c14e');
   log(`${OM(l)} invocou ${ESP[esp].nome}.`);
 }
@@ -3753,6 +3761,8 @@ async function fimTurno(){
 }
 async function fimTurnoJogo(){
   if(J.vez!==0||J.ocupado||J.fim)return;
+  if(tutTrava())return; // tutorial: ainda faltam invocações
+  if(J.tut&&J.turno===1){if(J.tut.n>=2)try{localStorage.setItem(TUT_CHAVE,String((+localStorage.getItem(TUT_CHAVE)||0)+1));}catch(e){}J.tut=null;}
   desseleciona();J.invocando=null;J.invocHex=null;J.menuInv=false;J.invHex=null;J.mg=null;J.fz=null;J.evo=null;J.prevArea=null;J.menuAlvo=null;
   fimDeTurno(0);
   // terminou o turno com tropas no castelo inimigo: cena do CERCO (o jogo espera ela fechar)
@@ -5712,6 +5722,9 @@ function atualiza(){
    bt.disabled=!minha&&(J.fim||!!J.pular);bt.classList.toggle('brilha',minha&&turnoEsgotado()&&!mestreAtaca);}
   bt.textContent=J.fim?'Fim de jogo':J.vez===0?'Encerrar turno':J.pular?`Vez ${doM(J.vez)}…`:`⏩ Pular vez ${doM(J.vez)}`;
   bt.title=J.vez!==0&&!J.fim?'Pula as animações dos rivais e vai direto para a sua vez':'';
+  {const trava=tutTrava();bt.classList.toggle('tutTrava',trava);
+   if(trava){bt.disabled=true;bt.textContent=`Invoque 2 criaturas (${J.tut.n}/2)`;bt.title='Toque no seu mestre e invoque duas criaturas';}
+   else if(minha&&J.tut&&J.turno===1)bt.classList.add('brilha');} // tutorial cumprido: o botão já brilha
   // celular deitado: a ficha do rodapé termina antes dos botões da direita (que crescem com 👣 e ✦)
   if(document.documentElement.classList.contains('paisagem')){
     const lf=document.getElementById('linhaFim').getBoundingClientRect();
