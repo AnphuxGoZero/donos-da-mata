@@ -565,7 +565,8 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 .paisagem #btCancela{left:calc(8px + var(--sl));bottom:calc(12px + var(--sb))}
 .paisagem #info{left:calc(128px + var(--sl));right:var(--dirBotoes,calc(214px + var(--sr)));bottom:calc(12px + var(--sb))}
 .paisagem #rodape.aberto,.paisagem #caixaLog.aberto{right:calc(6px + var(--sr))}
-.retrato #app{padding:4px calc(4px + var(--sr)) calc(4px + var(--sb)) calc(4px + var(--sl))}
+.retrato #app{padding:calc(4px + var(--st)) calc(4px + var(--sr)) calc(4px + var(--sb)) calc(4px + var(--sl))} /* em cima também: a barra de status (Android/iPhone) não cobre o cabeçalho */
+.retrato #menuJogo{top:calc(48px + var(--st))}
 
 /* ---------- Tela inicial (PC e celular): tela cheia, sem rolagem, sem o jogo aparecendo atrás ---------- */
 #saves.tela{display:flex!important;flex-direction:column;justify-content:center;position:fixed;inset:0;transform:none;
@@ -2259,7 +2260,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.64'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.65'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
