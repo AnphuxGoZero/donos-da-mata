@@ -230,8 +230,8 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 #linhaSup{display:contents}
 #figSel{display:none}
 /* celular deitado: 👣 e ✦ ficam acima do Encerrar turno, à direita; a figurinha da criatura selecionada, colada no 👣 */
-.paisagem #linhaFim{flex-direction:column;align-items:flex-end}
-.paisagem #linhaSup{display:flex;gap:6px;justify-content:flex-end;align-items:center}
+.paisagem #linhaFim{flex-direction:column;align-items:flex-end} /* Encerrar turno no alto à direita; 👣, ✦ e a figurinha no canto de baixo */
+.paisagem #linhaSup{display:flex;gap:6px;justify-content:flex-end;align-items:center;position:fixed;right:calc(8px + var(--sr,0px));bottom:calc(12px + var(--sb,0px));z-index:6}
 .paisagem #linhaSup:not(:has(.ativo)){display:none}
 .paisagem #figSel.ativo{display:block;box-shadow:0 4px 14px #000a;border-color:var(--corSel,#4a5268);border-width:2px}
 #figSel.pop{animation:figPop .35s ease-out}
@@ -429,7 +429,7 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
   text-align:center;line-height:1.35;font-size:max(13px,calc(var(--cw) / 24));font-weight:600;color:#fff;text-shadow:0 1px 3px #000,0 0 8px #000;pointer-events:none;opacity:0;transition:opacity .4s}
 #cercoCena .ccCeuTxt:empty{display:none}
 #cercoCena .ccCeuTxt.vis{opacity:1}
-#cercoCena .avTit{font-family:"Pirata One",serif;font-size:clamp(28px,6vw,44px);line-height:1.05;letter-spacing:.02em;text-shadow:0 3px 0 #000,0 0 18px currentColor}
+#cercoCena .avTit{font-family:"Pirata One",serif;font-size:min(clamp(28px,6vw,44px),8.5vh);line-height:1.05;letter-spacing:.02em;text-shadow:0 3px 0 #000,0 0 18px currentColor}
 #cercoCena .avTit.ouro{color:#ffd76c}#cercoCena .avTit.roxo{color:#d6b4ff}#cercoCena .avTit.verm{color:#ff9a6a}
 #cercoCena .avSub{margin-top:6px;font-size:clamp(14px,2.4vw,17px);font-weight:600;line-height:1.4;color:#fff;text-shadow:0 1px 3px #000,0 0 8px #000}
 
@@ -532,7 +532,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 .paisagem #menuJogo{left:0;top:44px}
 .paisagem #dicaMapa{top:50px;left:50%;right:auto;transform:translateX(-50%);width:max-content;max-width:min(460px,70vw)}
 /* canto de baixo, à direita: Registro e Encerrar turno */
-.paisagem #linhaFim{position:fixed;right:8px;bottom:12px;z-index:6} /* longe da borda: no iPhone, tocar rente ao pé da tela é gesto do sistema */
+.paisagem #linhaFim{position:fixed;right:8px;top:6px;z-index:6} /* canto superior direito (o placar fica à esquerda e o relógio no meio) */
 .paisagem #btCancela{bottom:12px}
 .paisagem #btFim{flex:none;padding:10px 16px;box-shadow:0 4px 14px #000a}
 /* ficha: faixa baixa no meio, entre o Cancelar (esquerda) e os botões da direita; some quando vazia */
@@ -544,7 +544,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 .paisagem #info .terr{margin-top:0;padding-top:4px}
 /* registro e placar: só pelo Registro do menu ☰ */
 .paisagem #rodape,.paisagem #caixaLog{display:none}
-.paisagem #alertaCerco.on{position:fixed;bottom:auto;top:52px;right:8px} /* embaixo ficam os botões */
+.paisagem #alertaCerco.on{position:fixed;bottom:auto;top:52px;left:8px;right:auto;align-items:flex-start} /* à direita, no alto, fica o Encerrar turno */
 .paisagem #rodape.aberto{display:grid;position:fixed;right:6px;top:52px;width:min(380px,60vw);z-index:8;border-color:#4a5268;box-shadow:0 6px 30px #000d}
 .paisagem #caixaLog.aberto{display:flex;position:fixed;right:6px;top:168px;bottom:56px;width:min(380px,60vw);z-index:8;border-color:#4a5268;box-shadow:0 6px 30px #000d}
 .paisagem #caixaLog.aberto #log{overflow:auto}
@@ -552,9 +552,9 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
    do entalhe e, depois de girar, o toque caía deslocado. Os controles ficam afastados do entalhe e da barrinha de baixo. */
 :root{--sl:env(safe-area-inset-left,0px);--sr:env(safe-area-inset-right,0px);--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
 .paisagem #topoMapa{left:calc(6px + var(--sl));right:calc(6px + var(--sr));top:calc(6px + var(--st))}
-.paisagem #linhaFim{right:calc(8px + var(--sr));bottom:calc(12px + var(--sb))}
+.paisagem #linhaFim{right:calc(8px + var(--sr));top:calc(6px + var(--st))}
 .paisagem #btCancela{left:calc(8px + var(--sl));bottom:calc(12px + var(--sb))}
-.paisagem #info{left:calc(128px + var(--sl));right:calc(214px + var(--sr));bottom:calc(12px + var(--sb))}
+.paisagem #info{left:calc(128px + var(--sl));right:var(--dirBotoes,calc(214px + var(--sr)));bottom:calc(12px + var(--sb))}
 .paisagem #rodape.aberto,.paisagem #caixaLog.aberto{right:calc(6px + var(--sr))}
 .retrato #app{padding:4px calc(4px + var(--sr)) calc(4px + var(--sb)) calc(4px + var(--sl))}
 
@@ -2250,7 +2250,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.61'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.62'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2670,8 +2670,12 @@ if(document.fonts)document.fonts.load(`32px ${FONTE_CENA}`).catch(()=>{}); // ca
 // o: {fundo, dur, agenda:[{t,x,y}], baixo(g,t,now) depois do fundo, cima(g,t,now) por cima de tudo, raio:[cor de fora, de dentro], clarao:'r,g,b'}
 function rodaCena(o){
   const el=document.getElementById('cercoCena');
-  const esc=Math.max(2,Math.min(4,Math.floor(Math.min(innerWidth*.9,520)/CC_W)))*.8; // quadro 20% menor
   const E=o.ceu||0,H=CC_H+E; // ceu: faixa extra de céu no alto do quadro (o aviso vai escrito nela)
+  let esc=Math.max(2,Math.min(4,Math.floor(Math.min(innerWidth*.9,520)/CC_W)))*.8; // quadro 20% menor
+  // tela baixa (celular deitado): o quadro encolhe para caber junto com o título de cima e as tropas de baixo
+  {const avEl=el.querySelector('.ccAviso'),capEl=el.querySelector('.cap');
+   const resto=(avEl.innerHTML?avEl.offsetHeight+14:0)+(capEl.innerHTML?capEl.offsetHeight+8:0)+40; // bordas, folgas e margem
+   const cabe=(innerHeight-resto)/H;if(esc>cabe)esc=Math.max(1,cabe);}
   const cw=Math.round(CC_W*esc),ch=Math.round(H*esc);
   // a pixel art é desenhada num quadro pequeno fora da tela (160×108) e ampliada sem suavizar para o canvas visível,
   // que tem a resolução real da tela; o texto vai direto nele, nítido
@@ -5745,10 +5749,10 @@ function atualiza(){
   {const trava=tutTrava();bt.classList.toggle('tutTrava',trava);
    if(trava){bt.disabled=true;bt.textContent=`Invoque 2 criaturas (${J.tut.n}/2)`;bt.title='Toque no seu mestre e invoque duas criaturas';}
    else if(minha&&J.tut&&J.turno===1)bt.classList.add('brilha');} // tutorial cumprido: o botão já brilha
-  // celular deitado: a ficha do rodapé termina antes dos botões da direita (que crescem com 👣 e ✦)
+  // celular deitado: a ficha do rodapé termina antes do 👣/✦/figurinha (canto de baixo); sem eles, vai até a borda
   if(document.documentElement.classList.contains('paisagem')){
-    const lf=document.getElementById('linhaFim').getBoundingClientRect();
-    if(lf.width)document.documentElement.style.setProperty('--dirBotoes',Math.round(innerWidth-lf.left+6)+'px');
+    const ls=document.getElementById('linhaSup').getBoundingClientRect();
+    document.documentElement.style.setProperty('--dirBotoes',ls.width?Math.round(innerWidth-ls.left+6)+'px':'calc(8px + var(--sr,0px))');
   }
   // dicas do que fazer agora vão para o topo da caixa de informações
   let dicaAcao='';
