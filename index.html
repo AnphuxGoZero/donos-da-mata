@@ -227,6 +227,15 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 @keyframes ocioFim3{0%,100%{transform:scale(1);box-shadow:0 0 0 0 #f2c14e00;background:#a87a22}50%{transform:scale(1.08);box-shadow:0 0 26px 9px #ffd76cee;background:#d39b2a}}
 @media (prefers-reduced-motion:reduce){#btFim.ocio1,#btFim.ocio2,#btFim.ocio3{animation:none}#btFim.ocio2,#btFim.ocio3{box-shadow:0 0 18px 5px #f2c14edd}}
 #linhaFim{display:flex;gap:6px;flex:none}
+#linhaSup{display:contents}
+#figSel{display:none}
+/* celular deitado: 👣 e ✦ ficam acima do Encerrar turno, à direita; a figurinha da criatura selecionada, colada no 👣 */
+.paisagem #linhaFim{flex-direction:column;align-items:flex-end}
+.paisagem #linhaSup{display:flex;gap:6px;justify-content:flex-end;align-items:center}
+.paisagem #linhaSup:not(:has(.ativo)){display:none}
+.paisagem #figSel.ativo{display:block;box-shadow:0 4px 14px #000a;border-color:var(--corSel,#4a5268);border-width:2px}
+#figSel.pop{animation:figPop .35s ease-out}
+@keyframes figPop{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
 /* atalho da Magia ao lado do Encerrar turno: só aparece quando dá para lançar; brilha quando há magia com alvo */
 #btMagia{display:none;flex:none;color:#d9b8ff;border-color:#6a4a8a;font-size:15px}
 #btMagia.ativo{display:block}
@@ -242,6 +251,10 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 #caixaLog{flex:1 1 0;min-height:64px;overflow:hidden;display:flex;flex-direction:column} /* o registro fica com o que sobrar e é o único que rola */
 #caixaLog #log{flex:1;max-height:none;min-height:0}
 .ficha{display:flex;flex-direction:column;gap:6px}
+.retrato #info .ficha{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:10px;row-gap:5px;align-items:start}
+.retrato #info .fichaTopo{display:contents}
+.retrato #info .fichaFoto{grid-column:1;grid-row:1 / span 3}
+.retrato #info .ficha>:not(.fichaTopo){grid-column:2}
 .fichaTopo{display:flex;align-items:center;gap:8px}
 .fichaTopo .spr{margin:0;border-radius:6px;background-color:#14161c}
 .fichaNome{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
@@ -715,7 +728,7 @@ html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
   <div id="lado"><div id="ladoIn">
     <canvas id="mini" title="Mini mapa: clique ou arraste para mover a câmera"></canvas>
     <div class="cx" id="info"></div>
-    <div id="linhaFim"><button id="btProx" onclick="proximaCriatura()" aria-label="Próxima criatura" title="Próxima criatura que ainda não agiu (atalho: N)">👣<b id="btProxN"></b></button><button id="btMagia" onclick="magiaDoBotao()" aria-label="Magia" title="Magia (atalho: M)">✦<span class="rot"> Magia</span></button><button class="pri" id="btFim" onclick="cliqueFim()">Encerrar turno</button></div>
+    <div id="linhaFim"><div id="linhaSup"><button id="figSel" class="fichaFoto" onclick="abreFichaSel()" aria-label="Ver detalhes da criatura selecionada"></button><button id="btProx" onclick="proximaCriatura()" aria-label="Próxima criatura" title="Próxima criatura que ainda não agiu (atalho: N)">👣<b id="btProxN"></b></button><button id="btMagia" onclick="magiaDoBotao()" aria-label="Magia" title="Magia (atalho: M)">✦<span class="rot"> Magia</span></button></div><button class="pri" id="btFim" onclick="cliqueFim()">Encerrar turno</button></div>
     <div class="cx" id="caixaLog"><h2>Registro</h2><div id="log"></div></div>
   </div></div>
 </div>
@@ -1888,7 +1901,7 @@ function camIntro(now){
 function hudVolta(){
   const de=document.documentElement;if(!de.classList.contains('introCheia'))return;
   de.classList.remove('introCheia');de.classList.add('introHud');ajustaTela(true);
-  clearTimeout(hudVolta.t);hudVolta.t=setTimeout(()=>de.classList.remove('introHud'),1000);
+  clearTimeout(hudVolta.t);hudVolta.t=setTimeout(()=>{de.classList.remove('introHud');posFicha();},1000);
 }
 function fimIntro(){
   const el=document.getElementById('intro');
@@ -2237,7 +2250,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.60'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.61'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -3482,6 +3495,7 @@ function magiaDoBotao(){
 // sob Sono/Petrificar também (começa o turno já marcado como "agiu").
 const criaturasPendentes=()=>J.un.filter(u=>u.lado===0&&!ESP[u.esp].mestre&&!u.agiu);
 // cada clique vai para a pendente mais perto da atual, sem repetir até ter passado por todas
+function abreFichaSel(){if(J&&J.sel)abreFicha(J.sel.id);}
 function proximaCriatura(){
   if(J.vez!==0||J.ocupado||J.fim||CENA)return;
   const ps=criaturasPendentes();if(!ps.length)return;
@@ -5450,7 +5464,7 @@ function fichaCurta(u){
   const est=SELOS_MAGIA.filter(([c])=>temEfeito(u,c)).map(([c])=>`<span class="tag" style="background:#3a2f52;color:#d6c2ff">${DESC_EFEITO[c].split(':')[0]}</span>`);
   if(u.semMana)est.unshift('<span class="tag" style="background:#3a2f52;color:#b48cff">Sem mana</span>');
   return `<div class="ficha"><div class="fichaTopo">
-    <button class="fichaFoto" onclick="abreFicha(${u.id})" aria-label="Ver detalhes de ${e.nome}">${iconeSpr(u.esp,44,'cor')}<span class="ic">ⓘ</span></button>
+    <button class="fichaFoto" onclick="abreFicha(${u.id})" aria-label="Ver detalhes de ${e.nome}">${iconeSpr(u.esp,RETRATO()?64:44,'cor')}<span class="ic">ⓘ</span></button>
     <div style="flex:1;min-width:0">
       <div class="fichaNome"><strong style="color:${COR[u.lado]}">${e.nome}</strong> <span class="tags" style="display:inline;flex:1">${tagEl(e.el)}</span><span class="vez">${e.mestre?'Mestre':'Nível '+e.tier}</span></div>
       <div class="barraVida"><i style="width:${frac*100}%;background:${corV}"></i><span>${u.hp} / ${e.hp}</span></div>${e.evo?`<div class="barraXp"><i style="width:${Math.min(100,u.xp/e.xp*100)}%"></i></div>`:''}
@@ -5716,6 +5730,12 @@ function atualiza(){
   {const n=minha?criaturasPendentes().length:0;
    document.getElementById('btProx').classList.toggle('ativo',n>0);
    document.getElementById('btProxN').textContent=n||'';}
+  // celular deitado: figurinha da criatura selecionada ao lado do 👣 (dá um "pop" quando a seleção muda)
+  {const f=document.getElementById('figSel'),u=PAISAGEM()&&minha?J.sel:null;
+   f.classList.toggle('ativo',!!u);
+   if(u&&f.dataset.id!==String(u.id)){f.dataset.id=u.id;f.innerHTML=iconeSpr(u.esp,40,'cor');f.style.setProperty('--corSel',COR[u.lado]);
+     f.classList.remove('pop');void f.offsetWidth;f.classList.add('pop');}
+   if(!u)f.dataset.id='';}
   const bt=document.getElementById('btFim');
   // nada mais a fazer (criaturas já agiram, não dá para invocar e o mestre não tem quem atacar): o botão fica dourado
   {const m=mestreDe(0),mestreAtaca=m&&!m.agiu&&alvosDesde(m,m.c,m.r).length>0;
@@ -5770,7 +5790,9 @@ function atualiza(){
 function posFicha(){
   const de=document.documentElement,el=document.getElementById('info');
   if(!RETRATO()){FOLGA.p=0;de.style.removeProperty('--infoH');return;}
-  const lf=document.getElementById('linhaFim').getBoundingClientRect(),topo=Math.round(innerHeight-lf.top+6);
+  const lfEl=document.getElementById('linhaFim'),lf=lfEl.getBoundingClientRect();
+  const ty=(()=>{const m=getComputedStyle(lfEl).transform;if(!m||m==='none')return 0;const v=m.match(/-?[\d.]+/g);return v?+v[v.length-1]||0:0;})(); // descontar a animação de entrada
+  const topo=Math.round(innerHeight-(lf.top-ty)+6);
   de.style.setProperty('--fimTopo',topo+'px');
   const h=el.classList.contains('vazio')?0:Math.round(el.getBoundingClientRect().height)+6;
   de.style.setProperty('--infoH',h+'px');
