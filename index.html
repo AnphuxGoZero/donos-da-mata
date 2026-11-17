@@ -195,6 +195,14 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 #fim{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:5}
 #fim .cx{text-align:center;padding:28px 36px}
 #fim h1{font-size:28px;margin-bottom:8px}
+#fim .cx{max-width:min(440px,calc(100vw - 20px))}
+#fimPorque:empty{display:none}
+#fimPorque{margin:12px 0 16px;text-align:left;font-size:13.5px;line-height:1.5}
+#fimPorque .porque{margin:0 0 8px}
+#fimPorque .placarFim{display:grid;grid-template-columns:auto 1fr 1fr;gap:2px 12px;font-size:12.5px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;margin:0 0 8px}
+#fimPorque .placarFim b{text-align:center}
+#fimPorque .placarFim span:not(:first-child){text-align:center}
+#fimPorque .dicaFim{margin:0;color:#f2c14e}
 .ajuda{font-size:12px;color:var(--dim)}
 /* coluna da direita na altura do mapa: informações e registro rolam por dentro */
 #app{align-items:stretch}
@@ -208,6 +216,18 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 #btFim{flex:1;padding:12px;font-size:15px;font-weight:600;letter-spacing:.02em}
 #btFim.brilha,#btFim.brilha:hover:not(:disabled){background:#a87a22;border-color:#f2c14e;color:#fff;animation:brilhaFim 1.6s ease-in-out infinite}
 @keyframes brilhaFim{0%,100%{box-shadow:0 0 0 0 #f2c14e00}50%{box-shadow:0 0 14px 3px #f2c14ecc}}
+/* jogador parado na própria vez: o Encerrar turno chama atenção aos poucos (ocio1 → ocio3) */
+#btFim{position:relative}
+#btFim.ocio1,#btFim.ocio2,#btFim.ocio3{background:#a87a22;border-color:#f2c14e;color:#fff}
+#btFim.ocio1{animation:brilhaFim 1.6s ease-in-out infinite}
+#btFim.ocio2{animation:ocioFim2 1.1s ease-in-out infinite}
+#btFim.ocio3{animation:ocioFim3 .8s ease-in-out infinite;z-index:3}
+@keyframes ocioFim2{0%,100%{transform:scale(1);box-shadow:0 0 0 0 #f2c14e00}50%{transform:scale(1.04);box-shadow:0 0 18px 5px #f2c14edd}}
+@keyframes ocioFim3{0%,100%{transform:scale(1);box-shadow:0 0 0 0 #f2c14e00;background:#a87a22}50%{transform:scale(1.08);box-shadow:0 0 26px 9px #ffd76cee;background:#d39b2a}}
+#btFim.ocio3::after{content:attr(data-dica);position:absolute;bottom:calc(100% + 12px);right:0;white-space:nowrap;background:#f2c14e;color:#1a1408;font-size:13px;font-weight:700;padding:6px 10px;border-radius:6px;box-shadow:0 4px 14px #000a;pointer-events:none;animation:dicaFim 1s ease-in-out infinite}
+#btFim.ocio3.dicaAbaixo::after{bottom:auto;top:calc(100% + 12px)}
+@keyframes dicaFim{0%,100%{translate:0 0}50%{translate:0 -5px}}
+@media (prefers-reduced-motion:reduce){#btFim.ocio1,#btFim.ocio2,#btFim.ocio3,#btFim.ocio3::after{animation:none}#btFim.ocio2,#btFim.ocio3{box-shadow:0 0 18px 5px #f2c14edd}}
 #linhaFim{display:flex;gap:6px;flex:none}
 /* atalho da Magia ao lado do Encerrar turno: só aparece quando dá para lançar; brilha quando há magia com alvo */
 #btMagia{display:none;flex:none;color:#d9b8ff;border-color:#6a4a8a;font-size:15px}
@@ -378,6 +398,18 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 #cercoCena .ccTela{position:relative;border:2px solid #162a5a;line-height:0}
 #cercoCena canvas{display:block}
 #cercoCena .cap:empty{display:none}
+#cercoCena{flex-direction:column;gap:14px}
+#cercoCena .ccAviso{max-width:min(560px,calc(100vw - 24px));text-align:center;opacity:0;transform:translateY(-10px) scale(1.06);transition:opacity .4s,transform .4s}
+#cercoCena .ccAviso:empty{display:none}
+#cercoCena .ccAviso.vis{opacity:1;transform:none}
+#cercoCena .ccCeuTxt{position:absolute;left:0;top:0;width:100%;display:flex;align-items:center;justify-content:center;padding:4px 12px;box-sizing:border-box;
+  text-align:center;line-height:1.35;font-size:max(13px,calc(var(--cw) / 24));font-weight:600;color:#fff;text-shadow:0 1px 3px #000,0 0 8px #000;pointer-events:none;opacity:0;transition:opacity .4s}
+#cercoCena .ccCeuTxt:empty{display:none}
+#cercoCena .ccCeuTxt.vis{opacity:1}
+#cercoCena .avTit{font-family:"Pirata One",serif;font-size:clamp(28px,6vw,44px);line-height:1.05;letter-spacing:.02em;text-shadow:0 3px 0 #000,0 0 18px currentColor}
+#cercoCena .avTit.ouro{color:#ffd76c}#cercoCena .avTit.roxo{color:#d6b4ff}#cercoCena .avTit.verm{color:#ff9a6a}
+#cercoCena .avSub{margin-top:6px;font-size:clamp(14px,2.4vw,17px);font-weight:600;line-height:1.4;color:#fff;text-shadow:0 1px 3px #000,0 0 8px #000}
+
 #cercoCena .ccTropas{display:flex;justify-content:center;gap:4px}
 #cercoCena .ccTropas .spr{margin:0}
 #cercoCena .ccFrase{font-size:14px;font-weight:600;text-align:center;padding:0 8px;max-width:480px;text-shadow:0 1px 2px #000}
@@ -393,9 +425,12 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 #intro .inTxt{font-size:clamp(16px,2.6vw,22px);font-weight:700;line-height:1.45;max-width:620px;color:#fff;
   text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000,0 2px 6px #000;
   opacity:0;transform:translateY(6px);transition:opacity .6s,transform .6s}
+#intro .inSeguir{margin-top:8px;font-size:clamp(14px,2.2vw,17px);font-weight:700;color:#f2c14e;letter-spacing:.04em;text-shadow:0 1px 3px #000;opacity:0;transition:opacity .4s}
+#intro .inSeguir.pisca{opacity:1;animation:inSeguir 1.3s ease-in-out infinite}
+@keyframes inSeguir{0%,100%{opacity:1}50%{opacity:.35}}
 #intro .vis{opacity:1!important;transform:none!important}
 #intro .inPular{position:absolute;right:12px;bottom:calc(9vh + 8px);font-size:12px;color:#fffa;text-shadow:0 1px 2px #000;pointer-events:none}
-#intro.sai .inCaixa,#intro.sai .inPular{opacity:0!important;transition:opacity 1s ease-in!important} /* .vis usa !important: a saída também */
+#intro.sai .inCaixa,#intro.sai .inPular,#intro.sai .inSeguir{opacity:0!important;transition:opacity 1s ease-in!important} /* .vis usa !important: a saída também */
 #compart,#instalar{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
 #compart.aberto,#instalar.aberto{display:flex}
 #compart>.cx,#instalar>.cx{width:min(340px,100%);text-align:center;padding:14px 18px 16px;box-shadow:0 10px 40px #000c}
@@ -674,8 +709,8 @@ html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
     <div class="cx" id="caixaLog"><h2>Registro</h2><div id="log"></div></div>
   </div></div>
 </div>
-<div id="intro"><div class="inCaixa"><div class="inTit">O Cristal se partiu</div><div class="inTxt in1">Quem restaurá-lo governará estas terras.</div><div class="inTxt in2">Conquiste as torres e domine o centro para vencer.</div></div><div class="inPular">toque para pular</div></div>
-<div id="cercoCena" title=""><div class="ccCaixa"><div class="ccTela"><canvas class="ccTxt"></canvas></div><div class="cap"></div></div></div>
+<div id="intro"><div class="inCaixa"><div class="inTit">O Cristal se partiu</div><div class="inTxt in1">Quem restaurá-lo governará estas terras.</div><div class="inTxt in2">Conquiste as torres e domine o centro para vencer.</div><div class="inSeguir">toque para começar</div></div><div class="inPular">toque para pular</div></div>
+<div id="cercoCena" title=""><div class="ccAviso"></div><div class="ccCaixa"><div class="ccTela"><canvas class="ccTxt"></canvas><div class="ccCeuTxt"></div></div><div class="cap"></div></div></div>
 <div id="fichaDet" onclick="if(event.target===this)fechaFicha()"><div class="cx"><div class="topoAj"><h2 id="fichaDetTit">Detalhes</h2><button onclick="fechaFicha()" title="Fechar (Esc)">✕</button></div><div id="fichaDetIn"></div></div></div>
 <div id="ajuda" onclick="if(event.target===this)fechaAjuda()"><div class="cx ajuda"><div class="topoAj"><h1>Como jogar</h1><button onclick="fechaAjuda()" title="Fechar (Esc)">✕</button></div>
       <p><b>Acerto:</b> cada ataque são 3 golpes. A chance de cada golpe acertar é a precisão de quem ataca menos a evasão do terreno de quem defende, mais ou menos 25% pelo horário (mínimo 5%, máximo 95%). Castelo e fortaleza só dão evasão ao dono: um invasor neles tem a evasão que teria na planície. Passe o mouse no alvo para ver a conta.</p>
@@ -684,8 +719,8 @@ html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
       <p><b>Terrenos:</b> cada mapa tem um tema (vale, costa, terras áridas, caldeira vulcânica ou fiorde glacial). Passe o mouse num hexágono para ver como ele afeta a criatura selecionada: custo de movimento, evasão e ataque.</p>
       <p>Clique numa unidade sua e depois numa casa azul para movê-la. Inimigos em vermelho podem ser atacados: os de borda contínua estão ao lado; nos tracejados, a criatura anda sozinha até uma casa vizinha e ataca. Todo ataque é corpo a corpo.</p>
       <p>Clique no seu mestre para abrir o menu dele: Mover, Atacar, Magia ou Força Elemental.</p>
-      <p><b>Magia:</b> as magias do seu mestre são liberadas quando você conquista a sua primeira torre (o mestre inimigo segue a mesma regra). Cada mestre tem 9 magias comuns e 2 da sua ordem (escolhida em Preparar Batalha), e lança <b>uma magia por turno</b>, em qualquer momento, desde que tenha MP. Em Magia abre a lista das magias que têm algum alvo agora (Cura só aparece se houver criatura sua ferida, e assim por diante). Escolha uma e clique no alvo destacado em roxo; as que pegam uma área grande mostram a área e pedem confirmação. Esc volta à lista. Mestres nunca são afetados por magias. Marcas no mapa: <b>S</b> Sono, <b>P</b> Petrificada, <b>B</b> Barreira, <b>L</b> Passo Largo, <b>F</b> Fúria, <b>D</b> Dominada.</p>
-      <p><b>Força Elemental:</b> é liberada quando você conquista a sua segunda torre (o mestre inimigo segue a mesma regra). Depois disso, uma vez por turno, por 40 MP, um elemental da sua ordem ataca qualquer criatura inimiga do mapa e enfrenta o revide. O elemental é feito para derrubar gigantes: contra nível 0 causa metade do dano, contra nível 1 três quartos, e contra nível 2, 3 e mestres o dano é cheio. Ele começa com 100 de vida, não se cura durante a partida e, se morrer, não volta. A Força Elemental não gasta a magia do turno.</p>
+      <p><b>Magia:</b> as magias do seu mestre são liberadas quando você conquista a sua segunda torre (o mestre inimigo segue a mesma regra). Cada mestre tem 9 magias comuns e 2 da sua ordem (escolhida em Preparar Batalha), e lança <b>uma magia por turno</b>, em qualquer momento, desde que tenha MP. Em Magia abre a lista das magias que têm algum alvo agora (Cura só aparece se houver criatura sua ferida, e assim por diante). Escolha uma e clique no alvo destacado em roxo; as que pegam uma área grande mostram a área e pedem confirmação. Esc volta à lista. Mestres nunca são afetados por magias. Marcas no mapa: <b>S</b> Sono, <b>P</b> Petrificada, <b>B</b> Barreira, <b>L</b> Passo Largo, <b>F</b> Fúria, <b>D</b> Dominada.</p>
+      <p><b>Força Elemental:</b> é liberada quando você conquista a sua terceira torre (o mestre inimigo segue a mesma regra). Depois disso, uma vez por turno, por 40 MP, um elemental da sua ordem ataca qualquer criatura inimiga do mapa e enfrenta o revide. O elemental é feito para derrubar gigantes: contra nível 0 causa metade do dano, contra nível 1 três quartos, e contra nível 2, 3 e mestres o dano é cheio. Ele começa com 100 de vida, não se cura durante a partida e, se morrer, não volta. A Força Elemental não gasta a magia do turno.</p>
       <p>Para invocar, clique numa construção sua (castelo, fortaleza ou torre) que esteja livre e ao lado do seu mestre. Elas ficam com borda dourada tracejada.</p>
       <p>Seu exército pode ter até 2 criaturas + 1 por torre que você controla. Ganhe torres (e MP) terminando o movimento sobre elas.</p>
       <p><b>Modos:</b> no <b>Duelo</b> você enfrenta um mestre. Na <b>Tríade</b> são três mestres, todos contra todos (você e dois controlados pelo computador), num mapa maior com três castelos. Na <b>Guerra Total</b> são quatro mestres, um castelo em cada canto do mapa. Quando um mestre cai ou tem o castelo cercado, ele sai da partida: o exército dele se desfaz e as construções dele ficam sem dono. Vence o último mestre de pé.</p>
@@ -726,7 +761,7 @@ html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
   <div id="instalarIn"></div>
   <div class="linha"><button class="pri" onclick="fechaInstalar()">Entendi</button></div>
 </div></div>
-<div id="fim"><div class="cx"><h1 id="fimTxt"></h1><p id="fimSub" class="vez"></p><button class="pri" onclick="abreConfig()">Jogar de novo</button></div></div>
+<div id="fim"><div class="cx"><h1 id="fimTxt"></h1><p id="fimSub" class="vez"></p><div id="fimPorque"></div><button class="pri" onclick="abreConfig()">Jogar de novo</button></div></div>
 
 <script>
 "use strict";
@@ -1768,8 +1803,10 @@ function novoJogo(op=prefs()){
 // ---------- Introdução da partida ----------
 // Abre na Torre do Cristal com o cristal inteiro brilhando; um raio cai nele e ele se parte nos seis cacos
 // (o estado em que toda partida começa). A frase resume o objetivo, e a câmera viaja até o seu mestre.
-// Tocar, clicar ou Esc/Espaço/Enter pulam. Desenho em desenhaCristal (estouro dos cacos) e desenhaIntro (raios, clarão).
-const INTRO={raio:1500,quebra:900,tit:2300,txt:3100,txt2:4700,viaja:7600,dViaja:1700,fim:9700}; // as frases entram uma de cada vez; a última fica ~2,8 s na tela
+// Depois das frases a cena espera um toque (clique, Espaço, Enter) para viajar; Esc pula tudo. Desenho em desenhaCristal (estouro dos cacos) e desenhaIntro (raios, clarão).
+const INTRO={raio:1500,quebra:900,tit:2300,txt:3100,txt2:4700,espera:5400,viaja:7600,dViaja:1700,fim:9700};
+// as frases entram uma de cada vez; depois da última a cena PARA (em INTRO.espera) e espera um toque:
+// só então a câmera viaja até o mestre (o jogador lê no seu tempo)
 function comecaIntro(){
   const m=mestreDe(0);
   if(!VEL||document.hidden||!J.cristal||!m){J.intro=null;return;}
@@ -1781,23 +1818,42 @@ function comecaIntro(){
   // título e frase centrados sobre o mapa (no PC, o painel lateral fica de fora)
   const rc=cv.getBoundingClientRect(),cx=el.querySelector('.inCaixa');cx.style.left=Math.max(0,rc.left)+'px';cx.style.right=Math.max(0,innerWidth-rc.right)+'px';
   el.className='aberto';el.querySelectorAll('.vis').forEach(e=>e.classList.remove('vis'));
-  el.onclick=fimIntro;
+  el.onclick=toqueIntro;
   void el.offsetWidth;setTimeout(()=>el.classList.add('claro'),40); // o mapa surge do escuro
-  el.querySelector('.inPular').textContent=TOQUE()?'toque para pular':'clique ou Esc para pular';
-  const I=J.intro;setTimeout(()=>{if(J&&J.intro===I)fimIntro();},INTRO.fim+1500); // garantia, como nas cenas
+  el.querySelector('.inPular').textContent=TOQUE()?'':'Esc para pular';
+  el.querySelector('.inSeguir').textContent=TOQUE()?'▶ Toque para começar':'▶ Clique para começar';
+}
+// toque/clique/Espaço/Enter na introdução: com as frases ainda entrando, mostra todas de uma vez;
+// com a cena esperando, segue para a viagem até o mestre; durante a viagem, chega direto
+function toqueIntro(){
+  const I=J&&J.intro;if(!I){fimIntro();return;}
+  const now=performance.now(),t=now-I.t0;
+  if(I.seguiu){fimIntro();return;}
+  if(t<INTRO.espera){I.t0=now-INTRO.espera;return;} // frases: aparecem todas, e a cena fica esperando
+  I.seguiu=true;I.t0=now-INTRO.viaja;
+  document.querySelector('#intro .inSeguir').classList.remove('pisca');
+  setTimeout(()=>{if(J&&J.intro===I)fimIntro();},INTRO.fim-INTRO.viaja+1500); // garantia, como nas cenas
 }
 const suave=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 // câmera da introdução: parada na torre (com uma leve aproximação e o tremor do raio), depois viaja até o mestre
 function camIntro(now){
-  const I=J.intro,t=now-I.t0,m=mestreDe(0);
+  const I=J.intro,m=mestreDe(0);
   if(!m){fimIntro();return;}
+  let t=now-I.t0;
+  if(!I.seguiu&&t>INTRO.espera)t=INTRO.espera;
   const el=document.getElementById('intro');
   if(I.etapa===0&&t>=INTRO.tit){I.etapa=1;el.querySelector('.inTit').classList.add('vis');el.querySelector('.inCaixa').classList.add('vis');}
   if(I.etapa===1&&t>=INTRO.txt){I.etapa=2;el.querySelector('.in1').classList.add('vis');}
   if(I.etapa===2&&t>=INTRO.txt2){I.etapa=3;el.querySelector('.in2').classList.add('vis');}
+  if(!I.seguiu&&t>=INTRO.espera){ // parada: o tempo da cena não anda até o toque
+    I.t0=now-INTRO.espera;
+    if(!I.esperando){I.esperando=true;el.querySelector('.inSeguir').classList.add('pisca');}
+    if(I.etapa<3){if(I.etapa<1){el.querySelector('.inTit').classList.add('vis');el.querySelector('.inCaixa').classList.add('vis');}
+      el.querySelector('.in1').classList.add('vis');el.querySelector('.in2').classList.add('vis');I.etapa=3;}
+  }
   if(I.etapa===3&&t>=INTRO.viaja+INTRO.dViaja*.2){I.etapa=4;el.classList.add('sai');}
   if(t>=INTRO.fim){fimIntro();return;}
-  const zPerto=I.zIni*(1+.06*Math.min(1,t/INTRO.viaja));
+  const zPerto=I.zIni*(1+.06*Math.min(1,t/INTRO.espera)); // aproxima até a parada e fica: sem salto ao seguir
   let [mx,my]=centro(m.c,m.r);
   const zA=CAM.z;CAM.z=I.zFim;mx=limX(mx);my=limY(my);CAM.z=zA; // onde a câmera vai parar no zoom do jogo
   const v=suave(Math.min(1,Math.max(0,(t-INTRO.viaja)/INTRO.dViaja)));
@@ -1809,7 +1865,7 @@ function camIntro(now){
 }
 function fimIntro(){
   const el=document.getElementById('intro');
-  el.onclick=null;el.className='';
+  el.onclick=null;el.className='';el.querySelector('.inSeguir').classList.remove('pisca');
   if(!J||!J.intro)return;
   const pulou=performance.now()-J.intro.t0<INTRO.fim;
   J.intro=null;
@@ -2153,7 +2209,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.54'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.55'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2381,7 +2437,7 @@ async function moverPara(u,k,prev){
   }
   u.movido=true;
   const tomou=captura(u);
-  if(tomou){hist(u).torre++;if(contaHj(u))hj(u.lado).torre++;atualiza();await mostraTorre(u,tomou.antes,tomou.liberou);} // cena da torre conquistada (o jogo espera ela fechar)
+  if(tomou){hist(u).torre++;if(contaHj(u))hj(u.lado).torre++;atualiza();await mostraTorre(u,tomou.antes,tomou.liberou,tomou.primeira);} // cena da torre conquistada (o jogo espera ela fechar)
   avisaCerco(u.lado);
 }
 // a vitória só vale se a ocupação aguentar até o início do próximo turno de quem cercou
@@ -2481,10 +2537,29 @@ function mostraCerco(l){
   if(c.n===J.cercoVisto[l])return Promise.resolve();
   J.cercoVisto[l]=c.n;
   if(!VEL||document.hidden)return Promise.resolve();
+  return focarCerco(l,c).then(()=>cenaDoCerco(l,c));
+}
+// antes da cena: a câmera vai até o castelo cercado e as casas ocupadas piscam na cor de quem cerca,
+// para ficar claro ONDE é o cerco (e não parecer que é na base de quem está na tela)
+async function focarCerco(l,c){
+  const urb=urbanaDe(c.o),ocup=urb.filter(k=>{const u=unidadeEm(...DK(k));return u&&u.lado===l&&!ESP[u.esp].mestre;});
+  const casas=ocup.length?ocup:urb;if(!casas.length)return;
+  let sx=0,sy=0;for(const k of casas){const [x,y]=centro(...DK(k));sx+=x;sy+=y;}
+  CAM.alvo={fixo:true,px:sx/casas.length,py:sy/casas.length};CAM.centrar=true;CAM.mao=false;CAM.parado=false;
+  const t0=performance.now();
+  while(VEL&&performance.now()-t0<1200){await new Promise(q=>setTimeout(q,30));if(CAM.parado&&!CAM.centrar)break;}
+  for(const k of ocup)piscaHex(k,COR[l],1100);
+  for(const k of urb)if(!ocup.includes(k))piscaHex(k,'#ffffff',1100);
+  await dorme(900);
+}
+function cenaDoCerco(l,c){
+  if(!J||J.fim||!VEL||document.hidden)return Promise.resolve();
   const el=document.getElementById('cercoCena');
   const occ=urbanaDe(c.o).map(k=>unidadeEm(...DK(k))).filter(u=>u&&u.lado===l&&!ESP[u.esp].mestre);
   const vence=c.n>=c.precisa;
-  el.querySelector('.cap').innerHTML=`<div class="ccTropas">${occ.map(u=>iconeSpr(u.esp,30,u.lado)).join('')}</div>`;
+  const castelo=c.o===0?'<span style="color:var(--p0)">seu castelo</span>':`o castelo <span style="color:var(--p${c.o})">${doM(c.o)}</span>`;
+  const frase=l===0?`Você cerca ${castelo}`:c.o===0?`<span style="color:var(--p${l})">${OM(l)}</span> cerca ${castelo}!`:`<span style="color:var(--p${l})">${OM(l)}</span> cerca ${castelo}`;
+  el.querySelector('.cap').innerHTML=`<div class="ccTropas">${occ.map(u=>iconeSpr(u.esp,30,u.lado)).join('')}</div><div class="ccFrase">${frase}</div>`;
   return rodaCena({fundo:fundoCerco(),dur:3000,
     // raios: nas torres laterais e na torre de menagem
     agenda:[{t:120,x:17,y:22},{t:650,x:143,y:22},{t:1500,x:80,y:8},{t:2150,x:17+Math.random()*126,y:30}],
@@ -2554,31 +2629,43 @@ if(document.fonts)document.fonts.load(`32px ${FONTE_CENA}`).catch(()=>{}); // ca
 function rodaCena(o){
   const el=document.getElementById('cercoCena');
   const esc=Math.max(2,Math.min(4,Math.floor(Math.min(innerWidth*.9,520)/CC_W)))*.8; // quadro 20% menor
-  const cw=Math.round(CC_W*esc),ch=Math.round(CC_H*esc);
+  const E=o.ceu||0,H=CC_H+E; // ceu: faixa extra de céu no alto do quadro (o aviso vai escrito nela)
+  const cw=Math.round(CC_W*esc),ch=Math.round(H*esc);
   // a pixel art é desenhada num quadro pequeno fora da tela (160×108) e ampliada sem suavizar para o canvas visível,
   // que tem a resolução real da tela; o texto vai direto nele, nítido
   const cv2=rodaCena.px||(rodaCena.px=Object.assign(document.createElement('canvas'),{width:CC_W,height:CC_H})),g=cv2.getContext('2d');
+  if(cv2.height!==H)cv2.height=H;
   const ct=el.querySelector('.ccTxt'),dpr=Math.min(3,window.devicePixelRatio||1),gt=ct.getContext('2d');
   ct.style.width=cw+'px';ct.style.height=ch+'px';
   ct.width=Math.round(cw*dpr);ct.height=Math.round(ch*dpr);
   const kt=ct.width/CC_W;
   const [corFora,corDentro]=o.raio||['#e070ff','#ffffff'],clarao=o.clarao||'255,215,255';
-  const t0=performance.now();
+  let t0=performance.now();
   let ativos=[],flash=0,prox=0;
+  const av=el.querySelector('.ccAviso');
+  av.classList.remove('vis');
+  if(o.aviso==null)av.innerHTML='';
+  // com céu extra, o.ceuTxt vai escrito dentro do quadro, sobre o céu (o título do aviso fica acima do quadro)
+  const ceuTxt=el.querySelector('.ccCeuTxt');ceuTxt.classList.remove('vis');
+  ceuTxt.innerHTML=E&&o.ceuTxt?o.ceuTxt:'';ceuTxt.style.height=(E/H*100)+'%';ceuTxt.style.setProperty('--cw',cw+'px');
   el.classList.add('aberto');
   return new Promise(fim=>{
-    let acabou=false;
-    const fecha=()=>{if(acabou)return;acabou=true;el.classList.remove('aberto');el.onclick=null;cenaCerco=null;setTimeout(fim,250);};
-    el.onclick=fecha;cenaCerco={fecha};
-    setTimeout(fecha,o.dur+600); // garantia: com a aba em segundo plano a animação pausa, e o jogo não pode ficar esperando
+    let acabou=false,parada=false;
+    const fecha=()=>{if(acabou)return;acabou=true;el.classList.remove('aberto');el.onclick=null;cenaCerco=null;av.classList.remove('vis');ceuTxt.classList.remove('vis');setTimeout(fim,250);};
+    // cena que espera toque: tocar antes do fim só adianta a animação (o aviso aparece); depois, fecha
+    const toque=()=>{if(!o.esperaToque||parada)fecha();else{t0=Math.min(t0,performance.now()-o.dur);}};
+    el.onclick=toque;cenaCerco={fecha:toque};
+    if(!o.esperaToque)setTimeout(fecha,o.dur+600); // garantia: com a aba em segundo plano a animação pausa, e o jogo não pode ficar esperando
     const quadro=now=>{
       if(acabou)return;
-      const t=now-t0;if(t>o.dur){fecha();return;}
+      let t=now-t0;
+      if(o.aviso!=null&&t>=o.aviso){av.classList.add('vis');ceuTxt.classList.add('vis');}
+      if(t>o.dur){if(!o.esperaToque){fecha();return;}t=o.dur;if(!parada){parada=true;av.classList.add('vis');ceuTxt.classList.add('vis');}}
       requestAnimationFrame(quadro); // agendado antes de desenhar: um erro num quadro não congela a cena
-      while(prox<o.agenda.length&&t>=o.agenda[prox].t){const a=o.agenda[prox++];ativos.push({...raioCerco(a.x,a.y),t:t});flash=1;}
+      while(prox<o.agenda.length&&t>=o.agenda[prox].t){const a=o.agenda[prox++];ativos.push({...raioCerco(a.x,a.y+E),t:t});flash=1;}
       g.drawImage(o.fundo,0,0);
-      o.baixo&&o.baixo(g,t,now);
-      if(flash>0){g.fillStyle=`rgba(${clarao},${flash*.55})`;g.fillRect(0,0,CC_W,CC_H);flash=Math.max(0,flash-.09);}
+      if(o.baixo){g.save();g.translate(0,E);o.baixo(g,t,now);g.restore();}
+      if(flash>0){g.fillStyle=`rgba(${clarao},${flash*.55})`;g.fillRect(0,0,CC_W,H);flash=Math.max(0,flash-.09);}
       // raios: piscam e somem em ~280 ms
       ativos=ativos.filter(r=>t-r.t<280);
       for(const r of ativos){
@@ -2587,7 +2674,7 @@ function rodaCena(o){
         g.globalAlpha=a;linha(r.pts,corFora,3);r.galhos.forEach(b=>linha(b,corFora,2));
         linha(r.pts,corDentro,1);r.galhos.forEach(b=>linha(b,corDentro,1));g.globalAlpha=1;
       }
-      gt.setTransform(1,0,0,1,0,0);gt.imageSmoothingEnabled=false;gt.drawImage(cv2,0,0,ct.width,ct.height);gt.setTransform(kt,0,0,kt,0,0);
+      gt.setTransform(1,0,0,1,0,0);gt.imageSmoothingEnabled=false;gt.drawImage(cv2,0,0,ct.width,ct.height);gt.setTransform(kt,0,0,kt,0,kt*E);
       o.cima&&o.cima(gt,t,now);
     };
     requestAnimationFrame(quadro);
@@ -2620,11 +2707,39 @@ function fundoTorre(){
   return ctFundo=c;
 }
 let ctTopo=[80,30]; // topo da torre na cena (onde fica o mastro)
-function mostraTorre(u,doDono,liberou){
+// com aviso, o quadro da torre fica mais alto: o céu continua para cima (escurecendo) e o subtítulo vai escrito nele
+const TORRE_CEU_ALTO=true;const CEU_TORRE=34,ctAlto={};
+function fundoTorreAlto(E){
+  if(ctAlto[E])return ctAlto[E];
+  const base=fundoTorre(),c=document.createElement('canvas');c.width=CC_W;c.height=CC_H+E;const g=c.getContext('2d');
+  const rnd=mulberry32(777),px=(x,y,cor)=>{g.fillStyle=cor;g.fillRect(x,y,1,1);};
+  const CEU=['#04061a','#0a1036','#121c52','#1c2c70','#2a4090','#3c58ad'];
+  for(let yy=0;yy<E;yy++)for(let x=0;x<CC_W;x++){const y=yy-E; // mesma fórmula do céu, para cima do quadro original
+    let v=(Math.sin(x*.16+Math.sin(y*.21)*2.4)*Math.cos(y*.19+x*.04)+Math.sin((x-y)*.09)*.7+1.7)/3.4*Math.max(.05,.4+y/120)*CEU.length;
+    v+=((x+y)&1)?.35:-.35;px(x,yy,CEU[Math.max(0,Math.min(CEU.length-1,Math.floor(v)))]);}
+  for(let i=0;i<16;i++)px(Math.floor(rnd()*CC_W),Math.floor(rnd()*E),rnd()<.3?'#ffffff':'#8fa8e0');
+  g.drawImage(base,0,E);
+  return ctAlto[E]=c;
+}
+// Avisos da torre ficam FORA do quadro de pixel art (texto da página, maior e nítido), acima dele:
+// 1ª torre do jogador: o objetivo; 2ª: Magia liberada; 3ª: Força Elemental liberada. Os do jogador só saem com um toque.
+const AVISO_TORRE={
+  primeira:{tit:'Domine mais torres para vencer',sub:'Cada torre rende energia e puxa o cabo de guerra a seu favor',cls:'ouro'},
+  'Magia liberada':{tit:'✦ Magia liberada',sub:l=>l===0?'Lance uma magia por turno':`${OM(l)} já pode lançar magias.`,cls:'roxo'},
+  'Força Elemental liberada':{tit:'⚡ Força Elemental liberada',sub:l=>l===0?'Elementais atacam qualquer criatura adversária':`${OM(l)} já pode usar a Força Elemental.`,cls:'verm'}};
+function mostraTorre(u,doDono,liberou,primeira=false){
   if(!J||J.fim||!VEL||document.hidden)return Promise.resolve();
   const l=u.lado,[cor,corE]=COR_BAND[l];
-  document.querySelector('#cercoCena .cap').innerHTML=`<div class="ccTropas">${iconeSpr(u.esp,30,l)}</div>`;
-  return rodaCena({fundo:fundoTorre(),dur:liberou?1600:1150,raio:['#6fa0ff','#ffffff'],clarao:'200,220,255',
+  const recado=l===0&&primeira&&!liberou; // primeira torre do jogador: recado do objetivo
+  const espera=l===0&&(recado||!!liberou); // avisos do jogador (1ª torre, Magia, Força) só fecham com um toque
+  const av=recado?AVISO_TORRE.primeira:liberou?AVISO_TORRE[liberou]:null;
+  const el=document.getElementById('cercoCena');
+  const sub=av?(typeof av.sub==='function'?av.sub(l):av.sub):'';
+  const alto=TORRE_CEU_ALTO&&!!av; // título acima do quadro, subtítulo no céu (quadro mais alto)
+  el.querySelector('.ccAviso').innerHTML=av?`<div class="avTit ${av.cls}">${av.tit}</div>${alto?'':`<div class="avSub">${sub}</div>`}`:'';
+  el.querySelector('.cap').innerHTML=`<div class="ccTropas">${iconeSpr(u.esp,30,l)}</div>`;
+  return rodaCena({fundo:alto?fundoTorreAlto(CEU_TORRE):fundoTorre(),ceu:alto?CEU_TORRE:0,ceuTxt:alto?sub:null,dur:espera?1150:liberou?2000:1150,esperaToque:espera,raio:['#6fa0ff','#ffffff'],clarao:'200,220,255',
+    aviso:av?500:null,
     agenda:[{t:40,x:56,y:40},{t:450,x:108,y:44},{t:800,x:20+Math.random()*120,y:70}],
     baixo:(g,t,now)=>{
       // mastro no alto da torre e a bandeira subindo (150→450 ms), tremulando
@@ -2636,7 +2751,6 @@ function mostraTorre(u,doDono,liberou){
     },
     cima:(g,t)=>{
       textoCena(g,'OCUPAÇÃO',88,28,PAL_LADO[l],t,40,150);
-      if(liberou)textoCena(g,liberou,15,14,liberou.startsWith('Força')?'verm':'roxo',t,600,150); // 1ª torre libera a Magia; 2ª, a Força
     }});
 }
 // ---------- Cena do cristal completo ----------
@@ -2736,15 +2850,15 @@ function captura(u){
     const antes=J.dono[k];
     J.dono[k]=u.lado;flutua(u,'Torre!',COR[u.lado]);
     log(`${nome(u)} capturou ${ehCristal(k)?'a Torre do Cristal':'uma torre'}.`);
-    // primeira torre do lado: libera as magias do mestre
+    // 1ª torre do lado: só a conquista (o jogador recebe o recado do objetivo); 2ª libera as magias; 3ª, a Força Elemental
     let liberou=false;
     J.conq=J.conq||[];J.conq[u.lado]=(J.conq[u.lado]||0)+1; // torres conquistadas na partida (a mesma torre retomada conta de novo)
-    if(J.magiaLib&&!J.magiaLib[u.lado]){J.magiaLib[u.lado]=true;liberou='Magia liberada';
+    const primeira=J.conq[u.lado]===1;
+    if(J.magiaLib&&!J.magiaLib[u.lado]&&J.conq[u.lado]>=2){J.magiaLib[u.lado]=true;liberou='Magia liberada';
       log(u.lado===0?'✦ Magias liberadas! Seu mestre já pode lançar uma magia por turno.':`✦ ${OM(u.lado)} agora pode lançar magias.`);}
-    // segunda torre conquistada: libera a Força elemental
-    else if(J.forcaLib&&!J.forcaLib[u.lado]&&J.conq[u.lado]>=2){J.forcaLib[u.lado]=true;liberou='Força Elemental liberada';
+    else if(J.forcaLib&&!J.forcaLib[u.lado]&&J.magiaLib&&J.magiaLib[u.lado]&&J.conq[u.lado]>=3){J.forcaLib[u.lado]=true;liberou='Força Elemental liberada';
       log(u.lado===0?'⚡ Força Elemental liberada! Seus elementais já podem atacar, uma vez por turno.':`⚡ ${OM(u.lado)} agora pode usar a Força Elemental.`);}
-    return {antes,liberou};
+    return {antes,liberou,primeira};
   }
 }
 const alvosDesde=(u,c,r)=>J.un.filter(e=>e.lado!==u.lado&&d6c(c,r,e.c,e.r)<=ESP[u.esp].alc);
@@ -2869,12 +2983,43 @@ function eliminar(l,por,motivo){
   const vivos=LADOS().filter(ativo);
   if(vivos.length===1)fimDeJogo(vivos[0],motivo,por);
 }
+// Derrota: um texto curto explicando por que o rival ganhou, um placar rápido e uma dica para a próxima.
+function porqueDerrota(v,motivo,por){
+  // quem ganhou: o vencedor; se a partida segue sem você (3+ mestres), quem te derrubou ou o rival com mais torres
+  const rivais=LADOS().filter(l=>l!==0);
+  const r=v!=null&&v!==0?v:por!=null&&por!==0?por:rivais.reduce((a,b)=>torresDe(b)>torresDe(a)?b:a,rivais[0]);
+  const o=ART(r)+' '+NM(r),O=OM(r);
+  const tV=torresDe(0),tR=torresDe(r),kV=hj(0).abates||0,kR=hj(r).abates||0,cV=hj(0).torre||0,cR=hj(r).torre||0;
+  const torresTx=tR>tV?` No fim, eram ${tR} torres ${ART(r)==='a'?'dela':'dele'} contra ${tV} sua${tV===1?'':'s'}.`:'';
+  let porque,dica;
+  if(motivo==='cabo'){
+    porque=`${O} dominou e protegeu mais torres que você. No fim de cada turno, cada torre puxa o cabo de guerra para o seu dono, e ${ART(r)==='a'?'ela':'ele'} puxou mais forte por mais tempo.${torresTx}`;
+    dica='Tome torres cedo e deixe uma criatura guardando cada uma: torre sem guarda troca de dono fácil.';
+  }else if(motivo==='cristal'){
+    const centro=J.cristal&&J.dono[J.cristal.k]===r;
+    porque=`${O} ${centro?`segurou a Torre do Cristal, que vale por ${valorCristal()} torres,`:'dominou e protegeu mais torres que você'} e foi montando o cristal turno a turno até completá-lo.${torresTx}`;
+    dica='Dispute a torre do centro desde o começo e não a deixe sem guarda.';
+  }else if(motivo==='cerco'){
+    porque=`As tropas ${doM(r)} cercaram e tomaram seu castelo enquanto ele estava pouco protegido.`;
+    dica='Deixe algumas criaturas perto de casa, principalmente quando o alerta de cerco aparecer.';
+  }else{
+    porque=`Seu mestre ficou ao alcance das criaturas ${doM(r)} e foi derrubado. Sem o mestre, o exército se desfaz.`;
+    dica='Mantenha o mestre atrás das suas criaturas e recue com ele quando estiver ferido.';
+  }
+  return `<p class="porque">${porque}</p>
+    <div class="placarFim"><span></span><b>Você</b><b>${NM(r)}</b>
+      <span>Torres agora</span><span>${tV}</span><span>${tR}</span>
+      <span>Torres tomadas</span><span>${cV}</span><span>${cR}</span>
+      <span>Criaturas derrubadas</span><span>${kV}</span><span>${kR}</span></div>
+    <p class="dicaFim">💡 ${dica}</p>`;
+}
 function fimDeJogo(v,motivo='mestre',por=null){
   J.fim=true;J.motivoFim=motivo;
   const jogo=J;
   const mostra=()=>{
     if(J!==jogo)return; // um novo jogo já começou
-    document.getElementById('fimTxt').textContent=v===0?'Vitória!':'Derrota';
+    document.getElementById('fimTxt').textContent=v===0?'Vitória!':'Você perdeu';
+    document.getElementById('fimPorque').innerHTML=v===0?'':porqueDerrota(v,motivo,por);
     document.getElementById('fimSub').textContent=motivo==='cabo'
       ?(v===0?`Suas torres venceram o cabo de guerra no turno ${J.turno}.`:`${OM(v)} venceu o cabo de guerra no turno ${J.turno}.`)
       :motivo==='cristal'
@@ -3145,7 +3290,7 @@ function alvoMagia(l,id,k){
 }
 // magias que aparecem no menu aberto num hexágono: as de alvo único só com um alvo compatível ali
 const magiasPara=(l,k)=>magiasDe(l).filter(id=>alvoMagia(l,id,k));
-// as magias de cada mestre só são liberadas depois que o lado dele conquista a primeira torre
+// as magias de cada mestre só são liberadas depois que o lado dele conquista a segunda torre (a Força, na terceira)
 // (vale para os dois lados): as mecânicas entram aos poucos
 const magiaLiberada=l=>J.magiaLib?!!J.magiaLib[l]:torresDe(l)>0;
 const podeMagia=l=>magiaLiberada(l)&&!J.magiaUsada[l]&&!!mestreDe(l);
@@ -3548,6 +3693,29 @@ function escolherInvocacao(esp){
 }
 // botão de baixo: na sua vez encerra o turno; na vez dos rivais, pula as animações até voltar a sua vez
 function cliqueFim(){if(J.vez===0)fimTurno();else pularRival();}
+// Jogador parado na própria vez (nada muda no jogo: ninguém anda, ataca, invoca ou gasta mana):
+// o Encerrar turno vai chamando atenção em 3 níveis. No 1º turno começa mais cedo (quem ainda não achou o botão);
+// com tudo já feito no turno, também. Telas por cima (ajuda, menus, cenas) pausam a contagem.
+const OCIO_SEG={primeiro:[10,20,35],normal:[30,60,90]};
+let ocio={seg:0,assin:'',nivel:0};
+const assinaturaJogo=()=>J.turno+'|'+J.mp[0]+'|'+J.un.map(u=>u.id+':'+u.c+','+u.r+','+u.hp+(u.agiu?'a':'')).join(';');
+const telaPorCima=()=>!!(CENA||cenaCerco||J.intro||['ajuda','compart','instalar','fichaDet'].some(id=>document.getElementById(id)?.classList.contains('aberto'))
+  ||document.getElementById('saves')?.style.display==='block'||document.getElementById('menuJogo')?.classList.contains('aberto'));
+function poeOcio(n){
+  const bt=document.getElementById('btFim');if(!bt)return;
+  if(n!==ocio.nivel){ocio.nivel=n;for(let i=1;i<=3;i++)bt.classList.toggle('ocio'+i,n===i);}
+  if(n===3){const abaixo=bt.getBoundingClientRect().top<60; // botão no alto da tela (celular deitado): balão embaixo
+    bt.classList.toggle('dicaAbaixo',abaixo);bt.dataset.dica=`${abaixo?'⬆ ':''}${TOQUE()?'Toque':'Clique'} aqui para encerrar o turno${abaixo?'':' ⬇'}`;}
+}
+setInterval(()=>{
+  if(!J||J.fim||J.vez!==0||J.ocupado){ocio.seg=0;ocio.assin='';poeOcio(0);return;}
+  const a=assinaturaJogo();
+  if(a!==ocio.assin){ocio.assin=a;ocio.seg=0;poeOcio(0);return;}
+  if(document.hidden||telaPorCima())return; // pausa, sem zerar
+  ocio.seg++;
+  const lim=OCIO_SEG[J.turno<=1?'primeiro':'normal'].map(t=>turnoEsgotado()?t/2:t);
+  poeOcio(ocio.seg>=lim[2]?3:ocio.seg>=lim[1]?2:ocio.seg>=lim[0]?1:0);
+},1000);
 function pularRival(){
   if(J.vez===0||J.fim||J.pular)return;
   J.pular=true;VEL_PULO=VEL;VEL=0;
@@ -5334,7 +5502,7 @@ function mestreHtml(l){
   const o=ORDENS[J.ordem[l]];
   const els=o.forca.map(e=>`<span style="color:${EL[e]}">${ELN[e]} ${J.elem[l][e]}/100</span>`).join(' · ');
   return `<div class="vez"><b style="color:#d6c2ff">${o.nome}</b> · ${o.magias.map(m=>MAGIAS[m].nome).join(' e ')}<br>
-    Magia ${!magiaLiberada(l)?'<b>na 1ª torre</b>':J.magiaUsada[l]?'<b>usada</b>':'<b style="color:#6ee08a">pronta</b>'} · Força Elemental ${!forcaLiberada(l)?'<b>na 2ª torre</b>':J.forcaUsada[l]?'<b>usada</b>':'<b style="color:#6ee08a">pronta</b>'} · Elementais: ${els}</div>`;
+    Magia ${!magiaLiberada(l)?'<b>na 2ª torre</b>':J.magiaUsada[l]?'<b>usada</b>':'<b style="color:#6ee08a">pronta</b>'} · Força Elemental ${!forcaLiberada(l)?'<b>na 3ª torre</b>':J.forcaUsada[l]?'<b>usada</b>':'<b style="color:#6ee08a">pronta</b>'} · Elementais: ${els}</div>`;
 }
 function painelCerco(){
   const a=cerco(0),b=cerco(1);
@@ -5876,7 +6044,7 @@ cv.addEventListener('wheel',ev=>{ev.preventDefault();mudaZoom(ev.deltaY<0?1:-1);
 // botão direito cancela; no toque, o menu de contexto do toque longo só é suprimido (quem cancela é o botão ✕ da tela)
 cv.addEventListener('contextmenu',ev=>{ev.preventDefault();if(ultTipo==='mouse')cancelar();});
 addEventListener('keydown',ev=>{
-  if(J&&J.intro){ev.preventDefault();if(ev.key==='Escape'||ev.key===' '||ev.key==='Enter')fimIntro();return;}
+  if(J&&J.intro){ev.preventDefault();if(ev.key==='Escape')fimIntro();else if(ev.key===' '||ev.key==='Enter')toqueIntro();return;}
   if(CENA&&(ev.key==='Escape'||ev.key===' '||ev.key==='Enter')){ev.preventDefault();toqueCena();return;}
   if(cenaCerco&&(ev.key==='Escape'||ev.key===' '||ev.key==='Enter')){ev.preventDefault();cenaCerco.fecha();return;}
   if(ev.key==='Escape'){if(document.getElementById('instalar').classList.contains('aberto')){fechaInstalar();return;}if(document.getElementById('compart').classList.contains('aberto')){fechaCompart();return;}if(document.getElementById('ajuda').classList.contains('aberto')){fechaAjuda();return;}if(fichaAberta!=null){fechaFicha();return;}cancelar();}
