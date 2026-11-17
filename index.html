@@ -376,11 +376,23 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 .retrato #zoomUI button:not(:last-child),.retrato #zoomN{display:none}
 .retrato #menuJogo{top:48px;left:4px}
 .retrato #mapa{order:2;flex:1 0 60vh;flex:1 0 60dvh;min-height:0}
+/* abertura no celular em pé: o mapa ocupa a tela inteira (cobre os painéis); quando a câmera parte para o mestre, os painéis voltam */
+.retrato.introCheia #mapa{position:fixed;inset:0;z-index:8;border-radius:0}
+.retrato.introHud #topoMapa{animation:hudVoltaCima .9s ease-out both}
+.retrato.introHud #linhaFim,.retrato.introHud #info{animation:hudVoltaBaixo .9s ease-out both}
+@keyframes hudVoltaCima{from{opacity:0;transform:translateY(-24px)}to{opacity:1;transform:none}}
+@keyframes hudVoltaBaixo{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:none}}
 .retrato #cv{position:absolute;inset:0;width:100%;height:100%}
 .retrato #menuM{max-height:58vh;max-height:58dvh}
 #dicaMapa{position:absolute;left:6px;right:6px;top:6px;z-index:2;pointer-events:none}
 #dicaMapa .prev{margin:0;padding:5px 9px;font-size:12px;background:#2a2230eb;border:1px solid #5a4a6a;box-shadow:0 4px 14px #0009}
 .retrato #info{order:3;flex:0 0 108px;min-height:64px;overflow-y:auto;padding:6px 8px;font-size:12px;display:flex;flex-direction:column;gap:5px}
+/* o mapa vai até o botão Encerrar turno; a ficha flutua sobre a parte de baixo do mapa e só aparece com algo a mostrar */
+.retrato #info{position:fixed;left:calc(8px + var(--sl,0px));right:calc(8px + var(--sr,0px));bottom:var(--fimTopo,64px);z-index:5;flex:none;min-height:0;max-height:min(140px,28vh);max-height:min(140px,28dvh);
+  background:rgba(22,25,33,.94);border-color:#3c4356;box-shadow:0 -4px 18px #000a}
+.retrato #info.vazio{display:none}
+.retrato #btCancela{bottom:calc(8px + var(--infoH,0px))}
+.retrato #alertaCerco.on{bottom:calc(8px + var(--infoH,0px))}
 .retrato #info>*{flex:none}
 /* ficha curta: o retrato é um botão que abre a ficha completa */
 .fichaFoto{position:relative;padding:0!important;min-height:0!important;border:1px solid #4a5268;border-radius:7px;background:#14161c;line-height:0;flex:none}
@@ -843,7 +855,7 @@ const ZOOMS=[1,1.3,1.6,2];
 const CAM={z:1.6,zPref:1.6,zAlvo:1.6,x:VW/2,y:VH/2,alvo:null,centrar:false,mao:false,t:0};
 // mantém a câmera dentro do mapa; num eixo em que a tela mostra o mapa inteiro, fica centrada
 const limX=x=>{const hw=TW/(2*CAM.z);return hw*2>=VW?VW/2:Math.min(VW-hw,Math.max(hw,x));};
-const limY=y=>{const hh=TH/(2*CAM.z),e=CAM.z*LARG_CSS/TW,lo=hh-FOLGA.t/e,hi=VH-hh+FOLGA.b/e;return lo>=hi?(lo+hi)/2:Math.min(hi,Math.max(lo,y));};
+const limY=y=>{const hh=TH/(2*CAM.z),e=CAM.z*LARG_CSS/TW,lo=hh-FOLGA.t/e,hi=VH-hh+(FOLGA.b+(FOLGA.pMax||0))/e;return lo>=hi?(lo+hi)/2:Math.min(hi,Math.max(lo,y));};
 function limitaCam(){CAM.x=limX(CAM.x);CAM.y=limY(CAM.y);}
 const paraTela=(x,y)=>[(x-CAM.x)*CAM.z+TW/2,(y-CAM.y)*CAM.z+TH/2];
 const paraMundo=(x,y)=>[(x-TW/2)/CAM.z+CAM.x,(y-TH/2)/CAM.z+CAM.y];
@@ -860,7 +872,8 @@ function atualizaCam(now){
   if(u&&!CAM.mao&&(u.fixo||J.un.includes(u))){
     const [x,y]=posUn(u),hw=TW/(2*CAM.z);
     // celular deitado: a área útil desconta as faixas cobertas pelos controles (FOLGA), para o alvo não parar embaixo deles
-    const esc=CAM.z*LARG_CSS/TW,dy=(FOLGA.t-FOLGA.b)/(2*esc),hh=TH/(2*CAM.z)-(FOLGA.t+FOLGA.b)/(2*esc),cy=CAM.y+dy;
+    const fb=FOLGA.b+(FOLGA.p||0); // embaixo: a faixa do Cancelar e a ficha flutuante (celular em pé)
+    const esc=CAM.z*LARG_CSS/TW,dy=(FOLGA.t-fb)/(2*esc),hh=TH/(2*CAM.z)-(FOLGA.t+fb)/(2*esc),cy=CAM.y+dy;
     // zona morta larga: a câmera fica parada até o alvo chegar perto da borda (≈1,5 hexágono).
     // Quando precisa andar, anda de uma vez até deixá-lo bem para dentro, em vez de ir aos pouquinhos.
     const bx=hw-Math.min(hw*.3,W*1.6),by=hh-Math.min(hh*.3,R*2.4);
@@ -883,12 +896,12 @@ function enquadraAlcance(u){
   let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
   for(const k of [...J.alc.dest,K(u.c,u.r)]){const [x,y]=centro(...DK(k));x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);}
   const m=R*1.3;x0-=m;x1+=m;y0-=m;y1+=m;
-  const esc=LARG_CSS/TW,folga=(FOLGA.t+FOLGA.b)/esc; // faixas cobertas pelos controles (celular deitado), em px lógicos de tela
+  const fb=FOLGA.b+(FOLGA.p||0),esc=LARG_CSS/TW,folga=(FOLGA.t+fb)/esc; // faixas cobertas pelos controles (celular deitado), em px lógicos de tela
   const z=Math.max(zBase(),Math.min(CAM.zPref,TW/(x1-x0),(TH-folga)/(y1-y0)));
   CAM.zAlvo=z;CAM.enq=z!==CAM.zPref;
   // se a área já cabe onde a câmera está, ela não se mexe; senão centraliza a área
   const hw=TW/(2*z),hh=TH/(2*z);
-  const cabe=x0>=limX(CAM.x)-hw&&x1<=limX(CAM.x)+hw&&y0>=CAM.y-hh+FOLGA.t/(z*esc)&&y1<=CAM.y+hh-FOLGA.b/(z*esc);
+  const cabe=x0>=limX(CAM.x)-hw&&x1<=limX(CAM.x)+hw&&y0>=CAM.y-hh+FOLGA.t/(z*esc)&&y1<=CAM.y+hh-fb/(z*esc);
   if(cabe&&!CAM.enq){seguir(u);return;}
   CAM.alvo={fixo:true,px:(x0+x1)/2,py:(y0+y1)/2};CAM.centrar=true;CAM.mao=false;
 }
@@ -922,7 +935,7 @@ function ajustaTela(forca=false){
   de.classList.toggle('retrato',ret);de.classList.toggle('paisagem',pai);de.classList.toggle('pc',pc);
   // celular em pé: folgas do tamanho da dica (até 2 linhas, em cima) e do botão Cancelar (embaixo),
   // para os dois ficarem na faixa preta além da borda do mapa
-  FOLGA=pai?{t:48,b:108}:ret?{t:52,b:52}:{t:0,b:0};
+  FOLGA=pai?{t:48,b:108}:ret?{t:52,b:52,p:FOLGA.p||0,pMax:150}:{t:0,b:0};
   let th=VH,rv=RES;
   if(ret||pai||pc){
     const m=document.getElementById('mapa'),w=m.clientWidth,h=m.clientHeight;
@@ -937,7 +950,8 @@ function ajustaTela(forca=false){
   if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;}
   // o zoom é guardado em relação ao zBase: mantém o mesmo "grau" de aproximação na tela nova
   const k=zBase()/antes;
-  if(k!==1){CAM.z*=k;CAM.zAlvo*=k;CAM.zPref*=k;}
+  const naAbertura=(J&&J.intro)||de.classList.contains('introCheia'); // a troca de tamanho da abertura não muda o zoom na tela
+  if(k!==1&&!naAbertura){CAM.z*=k;CAM.zAlvo*=k;CAM.zPref*=k;}
   if(mudouModo){
     // ao entrar num modo de celular usa o zoom inicial do celular; ao sair, volta para um degrau do PC
     const z=ret||pai?zInicio():ZOOMS.reduce((a,v)=>Math.abs(v-CAM.zPref)<Math.abs(a-CAM.zPref)?v:a);
@@ -1807,6 +1821,7 @@ const INTRO={dicaToque:5000,raio:1500,quebra:900,tit:2300,txt:3100,txt2:4700,esp
 function comecaIntro(){
   const m=mestreDe(0);
   if(!VEL||document.hidden||!J.cristal||!m){J.intro=null;return;}
+  if(RETRATO()){document.documentElement.classList.add('introCheia');ajustaTela(true);}
   const [tx,ty]=centro(...DK(J.cristal.k));
   const zFim=CAM.zPref,zIni=Math.max(zFim*1.3,zBase()*2.4);
   J.intro={t0:performance.now(),tx,ty:ty-R*.8,zIni,zFim,raios:[],tremor:0,etapa:0};
@@ -1849,6 +1864,7 @@ function camIntro(now){
     if(I.etapa<3){if(I.etapa<1){el.querySelector('.inTit').classList.add('vis');el.querySelector('.inCaixa').classList.add('vis');}
       el.querySelector('.in1').classList.add('vis');el.querySelector('.in2').classList.add('vis');I.etapa=3;}
   }
+  if(t>=INTRO.viaja)hudVolta();
   if(I.etapa===3&&t>=INTRO.viaja+INTRO.dViaja*.2){I.etapa=4;el.classList.add('sai');}
   if(t>=INTRO.fim){fimIntro();return;}
   const zPerto=I.zIni*(1+.06*Math.min(1,t/INTRO.espera)); // aproxima até a parada e fica: sem salto ao seguir
@@ -1861,9 +1877,16 @@ function camIntro(now){
   if(t>=INTRO.raio&&tr>0){CAM.x+=(Math.random()-.5)*7*tr/CAM.z;CAM.y+=(Math.random()-.5)*7*tr/CAM.z;}
   CAM.alvo=null;CAM.parado=true;
 }
+// sai da tela cheia da abertura: o mapa volta ao lugar dele e os painéis aparecem (esmaecendo)
+function hudVolta(){
+  const de=document.documentElement;if(!de.classList.contains('introCheia'))return;
+  de.classList.remove('introCheia');de.classList.add('introHud');ajustaTela(true);
+  clearTimeout(hudVolta.t);hudVolta.t=setTimeout(()=>de.classList.remove('introHud'),1000);
+}
 function fimIntro(){
   const el=document.getElementById('intro');
   el.onclick=null;el.className='';el.querySelector('.inSeguir').classList.remove('pisca');
+  hudVolta();
   if(!J||!J.intro)return;
   const pulou=performance.now()-J.intro.t0<INTRO.fim;
   J.intro=null;
@@ -2207,7 +2230,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.57'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.58'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -3420,7 +3443,8 @@ function seleciona(u){
   }
   enquadraAlcance(u);
 }
-function desseleciona(){soltaEnquadra();J.sel=null;J.alc=null;J.alvosSet=new Set();J.alvosMove=new Map();J.menuMestre=null;}
+function desseleciona(){soltaEnquadra();try{if(RETRATO()&&ultTipo!=='mouse')J.hoverInfo=null;}catch(e){} // celular em pé: a ficha recolhe junto
+  J.sel=null;J.alc=null;J.alvosSet=new Set();J.alvosMove=new Map();J.menuMestre=null;}
 const ehMestreSel=()=>J.sel&&J.sel.lado===0&&ESP[J.sel.esp].mestre;
 const menuAberto=()=>J.evo!=null||J.invHex!=null||(ehMestreSel()&&J.menuMestre==='principal')||J.mg?.fase==='lista'||J.mg?.fase==='confirma'||J.fz?.fase==='elem';
 // ----- Magia e Força pelo menu do mestre -----
@@ -5718,13 +5742,25 @@ function atualiza(){
   if(HV&&!pv&&!PAISAGEM()&&!(RETRATO()&&mostra))inf+=terrenoHtml(HV,J.sel||mostra);
   document.getElementById('info').classList.toggle('vazio',!inf); // deitado: sem nada a mostrar, a ficha some
   {const el=document.getElementById('info'),h=inf||(TOQUE()?'':`<span class="vez">Passe o mouse sobre uma criatura ou um terreno para ver os detalhes.</span>`); // na tela de toque a ficha vazia fica em branco
-   if(el.dataset.h!==h){el.dataset.h=h;el.innerHTML=h;}} // só troca se mudou, para não perder a rolagem
+   if(el.dataset.h!==h){el.dataset.h=h;el.innerHTML=h;} // só troca se mudou, para não perder a rolagem
+   posFicha();}
   // o registro só é redesenhado quando entra mensagem nova, para não perder a rolagem
   const lg=document.getElementById('log'),chLog=J.logs.length+'|'+J.logs.slice(0,3).join('|'); // 3 linhas: num jogo novo a primeira é sempre igual
   if(lg.dataset.ch!==chLog){lg.dataset.ch=chLog;lg.innerHTML=J.logs.map(l=>`<div>${l}</div>`).join('');}
   menus();
 }
 
+// celular em pé: a ficha flutua logo acima do Encerrar turno; a altura dela empurra o Cancelar e o alerta de cerco
+// e entra na folga da câmera (a criatura selecionada não fica escondida atrás dela)
+function posFicha(){
+  const de=document.documentElement,el=document.getElementById('info');
+  if(!RETRATO()){FOLGA.p=0;de.style.removeProperty('--infoH');return;}
+  const lf=document.getElementById('linhaFim').getBoundingClientRect(),topo=Math.round(innerHeight-lf.top+6);
+  de.style.setProperty('--fimTopo',topo+'px');
+  const h=el.classList.contains('vazio')?0:Math.round(el.getBoundingClientRect().height)+6;
+  de.style.setProperty('--infoH',h+'px');
+  FOLGA.p=h; // em px de tela, como FOLGA.t/b
+}
 // ---------- Menus flutuantes ----------
 function posMenu(el,u){
   posMenu.u=u;
@@ -5920,7 +5956,11 @@ cv.addEventListener('pointermove',ev=>{if(ev.pointerType!=='mouse')return;const 
 cv.addEventListener('pointerleave',ev=>{if(ev.pointerType!=='mouse')return;clearTimeout(tHoverInfo);J.hover=null;atualiza();});
 let tBloq=0; // depois de arrastar, pinçar ou segurar o dedo, o "click" que vem em seguida não conta
 const bloqueiaClique=()=>{tBloq=performance.now()+300;};
-cv.addEventListener('click',ev=>{if(performance.now()<tBloq)return;const h=hexNoPonto(ev);if(!h)return;if(ultTipo!=='mouse')J.hoverInfo=h;clique(...h);});
+// celular em pé, sem criatura selecionada: a ficha mostra a casa tocada; tocar de novo nela, arrastar o mapa ou cancelar a recolhe
+const fichaSolta=()=>RETRATO()&&ultTipo!=='mouse'&&!J.sel&&!J.insp&&!!J.hoverInfo;
+cv.addEventListener('click',ev=>{if(performance.now()<tBloq)return;const h=hexNoPonto(ev);if(!h)return;
+  if(ultTipo!=='mouse'){const mesma=fichaSolta()&&J.hoverInfo[0]===h[0]&&J.hoverInfo[1]===h[1]&&!unidadeEm(...h);J.hoverInfo=mesma?null:h;}
+  clique(...h);});
 // ---------- Mini mapa (canto superior direito) ----------
 // mostra o mapa inteiro, as criaturas como pontos e o retângulo do que a câmera enxerga;
 const mini=document.getElementById('mini'),mctx=mini.getContext('2d');
@@ -6004,6 +6044,7 @@ addEventListener('pointermove',ev=>{
   if(ev.pointerType==='mouse'&&!(ev.buttons&1))return;
   const dx=ev.clientX-arrasto.x,dy=ev.clientY-arrasto.y;
   if(!arrasto.mov&&dx*dx+dy*dy<arrasto.lim)return;
+  if(!arrasto.mov&&fichaSolta()){J.hoverInfo=null;atualiza();} // celular em pé: arrastar o mapa recolhe a ficha do terreno tocado
   arrasto.mov=true;clearTimeout(tLongo);
   if(arrasto.zd){ // toque + toque arrastado: muda o zoom mantendo parado o ponto onde o dedo encostou
     const q=cv.getBoundingClientRect(),k=TW/q.width,px=(arrasto.x-q.left)*k,py=(arrasto.y-q.top)*k;
