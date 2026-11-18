@@ -2,7 +2,11 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<script>/* "viewport-fit=cover" (desenhar sob o notch) só no iPhone/iPad: no Android (ex.: Samsung com barra de 3 botões)
+   o navegador desenha a página por baixo da barra de navegação sem informar a folga, e o mapa/menus ficam cortados */
+(function(){var ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+if(ios)document.querySelector('meta[name=viewport]').setAttribute('content','width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover');})();</script>
 <meta name="theme-color" content="#14161c">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icones/icone-192.png">
@@ -2260,7 +2264,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.65'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.66'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
