@@ -604,7 +604,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 #saves.tela.ini .tituloJogo .tlDa::before{background:linear-gradient(90deg,#ffd36a00,#ffd36a)}
 #saves.tela.ini .tituloJogo .tlDa::after{background:linear-gradient(90deg,#ffd36a,#ffd36a00)}
 #saves.tela.ini>.menuIni{margin-bottom:clamp(24px,15vh,170px)}
-#saves.tela .versaoJogo{position:absolute;right:max(10px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom));width:auto;max-width:none;font-size:12px;color:#fff9;text-shadow:0 1px 3px #000;pointer-events:none}
+#saves.tela .versaoJogo{position:absolute;right:max(10px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom));width:auto;max-width:none;font-size:12px;color:#fff9;text-shadow:0 1px 3px #000;cursor:default;padding:6px 0 0 12px}
 /* tela baixa (celular deitado): o título volta a uma linha só, e os botões ficam mais compactos */
 @media (max-height:560px){
   #saves.tela.ini .tituloJogo{flex-direction:row;justify-content:center;align-items:center;gap:.3em;margin-top:clamp(8px,5vh,40px)}
@@ -2264,7 +2264,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.67'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.68'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2282,7 +2282,7 @@ function desenhaInicio(){
       ${cfgInicio?'':'<button onclick="fecharSaves()">Voltar ao jogo</button>'}
     </div>
     <div class="rodIni"><button onclick="abreCompart()" title="Mostra um QR code com o link do jogo">▦ Compartilhar</button>${podeInstalar()?'<button onclick="botaoInstalar()" title="Coloca o jogo na tela inicial do celular, em tela cheia e jogável sem internet">📲 Instalar app</button>':''}</div>
-    <div class="versaoJogo">v${VERSAO}</div>`;
+    <div class="versaoJogo" onclick="contaDiag()">v${VERSAO}</div>`;
   poeArte(el,'inicio');
   el.classList.remove('cfg');el.classList.add('tela','ini');el.style.display='block';
 }
@@ -6197,6 +6197,24 @@ addEventListener('resize',ajustaTela);
  if(window.visualViewport){visualViewport.addEventListener('resize',()=>{reTopo();ajustaTela();});visualViewport.addEventListener('scroll',reTopo);}
  addEventListener('scroll',reTopo);addEventListener('orientationchange',()=>setTimeout(()=>{reTopo();ajustaTela();},300));}
 if(window.ResizeObserver)new ResizeObserver(()=>ajustaTela()).observe(document.getElementById('mapa'));
+// Diagnóstico de tela (3 toques seguidos na versão, no menu inicial): mostra medidas para achar cortes em celulares
+let toquesDiag=[];
+function contaDiag(){const t=Date.now();toquesDiag=toquesDiag.filter(x=>t-x<1500);toquesDiag.push(t);if(toquesDiag.length>=3){toquesDiag=[];mostraDiag();}}
+function mostraDiag(){
+  const pr=document.createElement('div');pr.style.cssText='position:fixed;left:0;top:0;visibility:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
+  document.body.appendChild(pr);const cs=getComputedStyle(pr);const ins=[cs.paddingTop,cs.paddingRight,cs.paddingBottom,cs.paddingLeft].map(v=>parseFloat(v)||0).join(' / ');pr.remove();
+  const modos=['fullscreen','standalone','minimal-ui','browser'].filter(m=>matchMedia('(display-mode: '+m+')').matches).join(',')||'?';
+  const vv=window.visualViewport;
+  const l=['v'+VERSAO,navigator.userAgent,'modo: '+modos,
+    'inner: '+innerWidth+'×'+innerHeight,'outer: '+outerWidth+'×'+outerHeight,'screen: '+screen.width+'×'+screen.height+' (avail '+screen.availWidth+'×'+screen.availHeight+')',
+    'visualViewport: '+(vv?Math.round(vv.width)+'×'+Math.round(vv.height)+' +'+Math.round(vv.offsetLeft)+','+Math.round(vv.offsetTop):'-'),
+    'html: '+document.documentElement.clientWidth+'×'+document.documentElement.clientHeight,'dpr: '+devicePixelRatio,
+    'safe-area (t/r/b/l): '+ins,'orientação: '+(screen.orientation?screen.orientation.type:'-'),
+    'tela cheia: '+(document.fullscreenEnabled?'permitida':'não')+', ativa: '+(document.fullscreenElement?'sim':'não')+(window.ERRO_TC?', erro: '+window.ERRO_TC:'')];
+  let d=document.getElementById('diagTela');if(!d){d=document.createElement('div');d.id='diagTela';
+    d.style.cssText='position:fixed;left:8px;top:8px;right:8px;z-index:99;background:#000e;color:#fff;font:12px/1.4 monospace;padding:10px;border:1px solid #c9a24a;border-radius:8px;white-space:pre-wrap;word-break:break-all;user-select:text';
+    d.onclick=()=>d.remove();document.body.appendChild(d);}
+  d.textContent=l.join(String.fromCharCode(10))+String.fromCharCode(10)+'(toque para fechar)';}
 // App instalado no Android: o sistema desenha o app por baixo da barra de navegação (ex.: Samsung com 3 botões,
 // que deitado fica na lateral) e não informa a folga, então o mapa e os menus ficavam cortados. Em tela cheia a
 // barra some (aparece só ao deslizar da borda). O navegador só permite pedir isso após um toque: pede no 1º toque
@@ -6204,7 +6222,7 @@ if(window.ResizeObserver)new ResizeObserver(()=>ajustaTela()).observe(document.g
 {const android=/Android/i.test(navigator.userAgent),instalado=matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: minimal-ui)').matches;
  const el=document.documentElement;
  if(android&&instalado&&el.requestFullscreen){
-   const pede=()=>{if(document.fullscreenElement)return;el.requestFullscreen({navigationUI:'hide'}).catch(()=>{});};
+   const pede=()=>{if(document.fullscreenElement)return;el.requestFullscreen({navigationUI:'hide'}).catch(e=>{window.ERRO_TC=String(e&&e.message||e);});};
    addEventListener('pointerup',pede,true);}}
 // registro (celular em pé): abre por cima do jogo pelo Registro do menu ☰ e fecha ao tocar fora
 // (deitado, o placar completo abre junto, porque também não fica na tela)
