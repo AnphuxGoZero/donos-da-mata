@@ -2264,7 +2264,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.66'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.67'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -6197,6 +6197,15 @@ addEventListener('resize',ajustaTela);
  if(window.visualViewport){visualViewport.addEventListener('resize',()=>{reTopo();ajustaTela();});visualViewport.addEventListener('scroll',reTopo);}
  addEventListener('scroll',reTopo);addEventListener('orientationchange',()=>setTimeout(()=>{reTopo();ajustaTela();},300));}
 if(window.ResizeObserver)new ResizeObserver(()=>ajustaTela()).observe(document.getElementById('mapa'));
+// App instalado no Android: o sistema desenha o app por baixo da barra de navegação (ex.: Samsung com 3 botões,
+// que deitado fica na lateral) e não informa a folga, então o mapa e os menus ficavam cortados. Em tela cheia a
+// barra some (aparece só ao deslizar da borda). O navegador só permite pedir isso após um toque: pede no 1º toque
+// e de novo se o jogador sair da tela cheia (gesto de voltar).
+{const android=/Android/i.test(navigator.userAgent),instalado=matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: minimal-ui)').matches;
+ const el=document.documentElement;
+ if(android&&instalado&&el.requestFullscreen){
+   const pede=()=>{if(document.fullscreenElement)return;el.requestFullscreen({navigationUI:'hide'}).catch(()=>{});};
+   addEventListener('pointerup',pede,true);}}
 // registro (celular em pé): abre por cima do jogo pelo Registro do menu ☰ e fecha ao tocar fora
 // (deitado, o placar completo abre junto, porque também não fica na tela)
 function alternaLog(ev){ev.stopPropagation();const cx=document.getElementById('caixaLog'),a=cx.classList.toggle('aberto');
