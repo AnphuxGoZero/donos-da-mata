@@ -2,11 +2,10 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<script>/* "viewport-fit=cover" (desenhar sob o notch) só no iPhone/iPad: no Android (ex.: Samsung com barra de 3 botões)
-   o navegador desenha a página por baixo da barra de navegação sem informar a folga, e o mapa/menus ficam cortados */
-(function(){var ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-if(ios)document.querySelector('meta[name=viewport]').setAttribute('content','width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover');})();</script>
+<!-- viewport-fit=cover: o sistema informa (env(safe-area-inset-*)) onde ficam o notch e o furo da câmera, e o jogo
+     deixa uma faixa escura ali. Precisa valer no Android também: no app instalado (tela cheia) o furo da câmera do
+     Galaxy S23 cobria o relógio do cabeçalho quando isso estava desligado. -->
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#14161c">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icones/icone-192.png">
@@ -714,6 +713,15 @@ html:not(.paisagem) #rodape .alaE{grid-area:1/1;justify-content:flex-end;padding
 html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
 #rodape .alaD .pManaBox{margin-left:auto;border-right:none;border-left:1px solid #ffffff30;padding:2px 2px 2px 10px}
 .retrato #rodape .alaD .pManaBox{padding:2px 0 2px 6px}
+/* duelo no celular em pé: o rival e a mana não encolhem (senão o número de criaturas do rival ficava por baixo do "MP");
+   em tela estreita o "MP" e o "+renda" ficam mais compactos para caber */
+.retrato #topoMapa:not(.tres) #rodape .alaD .pGrupo,.retrato #topoMapa:not(.tres) #rodape .alaD .pLado,.retrato #topoMapa:not(.tres) #rodape .alaD .pManaBox{flex:none}
+.retrato #topoMapa:not(.tres) #rodape .alaD{gap:4px}
+.retrato #topoMapa:not(.tres) #rodape .alaD .pNome{display:none} /* os números do rival já vêm na cor dele */
+@media (max-width:400px){.retrato #topoMapa:not(.tres) #rodape .alaD .pLado{gap:5px;padding:2px 3px}
+  .retrato #topoMapa:not(.tres) #rodape .alaD .mpU{font-size:10px;opacity:.8;margin-left:2px}
+  .retrato #topoMapa:not(.tres) #rodape .alaD .pMana{display:grid;grid-template-columns:auto auto;align-items:baseline;column-gap:0;line-height:1.05}
+  .retrato #topoMapa:not(.tres) #rodape .alaD .pMana b{grid-column:1/-1;justify-self:end;font-size:11px}} /* "+renda" embaixo da reserva */
 .retrato #rodape .pAla{gap:5px}
 .retrato #topoMapa.tres #rodape .pGrupo{flex-direction:column;align-items:stretch;gap:3px} /* 3 ou 4 mestres no celular: dois a dois, empilhados */
 .paisagem #topoMapa #rodape.aberto{grid-template-columns:auto;gap:6px}
@@ -1011,7 +1019,9 @@ function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a
 let VEL=1; // 0 = sem animações (útil para testes automáticos)
 let VEL_PULO=null; // velocidade guardada enquanto a vez dos rivais é pulada
 const dormindo=new Set(); // esperas em andamento: o ⏩ Pular vez acorda todas de uma vez
-const dorme=ms=>VEL?new Promise(r=>{const f=()=>{clearTimeout(id);dormindo.delete(f);r();},id=setTimeout(f,ms*VEL);dormindo.add(f);}):Promise.resolve();
+const dorme=ms=>VEL?new Promise(r=>{const f=()=>{clearTimeout(id);dormindo.delete(f);r();},id=setTimeout(f,ms*VEL*RITMO_IA);dormindo.add(f);}):Promise.resolve();
+// iniciantes: nos turnos 1 e 2 a vez dos rivais anda mais devagar (pausas e passos), para dar para ver o que eles fazem
+const RITMO_INICIO=1.8;let RITMO_IA=1;
 
 // ---------- Dados ----------
 // custo/defesa reais vêm da categoria de movimento de cada monstro (CAT_DEF)
@@ -1815,6 +1825,7 @@ function gravaPrefs(p){try{localStorage.setItem(PREFS_CHAVE,JSON.stringify(p));}
 function novoJogo(op=prefs(),semIntro=false){ // semIntro: a partida de fundo, atrás da tela inicial, não tem abertura
   garanteAtlas();
   if(VEL_PULO!=null){VEL=VEL_PULO;VEL_PULO=null;} // saiu no meio de um pulo da vez do rival
+  RITMO_IA=1;
   document.getElementById('fim').style.display='none';
   const seed=(Math.random()*1e9)|0;
   const np=MODOS[op.modo]||2;
@@ -1980,6 +1991,7 @@ function carregar(slot){
   garanteAtlas();
   const s=lerSave(slot);if(!s)return false;
   if(VEL_PULO!=null){VEL=VEL_PULO;VEL_PULO=null;}
+  RITMO_IA=1;
   defineLinhas(s.ter.length/COLS); // 13 linhas no 1x1, 17 com 3 ou 4 mestres
   document.getElementById('fim').style.display='none';
   for(const u of s.un){delete u.anim;delete u.hit;} // saves antigos podem trazer esses horários
@@ -2264,7 +2276,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.68'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.69'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2486,7 +2498,7 @@ async function moverPara(u,k,prev){
     for(const s of p){
       const [x0,y0]=centro(u.c,u.r),[c,r]=DK(s);
       viraPara(u,centro(c,r)[0]);
-      u.c=c;u.r=r;u.anim={x0,y0,t0:performance.now(),dur:85};
+      u.c=c;u.r=r;u.anim={x0,y0,t0:performance.now(),dur:85*RITMO_IA};
       await dorme(85);
     }
     u.anim=null;
@@ -3876,6 +3888,7 @@ function distanciasAte(alvoK,esp){
 async function agirIA(u,reservas){
   if(!J.un.includes(u)||J.fim||u.lado!==J.vez||u.agiu)return; // preso por Sono/Petrificar, ou já não é dele
   await focar(u.c,u.r);
+  if(RITMO_IA>1)await dorme(250); // começo da partida: um instante com a câmera na criatura antes de ela agir
   const eu=ESP[u.esp],ehMestre=!!eu.mestre;
   let A=alcancaveis(u);
   // o mestre segue a mesma regra do jogador: nos 3 primeiros turnos fica no castelo (só ataca de onde está)
@@ -4018,6 +4031,10 @@ function escolheEspIA(l=1){
   return best;
 }
 async function turnoIA(l=1){
+  RITMO_IA=J.turno<=2?RITMO_INICIO:1;
+  try{await turnoIAJogo(l);}finally{RITMO_IA=1;}
+}
+async function turnoIAJogo(l){
   J.ocupado=true;
   await magiaIA(l);
   if(J.fim){J.ocupado=false;return;}
@@ -4085,7 +4102,7 @@ CV_CENA.addEventListener('click',toqueCena);
 addEventListener('click',ev=>{if(!CENA||ev.target===CV_CENA)return;ev.stopPropagation();ev.preventDefault();
   if(ev.target.closest&&ev.target.closest('#btFim')&&J&&J.vez!==0&&!J.fim){pularRival();return;}toqueCena();},true);
 const fatorCena=()=>CENA&&CENA.rapido?0.2:1;
-const esperaC=ms=>dorme(ms*fatorCena());
+const esperaC=ms=>dorme(ms*fatorCena()/RITMO_IA); // as cenas de combate não ficam mais lentas no começo
 function tweenC(ms,f){
   ms*=VEL*fatorCena();
   // com a aba oculta o navegador segura timers em cadeia: aí a animação espera o tempo restante de uma vez
