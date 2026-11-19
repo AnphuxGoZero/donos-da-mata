@@ -207,6 +207,11 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 #passar.f1 .f1Cao .cara{display:block;width:88px;height:88px;border-radius:50%;background:#46201a url(img/f1-cao-cara.png) center/cover no-repeat;border:3px solid #ff7a3a;box-shadow:0 0 14px #ff5020aa,0 4px 8px #000a}
 #passar.f1 .f1Cao b{position:absolute;right:90px;top:-6px;font:400 30px "Pirata One",serif;color:#ff8a40;letter-spacing:1px;transform:rotate(-12deg);text-shadow:0 2px 0 #000,0 0 10px #ff5020;white-space:nowrap}
 @keyframes f1Rosna{from{transform:translate(0,0) rotate(-2deg)}to{transform:translate(-2px,1px) rotate(2deg)}}
+#passar.f1 .seq.s3{animation-delay:2.8s}#passar.f1 .seq.s4{animation-delay:4.4s}
+#passar.f1 .grr{margin:10px 0 4px;text-align:center;font:400 34px "Pirata One",serif;color:#ff8a40;letter-spacing:2px;text-shadow:0 2px 0 #000,0 0 14px #ff5020}
+#passar.f1 .grr.seq{animation:f1Seq .4s ease-out 2.8s forwards,f1Rosna .12s ease-in-out 2.8s 14 alternate}
+#passar.f1.vitoria .linha{opacity:0;animation:f1Seq .5s ease-out 5.2s forwards}
+#passar.f1.sobreEvo{top:auto;bottom:4%;transform:translateX(-50%);z-index:6;pointer-events:none}
 #passar.f1.baixo{top:auto;bottom:14px;transform:translateX(-50%)}
 #passar.f1 .seq{opacity:0;animation:f1Seq .6s ease-out forwards}#passar.f1 .seq.s1{animation-delay:.2s}#passar.f1 .seq.s2{animation-delay:1.4s}
 #passar.f1 .fala{display:flex;align-items:center;gap:10px;margin:8px 0 2px}
@@ -926,7 +931,7 @@ function atualizaCam(now){
   const dt=Math.min(.05,(now-(CAM.t||now))/1000);CAM.t=now;
   if(J.intro){camIntro(now);if(J.intro)return;}
   if(Math.abs(CAM.zAlvo-CAM.z)>.002)CAM.z+=(CAM.zAlvo-CAM.z)*(1-Math.exp(-dt*7));else CAM.z=CAM.zAlvo;
-  const movendo=J.un.find(u=>u.anim);
+  const movendo=J.f1&&J.f1.chegando?null:J.un.find(u=>u.anim); // chegada da Fase 1: a câmera segue só o roteiro dela
   if(movendo){CAM.alvo=movendo;CAM.mao=false;}
   const u=CAM.alvo;
   CAM.parado=true;
@@ -1869,6 +1874,7 @@ function novoJogo(op=prefs(),semIntro=false){ // semIntro: a partida de fundo, a
      cristal:m.cristal!=null?{k:m.cristal,v:0,lado:null}:null,cabo:m.cristal!=null||f1?null:{v:0,lado:null},evoFixa:Array.from({length:np},()=>({})),hj:Array.from({length:np},novaHj),
      ...estadoMagiaNovo(ordens,0)}; // mana só pela renda (padrão do jogo)
   m.f.forEach((f,l)=>criaUnidade(ORDENS[ordens[l]].esp,l,...f));
+  J.op=op; // para Reiniciar partida
   if(f1)iniciaF1(m);
   J.tut=!semIntro&&(f1||tutorialPendente())?{n:0}:null;
   zoomInicio(true);
@@ -2308,7 +2314,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.76'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.77'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2422,6 +2428,9 @@ const AVISOS_F1={
   vila:{falas:['Uma vila caiu!','Não sobrou ninguém pra contar a história.']},
   campones:{falas:['Um camponês morreu, rápido! Precisamos de ajuda!']},
   resistiu:{falas:['Ufa, essa foi por pouco!']},
+  caiuUm:{falas:['Um cão derrotado!','Uhulllll! Falta só mais um!']}, // o primeiro dos dois caiu
+  // o segundo caiu: comemoração, um rosnado vindo de longe e a dúvida do soldado (antes da tela de vitória)
+  vitoria:{falas:['Uhuuul! Pode voltar pro inferno, cachorrinho!','Acabou! O vale está a salvo!',{quem:'grr',txt:'GRRRRR...'},{quem:'soldado',txt:'Será mesmo?'}],bt:'Continuar'},
   // uma criatura sua alcança uma torre que ainda não é sua: o soldado chama, o camponês explica
   torre:{falas:[{quem:'soldado',txt:'Rápido, entre na torre para se fortalecer!'},'Lá dentro a criatura se cura e fica protegida!']},
   // tomou uma torre perto de casa (longe da luta): o que ela rende
@@ -2441,13 +2450,13 @@ function tomouTorreF1(k){
   const dE=Math.min(99,...(J.f1.entrada||[]).map(p=>d6c(...DK(k),...p))),dC=cast<0?99:d6c(...DK(k),...DK(cast));
   if(dC<dE)avisoF1('torreMagica');
 }
-function checaTorreF1(){
-  if(!J.f1||J.f1.vistos.torre)return;
+function torreNaFrente(){ // alguma criatura sua alcança, neste turno, uma torre da frente de batalha que não é sua
   const bando=J.un.filter(u=>u.selvagem);
   const cast=J.ter.findIndex((t,k)=>t==='cast'&&J.dono[k]===0),dCast=k=>cast<0?99:d6c(...DK(k),...DK(cast));
   const util=k=>J.ter[k]==='torre'&&J.dono[k]!==0&&bando.some(f=>{const d=d6c(...DK(k),f.c,f.r);return d<=TORRE_PERTO_F1&&d<dCast(k);});
-  if(criaturasDe(0).some(u=>!u.agiu&&[...alcancaveis(u).dest].some(util)))avisoF1('torre');
+  return criaturasDe(0).some(u=>!u.agiu&&[...alcancaveis(u).dest].some(util));
 }
+function checaTorreF1(){if(J.f1&&!J.f1.vistos.torre&&torreNaFrente())avisoF1('torre');}
 // aviso na hora, mesmo na vez do Bando: a vez dele fica parada até o jogador fechar (sem animação, entra na fila)
 async function avisoJaF1(id){
   if(!J.f1||J.f1.vistos[id])return;
@@ -2457,10 +2466,21 @@ async function avisoJaF1(id){
   if(J&&J.f1)J.f1.forcar=false;
 }
 function avisoF1(id){if(!id||!J.f1||J.f1.vistos[id])return;J.f1.vistos[id]=true;J.f1.fila.push(id);}
-function fechaAvisoF1(){if(J&&J.f1){const id=J.f1.fila.shift();if(id==='intro1')voltaMestreF1();if(J.f1.solta){const s=J.f1.solta;J.f1.solta=null;s();}}atualiza();}
+// Ritmo das falas: as que não podem esperar (abertura, alerta do camponês, evolução do Cão, vitória) saem na hora; as
+// outras, no máximo uma por turno e nunca logo depois de outra fala (espera o turno seguinte). A da torre é conferida de
+// novo na hora de aparecer: se já não vale, sai da fila e pode voltar mais tarde.
+const PRIOR_F1=new Set(['intro1','intro2','vitoria','campones','evoluiu']);
+function proxAvisoF1(){
+  const F=J&&J.f1;if(!F||!F.fila.length)return null;
+  if(F.fila[0]==='torre'&&J.vez===0&&!J.ocupado&&!torreNaFrente()){F.fila.shift();F.vistos.torre=false;return proxAvisoF1();}
+  const id=F.fila[0];
+  return PRIOR_F1.has(id)||(F.falouTurno||0)<J.turno?id:null;
+}
+const marcaFalaF1=()=>{if(J&&J.f1)J.f1.falouTurno=J.vez===0?J.turno:J.turno+1;}; // fala na vez do Bando conta para o seu próximo turno
+function fechaAvisoF1(){if(J&&J.f1){const id=J.f1.fila.shift();marcaFalaF1();if(id==='intro1')voltaMestreF1();if(J.f1.solta){const s=J.f1.solta;J.f1.solta=null;s();}}atualiza();}
 // dica do que fazer agora (topo da ficha no PC, faixa sobre o mapa no celular), quando nada está selecionado
 function dicaF1(){
-  if(J.f1.fila.length)return '';
+  if(proxAvisoF1())return '';
   const v=TOQUE()?'Toque':'Clique';
   const minhas=criaturasDe(0).filter(u=>!u.agiu);
   if(minhas.some(u=>{const A=alcancaveis(u);return [...A.dest].some(k=>{const [c,r]=DK(k);return J.un.some(e=>e.selvagem&&d6c(c,r,e.c,e.r)<=ESP[u.esp].alc);});}))
@@ -2474,27 +2494,29 @@ function dicaF1(){
 // do outro; rosnam, e a câmera volta para o seu mestre. Só então aparece o aviso de abertura (que espera J.ocupado)
 async function chegadaF1(){
   const jogo=J,fs=J.un.filter(u=>u.selvagem);if(!fs.length||!VEL||document.hidden)return;
-  J.ocupado=true;
-  // câmera bem de perto, em um Filhote de cada vez: mostra um chegando, depois vai até o outro
-  // (o zoom volta ao normal quando ela viaja até o mestre)
+  J.ocupado=true;J.f1.chegando=true;
+  // câmera bem de perto: abre na entrada do primeiro Filhote; quando ele chega e rosna, desliza numa passada só
+  // até enquadrar os dois, enquanto o segundo já vem correndo (o zoom volta ao normal quando ela viaja até o mestre)
   const cima=J.f1.entra==='cima';
   const ponto=f=>{const [x,y]=centro(f.c,f.r);return [x-(cima?0:W*1.5),y+(cima?R*3:0)];}; // em pé: um pouco abaixo da borda
   const fora=f=>{const [x,y]=centro(f.c,f.r);return cima?{x0:x,y0:y-R*9}:{x0:x+R*9,y0:y};}; // entram de fora do mapa
   const z=Math.min(zBase()*2.4,Math.max(CAM.zPref*1.5,zBase()*1.6));
-  {const [mx,my]=ponto(fs[0]);CAM.z=CAM.zAlvo=z;CAM.enq=true;CAM.x=mx;CAM.y=my;CAM.mao=false;}
+  const mira=([x,y])=>{CAM.alvo={fixo:true,px:x,py:y};CAM.centrar=true;CAM.mao=false;};
+  {const [mx,my]=ponto(fs[0]);CAM.z=CAM.zAlvo=z;CAM.enq=true;CAM.x=mx;CAM.y=my;limitaCam();mira([mx,my]);}
   for(const f of fs)f.anim={...fora(f),t0:performance.now(),dur:1e9}; // esperando fora do mapa
-  for(const [i,f] of fs.entries()){
-    const [mx,my]=ponto(f);CAM.alvo={fixo:true,px:mx,py:my};CAM.centrar=true;limitaCam();atualiza();
-    await dorme(i?900:700);if(J!==jogo)return; // a câmera viaja até a entrada deste Filhote
-    f.anim={...fora(f),t0:performance.now(),dur:1300};
-    await dorme(1400);if(J!==jogo)return;
-    f.anim=null;flutua(f,'Grrrr!','#ff8a50');
-    await dorme(900);if(J!==jogo)return;
-  }
-  // os dois à vista para o alarme do camponês
-  {const xs=fs.map(ponto);CAM.alvo={fixo:true,px:xs.reduce((a,p)=>a+p[0],0)/xs.length,py:xs.reduce((a,p)=>a+p[1],0)/xs.length};CAM.centrar=true;}
-  await dorme(600);if(J!==jogo)return;
-  J.ocupado=false;atualiza(); // o camponês dá o alarme (intro1); ao fechar, a câmera viaja até o mestre
+  atualiza();await dorme(600);if(J!==jogo)return;
+  const [a,...outros]=fs;
+  a.anim={...fora(a),t0:performance.now(),dur:1300};
+  await dorme(1350);if(J!==jogo)return;
+  a.anim=null;flutua(a,'Grrrr!','#ff8a50');
+  await dorme(700);if(J!==jogo)return;
+  // uma passada só: a câmera vai para o meio dos dois enquanto o(s) outro(s) chega(m)
+  const ps=fs.map(ponto);mira([ps.reduce((s,p)=>s+p[0],0)/ps.length,ps.reduce((s,p)=>s+p[1],0)/ps.length]);
+  for(const f of outros)f.anim={...fora(f),t0:performance.now(),dur:1500};
+  await dorme(1550);if(J!==jogo)return;
+  for(const f of outros){f.anim=null;flutua(f,'Grrrr!','#ff8a50');}
+  await dorme(1100);if(J!==jogo)return;
+  J.f1.chegando=false;J.ocupado=false;atualiza(); // o camponês dá o alarme (intro1); ao fechar, a câmera viaja até o mestre
 }
 // depois do alarme do camponês: a câmera viaja até o seu mestre e um soldado pede ajuda (intro2)
 async function voltaMestreF1(){
@@ -2554,7 +2576,7 @@ async function agirSelvagem(u){
 // os 8 camponeses da tela de batalha (folha 4×2, figuras de pé na base; olha = para onde a figura está virada)
 // figurinhas de quem fala nos avisos: tiras de 8 rostos (camponeses e soldados)
 const ROSTOS_F1={campones:{img:'img/f1-rostos.png',n:8},soldado:{img:'img/f1-soldados.png',n:8}};
-const CAMPONESES={img:'img/f1-camponeses.png',olha:[-1,1,-1,-1,-1,1,-1,1]};
+const CAMPONESES={img:'img/f1-camponeses.png?v=2',olha:[1,1,1,1,1,1,1,1]}; // a folha nova tem todos virados para a direita
 // um camponês sai para defender a casa: uma troca de golpes de verdade (o Filhote leva uns arranhões). Com sorte
 // (o Filhote erra golpes), o camponês aguenta e a casa fica de pé por mais um turno: na média do dia e da noite,
 // ~28% contra o Filhote e ~22% contra o Cão Infernal (o Fogo erra mais à noite). Devolve true se o camponês caiu.
@@ -3402,7 +3424,7 @@ function morre(u,por){
   log(`${nome(u)} foi derrotado.`);
   if(J.sel===u)desseleciona();
   if(ESP[u.esp].mestre)eliminar(u.lado,null,'mestre');
-  else if(J.f1&&u.selvagem&&!J.un.some(x=>x.selvagem)&&!J.fim)fimDeJogo(0,'f1'); // Fase 1: o Bando caiu
+  else if(J.f1&&u.selvagem&&!J.fim){if(!J.un.some(x=>x.selvagem))fimDeJogo(0,'f1');else avisoF1('caiuUm');} // Fase 1: o Bando caiu (ou só um dos dois)
 }
 // um lado perde (mestre derrotado ou castelo cercado). No 1x1 a partida acaba; no 1x1x1 o lado sai:
 // o exército dele se desfaz, as construções ficam sem dono, e vence o último mestre de pé.
@@ -3454,7 +3476,9 @@ function fimDeJogo(v,motivo='mestre',por=null){
   const jogo=J;
   const mostra=()=>{
     if(J!==jogo)return; // um novo jogo já começou
-    if(J.f1){mostraFimF1(v,motivo);return;}
+    if(J.f1){ // vitória: antes das estrelas, a cena das falas (se der para animar)
+      if(v===0&&VEL&&!document.hidden&&!J.f1.vistos.vitoria){avisoJaF1('vitoria').then(()=>{if(J===jogo)mostraFimF1(v,motivo);});return;}
+      mostraFimF1(v,motivo);return;}
     {const b=document.getElementById('fimBt');b.textContent='Jogar de novo';b.onclick=()=>abreConfig();document.getElementById('fimBt2').style.display='none';}
     document.getElementById('fimTxt').textContent=v===0?'Vitória!':'Você perdeu';
     document.getElementById('fimPorque').innerHTML=v===0?'':porqueDerrota(v,motivo,por);
@@ -4005,7 +4029,7 @@ async function clique(c,r){
   if(J.vez!==0||J.ocupado||J.fim)return;
   const k=K(c,r),alvo=unidadeEm(c,r),s=J.sel;
   // a ficha "presa" de um inimigo (ou de criatura sua que já agiu) solta a cada clique; clicar nela de novo só solta
-  if(J.f1&&J.f1.fila.length&&!J.intro){if(!J.f1.fila[0].startsWith('intro')){J.f1.fila.shift();atualiza();}return;} // Fase 1: com um aviso aberto, o clique no mapa só o fecha (a abertura pede o botão)
+  if(J.f1&&!J.intro&&proxAvisoF1()){if(!proxAvisoF1().startsWith('intro')){J.f1.fila.shift();marcaFalaF1();atualiza();}return;} // Fase 1: com um aviso aberto, o clique no mapa só o fecha (a abertura pede o botão)
   if(J.avisoEvo){J.avisoEvo=false;} // clicar no mapa com o aviso de evolução aberto vale como "Agora não"
   const inspAntes=J.insp,menuAntes=J.menuAlvo;J.insp=null;J.menuAlvo=null;
   if(J.mg||J.fz){await cliqueMagia(k);return;}
@@ -4136,7 +4160,7 @@ function escolherInvocacao(esp){
 // botão de baixo: na sua vez encerra o turno; na vez dos rivais, pula as animações até voltar a sua vez
 function cliqueFim(){if(J.vez===0)fimTurno();else pularRival();}
 // Jogador parado na própria vez (nada muda no jogo: ninguém anda, ataca, invoca ou gasta mana):
-// o Encerrar turno vai chamando atenção em 3 níveis (só quando já não dá para invocar). No 1º turno começa mais cedo (quem ainda não achou o botão);
+// o Encerrar turno vai chamando atenção em 3 níveis (só quando já não dá para invocar nem há criatura sua por agir). No 1º turno começa mais cedo (quem ainda não achou o botão);
 // com tudo já feito no turno, também. Telas por cima (ajuda, menus, cenas) pausam a contagem.
 const OCIO_SEG={primeiro:[10,20,35],normal:[30,60,90]};
 let ocio={seg:0,assin:'',nivel:0};
@@ -4153,6 +4177,7 @@ setInterval(()=>{
   if(a!==ocio.assin){ocio.assin=a;ocio.seg=0;poeOcio(0);return;}
   if(document.hidden||telaPorCima())return; // pausa, sem zerar
   if(mestreDe(0)&&podeInvocarAlgo()){ocio.seg=0;poeOcio(0);return;} // ainda dá para pôr monstros em jogo: o botão não chama atenção
+  if(criaturasPendentes().length){ocio.seg=0;poeOcio(0);return;} // ainda há criatura sua que pode andar ou atacar: o botão não pisca
   ocio.seg++;
   const lim=OCIO_SEG[J.turno<=1?'primeiro':'normal'].map(t=>turnoEsgotado()?t/2:t);
   poeOcio(ocio.seg>=lim[2]?3:ocio.seg>=lim[1]?2:ocio.seg>=lim[0]?1:0);
@@ -4805,10 +4830,14 @@ async function cenaEvolucao(u,de,para,espPara){
   for(let i=0;i<40;i++)E.part.push({a:Math.random()*Math.PI*2,v:120+Math.random()*260,t0:performance.now(),r:2+Math.random()*4});
   await tweenC(450,t=>{E.flash=1-t;});
   await tweenC(700,t=>{E.branco=1-t;E.raios=1-t*.7;});           // a cor volta, já na forma nova
+  // Fase 1: o Filhote do Bando virou Cão Infernal: os camponeses reagem por cima da própria cena (sem botão; fecha com ela)
+  const falaEvo=J.f1&&u.selvagem&&!J.f1.vistos.evoluiu;
+  if(falaEvo){J.f1.vistos.evoluiu=true;J.f1.sobreEvo=true;J.f1.fila.unshift('evoluiu');atualiza();}
   // espera o jogador clicar (ou Enter/Espaço/Esc) para sair
   E.aguarda=performance.now();if(VEL)await new Promise(res=>CENA.fechar=res);CENA.fechar=null;CENA.rapido=false; // pulando a vez do rival: não espera
+  if(falaEvo&&J.f1){J.f1.sobreEvo=false;J.f1.fila=J.f1.fila.filter(x=>x!=='evoluiu');marcaFalaF1();}
   await tweenC(280,t=>{if(CENA)CENA.fade=t;});
-  CV_CENA.style.display='none';CENA=null;
+  CV_CENA.style.display='none';CENA=null;atualiza();
 }
 function desenhaEvo(now){
   const g=cg,E=CENA.evo,u=E.u;g.setTransform(2,0,0,2,0,0);g.globalAlpha=1;
@@ -6138,7 +6167,16 @@ function compartNativo(){if(navigator.share)navigator.share({title:'Senhores da 
 function abreAjuda(){fechaMenuJogo();document.getElementById('ajuda').classList.add('aberto');}
 function fechaAjuda(){document.getElementById('ajuda').classList.remove('aberto');}
 function alternaMenuJogo(ev){ev.stopPropagation();document.getElementById('menuJogo').classList.toggle('aberto');}
-function fechaMenuJogo(){document.getElementById('menuJogo').classList.remove('aberto');}
+function fechaMenuJogo(){document.getElementById('menuJogo').classList.remove('aberto');if(J&&J.confReinicio){J.confReinicio=false;atualiza();}}
+// Reiniciar: começa de novo a mesma partida (mesmo modo e mestre; na Fase 1, a Fase 1). Pede um segundo toque para confirmar.
+function reiniciarPartida(ev){
+  ev.stopPropagation();
+  if(!J||J.ocupado||(J.vez!==0&&!J.fim))return;
+  if(!J.confReinicio){J.confReinicio=true;atualiza();return;}
+  const f1=J.f1,op=J.op||{...prefs(),modo:Object.keys(MODOS).find(k=>MODOS[k]===NP())||'1x1'};
+  fechaMenuJogo();fecharSaves();
+  if(f1)jogarFase1();else novoJogo(op);
+}
 addEventListener('click',ev=>{if(!ev.target.closest('#menuJogo'))fechaMenuJogo();});
 let PLACAR_TORRE=null; // ícone de torre do placar (pixel art gerada uma vez)
 function atualiza(){
@@ -6155,7 +6193,8 @@ function atualiza(){
   const c0=cercoContra(0),c1=cercoDe(0); // c0: o rival que mais cerca você (c0.por); c1: o seu cerco mais adiantado (c1.o)
   // menu do jogo (☰): novo jogo, salvar e carregar
   document.getElementById('menuJogo').innerHTML=`
-    <button onclick="abreConfig()">↻ Menu principal</button>
+    <button onclick="abreConfig()">☰ Menu principal</button>
+    <button onclick="reiniciarPartida(event)" ${J.ocupado||J.vez!==0&&!J.fim?'disabled':''}${J.confReinicio?' style="border-color:#ff8a80;color:#ffb0a8"':''}>↻ ${J.confReinicio?'Toque de novo para reiniciar':'Reiniciar partida'}</button>
     <button onclick="fechaMenuJogo();salvarJogo()" ${podeSalvar()?'':'disabled'}>💾 Salvar</button>
     <button onclick="fechaMenuJogo();abrirCarregar()" ${J.ocupado?'disabled':''}>📂 Carregar</button>
     <button onclick="fechaMenuJogo();alternaLog(event)">📜 Registro</button>
@@ -6447,21 +6486,23 @@ function menus(){
   // fim de turno: sem caixa sobre o mapa; quem avisa é o Encerrar turno dourado (veja atualiza).
   // A caixa do meio do mapa serve ao aviso de evolução do começo do turno (espera a abertura e os combates)
   const evoAviso=minha&&J.avisoEvo&&!J.intro&&!CENA&&podeEvoluir(0)&&!J.evo&&!J.mg&&!J.fz&&J.invHex==null&&!J.invocando;
-  const f1Aviso=J.f1&&J.f1.fila.length&&!J.intro&&!CENA&&!J.fim&&(J.f1.forcar||minha&&!J.ocupado); // forcar: aviso na hora, na vez do Bando
+  const idF1=J.f1&&!J.intro?proxAvisoF1():null;
+  const f1Aviso=idF1&&(J.f1.sobreEvo&&idF1==='evoluiu'||!CENA&&(J.f1.forcar||minha&&!J.ocupado&&!J.fim)); // sobreEvo: por cima da tela de evolução // forcar: aviso na hora, na vez do Bando
   if(f1Aviso){
-    const id=J.f1.fila[0],A=AVISOS_F1[id];
+    const id=idF1,A=AVISOS_F1[id];
     let corpo;
     if(A.falas){
       // um rosto diferente para cada fala, sorteado uma vez (o aviso não troca de rosto ao redesenhar)
       const falas=(typeof A.falas==='function'?A.falas():A.falas).map(f=>typeof f==='string'?{quem:'campones',txt:f}:f);
-      const rs=J.f1.rostos[id]||(J.f1.rostos[id]=(()=>{const usados={};return falas.map(f=>{const R=ROSTOS_F1[f.quem],u=usados[f.quem]||(usados[f.quem]=new Set());
+      const rs=J.f1.rostos[id]||(J.f1.rostos[id]=(()=>{const usados={};return falas.map(f=>{if(!ROSTOS_F1[f.quem])return 0;const R=ROSTOS_F1[f.quem],u=usados[f.quem]||(usados[f.quem]=new Set());
         let i;do i=Math.random()*R.n|0;while(u.has(i)&&u.size<R.n);u.add(i);return i;});})());
-      corpo=`${A.tit?`<div class="evoTit">${A.tit}</div>`:''}${falas.map((f,i)=>{const R=ROSTOS_F1[f.quem];
+      corpo=`${A.tit?`<div class="evoTit">${A.tit}</div>`:''}${falas.map((f,i)=>{if(f.quem==='grr')return `<div class="grr seq s${i+1}">${f.txt}</div>`;const R=ROSTOS_F1[f.quem];
         return `<div class="fala seq s${i+1}"><span class="rosto ${f.quem}" style="background-image:url(${R.img});background-position:${rs[i]/(R.n-1)*100}% 0"></span><div class="balao">${f.txt}</div></div>`;}).join('')}`;
     }else corpo=`<div class="evoTit">${A[0]}</div><div class="evoTx">${A[1]}</div>`;
     if(A.cao)corpo+=`<div class="f1Cao" aria-hidden="true"><span class="cara"></span><b>GRRRR!</b></div>`;
-    poeHTML(ps,`${corpo}<div class="linha"><button class="btEvo" onclick="fechaAvisoF1()">${(A.bt||A[2])||'Entendi'}</button></div>`);
-    ps.className='flut evo f1'+(id.startsWith('intro')?' intro':'')+(id==='intro1'?' baixo':'');ps.style.display='block'; // o alarme fica embaixo, para não cobrir os Filhotes
+    const sobre=J.f1.sobreEvo&&id==='evoluiu'; // em cima da cena de evolução: sem botão, o toque vai para a cena
+    poeHTML(ps,`${corpo}${sobre?'':`<div class="linha"><button class="btEvo" onclick="fechaAvisoF1()">${(A.bt||A[2])||'Entendi'}</button></div>`}`);
+    ps.className='flut evo f1'+(id.startsWith('intro')?' intro':'')+(id==='intro1'?' baixo':'')+(id==='vitoria'?' vitoria':'')+(J.f1.sobreEvo&&id==='evoluiu'?' sobreEvo':'');ps.style.display='block'; // o alarme fica embaixo, para não cobrir os Filhotes
   }else if(evoAviso){
     poeHTML(ps,`<div class="evoTit">▲ Evolução disponível</div><div class="evoTx">Sua reserva chegou a ${EVO_CUSTO} MP. Escolha uma criatura para evoluir permanentemente.</div><div class="linha"><button onclick="fechaAvisoEvo()">Agora não</button><button class="btEvo" onclick="avisoEvoluir()">▲ Evoluir</button></div>`);
     ps.className='flut evo';ps.style.display='block';
