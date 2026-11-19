@@ -2314,7 +2314,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.78'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.79'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2363,8 +2363,8 @@ const MAPAS_F1={ // corredor em S, curto (~18 passos da entrada ao castelo) para
   // bordas irregulares, pedreiras entre as montanhas, moitas de floresta e uma passagem estreita no mapa em pé
   deitado:{entra:'direita',linhas:[
     'mmmmmmm.m........',
-    'mmpmp...V..f.v..a',
-    'mmmp...T..ff....b',
+    'mmpmp...V..f.v.a.',
+    'mmmp...T..ff...b.',
     'mmmf.f..mm.mm..pm',
     'mmmm...m..mm.mmmm',
     'mmm..f.V....mmmmm',
@@ -2372,8 +2372,8 @@ const MAPAS_F1={ // corredor em S, curto (~18 passos da entrada ao castelo) para
     'mmmm.ff.f....C.mp',
     'mmmmmmmfmm..m..mm']},
   empe:{entra:'cima',linhas:[
-    'mmmmmmmpmma.b.mmm',
-    'mmpmpmmppmm...mmm',
+    'mmmmmmmpmm.....mm',
+    'mmpmpmmppmma.bmmm',
     'pmmmmmm.mmv....mm',
     'mpmpm..........mp',
     'mpmp...V........m',
@@ -2522,6 +2522,21 @@ async function chegadaF1(){
   await dorme(1100);if(J!==jogo)return;
   J.f1.chegando=false;J.ocupado=false;atualiza(); // o camponês dá o alarme (intro1); ao fechar, a câmera viaja até o mestre
 }
+// abertura: a figurinha da camponesa sai voando da vila da entrada (no mapa) até o lugar dela no balão da fala
+function voaRostoF1(ps){
+  const alvo=ps.querySelector('.rosto');if(!alvo||!VEL||!J||!J.vilas)return;
+  const vk=+Object.keys(J.vilas).find(k=>J.vilas[k].estrela===false);if(isNaN(vk))return;
+  const fala=alvo.closest('.fala');if(fala)fala.style.animationDelay='.75s'; // o balão abre quando ela chega
+  const [wx,wy]=centro(...DK(vk)),rc=cv.getBoundingClientRect();
+  const sx=rc.left+(TW/2+(wx-CAM.x)*CAM.z)*rc.width/TW,sy=rc.top+(TH/2+(wy-CAM.y)*CAM.z)*rc.height/TH;
+  const ra=alvo.getBoundingClientRect(),cs=getComputedStyle(alvo),v=document.createElement('span');
+  for(const k of ['width','height','borderRadius','backgroundImage','backgroundColor','backgroundSize','backgroundPosition','backgroundRepeat','border','boxShadow'])v.style[k]=cs[k];
+  Object.assign(v.style,{position:'fixed',left:ra.left+'px',top:ra.top+'px',zIndex:20,pointerEvents:'none',opacity:'0',
+    transform:`translate(${sx-ra.left-ra.width/2}px,${sy-ra.top-ra.height/2}px) scale(.3)`,transition:'transform .75s cubic-bezier(.3,.8,.35,1),opacity .2s'});
+  document.body.appendChild(v);alvo.style.visibility='hidden';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{v.style.opacity='1';v.style.transform='none';}));
+  setTimeout(()=>{alvo.style.visibility='';v.remove();},820);
+}
 // depois do alarme do camponês: a câmera viaja até o seu mestre e um soldado pede ajuda (intro2)
 async function voltaMestreF1(){
   const jogo=J;J.ocupado=true;soltaEnquadra();
@@ -2648,10 +2663,9 @@ function mostraFimF1(v,motivo){
     try{localStorage.setItem(F1_CHAVE,JSON.stringify({venceu:true,estrelas:Math.max(info.estrelas||0,salvas)}));}catch(e){}
     document.getElementById('fimSub').textContent=`O Bando Infernal caiu no turno ${J.turno}.`;
     document.getElementById('fimPorque').innerHTML=`<div class="estrelasF1">${[0,1,2].map(i=>`<span class="${i<salvas?'on':''}">★</span>`).join('')}</div>
-      <p class="porque" style="text-align:center">${salvas} de ${vs.length} vilas salvas · ${camp} de ${tot} camponeses vivos</p>
-      <p class="dicaFim">💡 Na Fase 2 você enfrenta um mestre de verdade: ele invoca criaturas, toma torres e lança magias.</p>`;
-    b.textContent='Continuar para a Fase 2';b.onclick=()=>jogarFase2();
-    b2.textContent=salvas<3?'Tentar 3 estrelas':'Jogar de novo';b2.onclick=()=>jogarFase1();
+      <p class="porque" style="text-align:center">${salvas} de ${vs.length} vilas salvas · ${camp} de ${tot} camponeses vivos</p>`;
+    b.textContent='Continuar';b.onclick=()=>jogarFase2();
+    b2.textContent='Tentar novamente';b2.onclick=()=>jogarFase1();
   }else{
     document.getElementById('fimSub').textContent=motivo==='vilas'?`O Bando Infernal destruiu todas as vilas no turno ${J.turno}.`:`${OM(0)} caiu no turno ${J.turno}.`;
     document.getElementById('fimPorque').innerHTML=`<p class="porque">${motivo==='vilas'?'Os Filhotes saquearam vila por vila sem ninguém para pará-los.':'Os Filhotes chegaram até o seu mestre e o derrubaram.'}</p>
@@ -6507,7 +6521,8 @@ function menus(){
     if(A.cao)corpo+=`<div class="f1Cao" aria-hidden="true"><span class="cara"></span><b>GRRRR!</b></div>`;
     const sobre=J.f1.sobreEvo&&id==='evoluiu'; // em cima da cena de evolução: sem botão, o toque vai para a cena
     poeHTML(ps,`${corpo}${sobre?'':`<div class="linha"><button class="btEvo" onclick="fechaAvisoF1()">${(A.bt||A[2])||'Entendi'}</button></div>`}`);
-    ps.className='flut evo f1'+(id.startsWith('intro')?' intro':'')+(id==='intro1'?' baixo':'')+(id==='vitoria'?' vitoria':'')+(J.f1.sobreEvo&&id==='evoluiu'?' sobreEvo':'');ps.style.display='block'; // o alarme fica embaixo, para não cobrir os Filhotes
+    ps.className='flut evo f1'+(id.startsWith('intro')?' intro':'')+(id==='intro1'?' baixo':'')+(id==='vitoria'?' vitoria':'')+(J.f1.sobreEvo&&id==='evoluiu'?' sobreEvo':'');ps.style.display='block';
+    if(id==='intro1'&&!J.f1.voou){J.f1.voou=true;requestAnimationFrame(()=>voaRostoF1(ps));} // a camponesa sai da vila até o balão // o alarme fica embaixo, para não cobrir os Filhotes
   }else if(evoAviso){
     poeHTML(ps,`<div class="evoTit">▲ Evolução disponível</div><div class="evoTx">Sua reserva chegou a ${EVO_CUSTO} MP. Escolha uma criatura para evoluir permanentemente.</div><div class="linha"><button onclick="fechaAvisoEvo()">Agora não</button><button class="btEvo" onclick="avisoEvoluir()">▲ Evoluir</button></div>`);
     ps.className='flut evo';ps.style.display='block';
