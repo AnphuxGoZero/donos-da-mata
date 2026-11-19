@@ -2303,7 +2303,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.73'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.74'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2418,7 +2418,7 @@ const AVISOS_F1={
   // uma criatura sua alcança uma torre que ainda não é sua: o soldado chama, o camponês explica
   torre:{falas:[{quem:'soldado',txt:'Rápido, entre na torre para se fortalecer!'},'Lá dentro a criatura se cura e fica protegida!']},
   evoluiu:{falas:['Oxi, filhotinho evoluiu!','Nossa, olha o tamanho desse bicho!']},
-  evoMinha:['Sua criatura evoluiu!','Suas criaturas também ganham experiência lutando e evoluem para formas mais fortes. Mantenha as veteranas vivas.'],
+  evoMinha:{falas:['Sua criatura evoluiu!','Evoluir é a nossa esperança. Mantenha as veteranas vivas.']},
 };
 // uma criatura sua pode chegar a uma torre que ainda não é sua neste turno: a fala da torre (uma vez por partida)
 function checaTorreF1(){
