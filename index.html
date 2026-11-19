@@ -2316,7 +2316,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.83'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.84'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2514,6 +2514,14 @@ const ANCORA_F1={
   intro1:()=>+Object.keys(J.vilas).find(k=>J.vilas[k].estrela===false),
   torreMagica:()=>J.f1.torreK,torre:()=>J.f1.torreFrenteK,
   campones:()=>J.f1.vilaK,vila:()=>J.f1.vilaK,resistiu:()=>J.f1.vilaK};
+// a fala apareceu: se a casa dela está fora da tela (ou colada na borda), a câmera vai até ela, e a casa pisca
+function mostraAncoraF1(id){
+  if(id==='intro1')return; // a abertura tem o roteiro de câmera dela
+  const k=ANCORA_F1[id]?.();if(k==null||isNaN(k))return;
+  const [x,y]=centro(...DK(k)),[sx,sy]=paraTela(x,y);
+  if(sx<TW*.18||sx>TW*.82||sy<TH*.2||sy>TH*.8){CAM.alvo={fixo:true,px:x,py:y};CAM.centrar=true;CAM.mao=false;}
+  piscaHex(k,'#f2c14e',900);setTimeout(()=>piscaHex(k,'#f2c14e',900),1000);
+}
 function posAvisoF1(){
   const ps=document.getElementById('passar'),id=ps.dataset.ancora;
   if(!J||!J.f1||!id||ps.style.display!=='block'||!ps.classList.contains('ancora'))return;
@@ -2528,6 +2536,9 @@ function posAvisoF1(){
     const bando=J.un.filter(u=>u.selvagem).map(tela),lado=bando.length?(bando.reduce((a,b)=>a+b,0)/bando.length>sx?-1:1):0;
     let top=sy<rm.height/2?sy+hex+6:sy-hex-6-h,left=lado<0?sx+hex*.6-w:lado>0?sx-hex*.6:sx-w/2;
     left=Math.max(m,Math.min(rm.width-w-m,left));top=Math.max(m,Math.min(rm.height-h-m,top));
+    // a caixa nunca cobre a casa de que fala: se a borda da tela a empurrou para cima dela, vai para o outro lado
+    const cobre=t=>t<sy+hex&&t+h>sy-hex&&left<sx+hex&&left+w>sx-hex;
+    if(cobre(top)){const t2=Math.max(m,Math.min(rm.height-h-m,sy<rm.height/2?sy-hex-6-h:sy+hex+6));if(!cobre(t2))top=t2;}
     ps.style.left=Math.round(left)+'px';ps.style.top=Math.round(top)+'px';
   }
   requestAnimationFrame(posAvisoF1);
@@ -2872,8 +2883,9 @@ function inicioTurno(l){
     if(u.sono||u.petra){u.movido=u.agiu=true;u.preso=true;flutua(u,u.sono?'Dormindo':'Petrificado','#b9c6ff');}
     const e=ESP[u.esp],t=terDe(u);
     let cura=0;
-    // construção própria cura 20%; a Torre do Cristal não: quem a segura não pode se curar parado ali
-    if(ehConstrucao(t)&&J.dono[K(u.c,u.r)]===l&&!ehCristal(K(u.c,u.r)))cura=Math.round(e.hp*0.2);
+    // construção própria cura 20% (40% na Fase 1, para a torre valer a pena contra o Bando); a Torre do Cristal não:
+    // quem a segura não pode se curar parado ali
+    if(ehConstrucao(t)&&J.dono[K(u.c,u.r)]===l&&!ehCristal(K(u.c,u.r)))cura=Math.round(e.hp*(ehF1()?0.4:0.2));
     if(e.mestre)cura=Math.max(cura,8);
     cura=Math.min(cura,e.hp-u.hp);
     if(cura>0){u.hp+=cura;flutua(u,'+'+cura,'#6ee08a');}
@@ -6558,7 +6570,7 @@ function menus(){
     poeHTML(ps,`${corpo}${sobre?'':`<div class="linha"><button class="btEvo" onclick="fechaAvisoF1()">${(A.bt||A[2])||'Entendi'}</button></div>`}`);
     ps.className='flut evo f1'+(id.startsWith('intro')?' intro':'')+''+(id==='vitoria'?' vitoria':'')+(J.f1.sobreEvo&&id==='evoluiu'?' sobreEvo':'');ps.style.display='block';
     {const anc=ANCORA_F1[id]&&!(J.f1.sobreEvo&&id==='evoluiu');ps.classList.toggle('ancora',!!anc);
-     if(anc&&ps.dataset.ancora!==id){ps.dataset.ancora=id;requestAnimationFrame(posAvisoF1);}else if(!anc){ps.dataset.ancora='';ps.style.left=ps.style.top='';}} // a caixa perto do evento // o alarme fica embaixo, para não cobrir os Filhotes
+     if(anc&&ps.dataset.ancora!==id){ps.dataset.ancora=id;mostraAncoraF1(id);requestAnimationFrame(posAvisoF1);}else if(!anc){ps.dataset.ancora='';ps.style.left=ps.style.top='';}} // a caixa perto do evento // o alarme fica embaixo, para não cobrir os Filhotes
   }else if(evoAviso){
     poeHTML(ps,`<div class="evoTit">▲ Evolução disponível</div><div class="evoTx">Sua reserva chegou a ${EVO_CUSTO} MP. Escolha uma criatura para evoluir permanentemente.</div><div class="linha"><button onclick="fechaAvisoEvo()">Agora não</button><button class="btEvo" onclick="avisoEvoluir()">▲ Evoluir</button></div>`);
     ps.className='flut evo';ps.style.display='block';
