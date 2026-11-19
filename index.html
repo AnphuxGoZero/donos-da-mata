@@ -2314,7 +2314,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.77'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.78'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2460,23 +2460,27 @@ function checaTorreF1(){if(J.f1&&!J.f1.vistos.torre&&torreNaFrente())avisoF1('to
 // aviso na hora, mesmo na vez do Bando: a vez dele fica parada até o jogador fechar (sem animação, entra na fila)
 async function avisoJaF1(id){
   if(!J.f1||J.f1.vistos[id])return;
-  if(!VEL||document.hidden){avisoF1(id);return;}
-  J.f1.vistos[id]=true;J.f1.fila.unshift(id);J.f1.forcar=true;atualiza();
+  if(!VEL||document.hidden||!podeFalarF1(id)){avisoF1(id);return;} // sem ação desde a última fala: vai para a fila (e pode caducar)
+  J.f1.vistos[id]=true;J.f1.fila.unshift(id);(J.f1.nasceu||(J.f1.nasceu={}))[id]=J.f1.acao||0;J.f1.forcar=true;atualiza();
   await new Promise(r=>{J.f1.solta=r;});
   if(J&&J.f1)J.f1.forcar=false;
 }
-function avisoF1(id){if(!id||!J.f1||J.f1.vistos[id])return;J.f1.vistos[id]=true;J.f1.fila.push(id);}
-// Ritmo das falas: as que não podem esperar (abertura, alerta do camponês, evolução do Cão, vitória) saem na hora; as
-// outras, no máximo uma por turno e nunca logo depois de outra fala (espera o turno seguinte). A da torre é conferida de
-// novo na hora de aparecer: se já não vale, sai da fila e pode voltar mais tarde.
+function avisoF1(id){if(!id||!J.f1||J.f1.vistos[id])return;J.f1.vistos[id]=true;J.f1.fila.push(id);(J.f1.nasceu||(J.f1.nasceu={}))[id]=J.f1.acao||0;}
+// Ritmo das falas: cada fala sai no momento do seu evento (pode haver várias no mesmo turno), mas nunca uma logo depois
+// da outra sem uma ação no meio (andar, atacar, invocar, um saque do Bando). Uma fala que não pôde sair espera a próxima
+// ação; se passarem 2 ações sem ela sair, perdeu o contexto e é descartada. As da abertura, do alerta do camponês, da
+// evolução do Cão e da vitória saem sempre. A da torre é conferida de novo na hora de aparecer.
 const PRIOR_F1=new Set(['intro1','intro2','vitoria','campones','evoluiu']);
+const acaoF1=()=>{if(J&&J.f1)J.f1.acao=(J.f1.acao||0)+1;};
+const podeFalarF1=id=>PRIOR_F1.has(id)||(J.f1.acao||0)>(J.f1.ultFala??-1);
 function proxAvisoF1(){
   const F=J&&J.f1;if(!F||!F.fila.length)return null;
-  if(F.fila[0]==='torre'&&J.vez===0&&!J.ocupado&&!torreNaFrente()){F.fila.shift();F.vistos.torre=false;return proxAvisoF1();}
   const id=F.fila[0];
-  return PRIOR_F1.has(id)||(F.falouTurno||0)<J.turno?id:null;
+  if(!PRIOR_F1.has(id)&&(F.acao||0)-(F.nasceu?.[id]??F.acao??0)>2){F.fila.shift();if(id==='torre')F.vistos.torre=false;return proxAvisoF1();} // fora de contexto
+  if(id==='torre'&&J.vez===0&&!J.ocupado&&!torreNaFrente()){F.fila.shift();F.vistos.torre=false;return proxAvisoF1();}
+  return podeFalarF1(id)?id:null;
 }
-const marcaFalaF1=()=>{if(J&&J.f1)J.f1.falouTurno=J.vez===0?J.turno:J.turno+1;}; // fala na vez do Bando conta para o seu próximo turno
+const marcaFalaF1=()=>{if(J&&J.f1)J.f1.ultFala=J.f1.acao||0;};
 function fechaAvisoF1(){if(J&&J.f1){const id=J.f1.fila.shift();marcaFalaF1();if(id==='intro1')voltaMestreF1();if(J.f1.solta){const s=J.f1.solta;J.f1.solta=null;s();}}atualiza();}
 // dica do que fazer agora (topo da ficha no PC, faixa sobre o mapa no celular), quando nada está selecionado
 function dicaF1(){
@@ -2586,7 +2590,7 @@ async function lutaCampones(u,k){
   await abreCena(u,p,{revida:true});
   await golpear(u,p,1,false);
   if(p.hp>0&&J.un.includes(u))await golpear(p,u,CONTRA,true);
-  await fechaCena();
+  await fechaCena();acaoF1();
   return p.hp<=0;
 }
 async function saqueiaVila(u){
@@ -2595,16 +2599,17 @@ async function saqueiaVila(u){
   const caiu=await lutaCampones(u,k);if(J.fim||!J.un.includes(u))return;
   if(!caiu){ // o camponês resistiu: a casa aguenta mais um turno
     const [x,y]=centro(...DK(k));fx.push({txt:'Resistiu!',x,y:y-6,t0:performance.now(),cor:'#9dffb8',dur:1400});piscaHex(k,'#6ee08a',900);
-    log(`Um camponês resistiu ao ${ESP[u.esp].nome}! A casa ficou de pé.`);avisoF1('resistiu');atualiza();await dorme(500);return;
+    log(`Um camponês resistiu ao ${ESP[u.esp].nome}! A casa ficou de pé.`);atualiza();await dorme(500);await avisoJaF1('resistiu');return;
   }
   const v=J.vilas[k];v.n--;
   const [x,y]=centro(...DK(k));
   fx.push({txt:'−1 camponês',x,y:y-6,t0:performance.now(),cor:'#ff8a80',dur:1400});piscaHex(k,'#ff5b52',900);
   log(`${nome(u)} atacou uma vila: um camponês morreu${v.n?` (restam ${v.n})`:''}.`);
   ganhaXp(u,F1_XP);atualiza();await dorme(500);await avisoJaF1('campones'); // o alarme vem na hora, antes do outro Filhote jogar
-  if(!v.n){log('🔥 Uma vila foi destruída!');avisoF1('vila');
+  if(!v.n){log('🔥 Uma vila foi destruída!');
     if(!vilasVivas().length){log('Todas as vilas foram destruídas.');fimDeJogo(1,'vilas');return;}}
   atualiza();await dorme(600);
+  if(!v.n)await avisoJaF1('vila'); // na hora, na vez do Bando
   await checaEvo(u);
 }
 // casinhas desenhadas por cima do terreno: uma casa por camponês. Cada camponês morto derruba uma casa
@@ -2860,7 +2865,7 @@ async function moverPara(u,k,prev){
     }
     u.anim=null;
   }
-  u.movido=true;
+  u.movido=true;acaoF1();
   const tomou=captura(u);
   if(tomou){hist(u).torre++;if(contaHj(u))hj(u.lado).torre++;atualiza();await mostraTorre(u,tomou.antes,tomou.liberou,tomou.primeira);if(u.lado===0)tomouTorreF1(K(u.c,u.r));} // cena da torre conquistada (o jogo espera ela fechar)
   avisaCerco(u.lado);
@@ -3358,7 +3363,7 @@ async function atacar(a,d){
   // atacante vira para o alvo; o alvo vira para quem o atacou
   viraPara(a,centro(d.c,d.r)[0]);viraPara(d,centro(a.c,a.r)[0]);
   const dist=d6(a,d);
-  a.movido=true;a.agiu=true;
+  a.movido=true;a.agiu=true;acaoF1();
   if(!a.elemental)hist(a).mordidas=(hist(a).mordidas||0)+1; // história do estágio (ramo do Cão Infernal)
   if(contaHj(a)){const f=faseAtual().nome;hj(a.lado)[f==='Dia'?'atkDia':f==='Noite'?'atkNoite':'atkCresp']++;} // história da partida (Evoluir)
   const revida=dist<=ESP[d.esp].alc;
@@ -3508,7 +3513,7 @@ function hexesInvocacao(l){
 }
 function invocar(l,esp,c,r){
   J.mp[l]-=ESP[esp].custo;
-  const u=criaUnidade(esp,l,c,r);u.movido=true;u.agiu=true;seguir(u);
+  const u=criaUnidade(esp,l,c,r);u.movido=true;u.agiu=true;seguir(u);acaoF1();
   (J.invocou||(J.invocou=[]))[l]=true; // a Magia do menu do mestre só aparece depois da primeira invocação
   if(l===0&&J.tut&&J.turno===1)J.tut.n++;
   flutua(u,'Invocado','#f2c14e');
