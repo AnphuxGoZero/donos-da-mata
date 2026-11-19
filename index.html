@@ -203,7 +203,11 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 #fim .fimBts{justify-content:center;gap:8px;flex-wrap:wrap}
 #fimPorque .estrelasF1{text-align:center;font-size:44px;letter-spacing:6px;color:#4a4f5c;margin:0 0 4px}#fimPorque .estrelasF1 .on{color:#f2c14e;text-shadow:0 0 12px #f2c14e88}
 #passar.f1{max-width:min(380px,90%)}
-#passar.f1 .seq{display:block;opacity:0;animation:f1Seq .6s ease-out forwards}#passar.f1 .seq.s1{font-size:15px;color:#f0e6d2;animation-delay:.2s}#passar.f1 .seq.s2{margin-top:8px;animation-delay:1.4s}
+#passar.f1 .seq{opacity:0;animation:f1Seq .6s ease-out forwards}#passar.f1 .seq.s1{animation-delay:.2s}#passar.f1 .seq.s2{animation-delay:1.4s}
+#passar.f1 .fala{display:flex;align-items:center;gap:10px;margin:8px 0 2px}
+#passar.f1 .rosto{flex:none;width:52px;height:52px;border-radius:50%;background:#463c32 url(img/f1-rostos.png) no-repeat;background-size:800% 100%;border:2px solid #c9a27a;box-shadow:0 2px 6px #0008}
+#passar.f1 .balao{position:relative;flex:1;background:#f4ead0;color:#2b2118;border-radius:10px;padding:8px 11px;font-size:14px;line-height:1.35;font-weight:600}
+#passar.f1 .balao::before{content:'';position:absolute;left:-7px;top:50%;margin-top:-6px;border:6px solid transparent;border-right:7px solid #f4ead0;border-left:0}
 #passar.f1.intro .linha{opacity:0;animation:f1Seq .5s ease-out 2.3s forwards}
 @keyframes f1Seq{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 #fimPorque{margin:12px 0 16px;text-align:left;font-size:13.5px;line-height:1.5}
@@ -442,6 +446,7 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 #cercoCena .ccCeuTxt{position:absolute;left:0;top:0;width:100%;display:flex;align-items:center;justify-content:center;padding:4px 12px;box-sizing:border-box;
   text-align:center;line-height:1.35;font-size:max(13px,calc(var(--cw) / 24));font-weight:600;color:#fff;text-shadow:0 1px 3px #000,0 0 8px #000;pointer-events:none;opacity:0;transition:opacity .4s}
 #cercoCena .ccCeuTxt:empty{display:none}
+#cercoCena .ccCeuTxt .ccMana{font-size:1.45em;font-weight:800;letter-spacing:.3px} /* renda da torre: um pouco maior que os outros recados */
 #cercoCena .ccCeuTxt.vis{opacity:1}
 #cercoCena .avTit{font-family:"Pirata One",serif;font-size:min(clamp(28px,6vw,44px),8.5vh);}
 .paisagem #cercoCena .avTit{font-size:min(30px,7.5vh)}
@@ -1087,7 +1092,7 @@ const FASES=[
   {nome:'Noite',icone:'🌙',diurno:false,forca:.25,tom:'rgba(10,20,70,.38)'},
 ];
 // o horário age pelo elemento: Fogo e Planta são diurnos, Água e Arcano noturnos, Terra e Ar neutros
-const HORA_EL={fogo:'dia',planta:'dia',agua:'noite',arcano:'noite',terra:'neutro',ar:'neutro'};
+const HORA_EL={humano:'neutro',fogo:'dia',planta:'dia',agua:'noite',arcano:'noite',terra:'neutro',ar:'neutro'};
 // horário da espécie: o do elemento, ou o da linhagem (Solar = dia, Lunar = noite)
 const horaDe=e=>e.hora||HORA_EL[e.el];
 const HORA_DESC={
@@ -1105,7 +1110,7 @@ const faseIdx=(p=J.ciclo)=>CICLO[((p%CICLO.length)+CICLO.length)%CICLO.length];
 function avancaCiclo(){J.ciclo=((J.ciclo+J.cicloDir)%CICLO.length+CICLO.length)%CICLO.length;}
 const faseAtual=()=>FASES[faseIdx()];
 // precisão base: depende da família (elemento) e sobe 5% por nível
-const PREC_EL={fogo:.90,agua:.90,planta:.85,terra:.80,ar:.95,arcano:.95};
+const PREC_EL={humano:.75,fogo:.90,agua:.90,planta:.85,terra:.80,ar:.95,arcano:.95};
 function precisao(esp){const e=ESP[esp];if(e.mestre)return .95;return Math.min(1,PREC_EL[e.el]+(e.tier-1)*.05);}
 // +0.25, −0.25 ou 0 conforme o alinhamento e o horário
 // ícones das fases em pixel art (desenhados em 30×30 e ampliados)
@@ -1210,8 +1215,8 @@ function modHora(esp){
   const f=faseAtual();
   return (h==='dia')===f.diurno?f.forca:-f.forca;
 }
-const EL={fogo:'#e8663a',agua:'#3f8fd8',planta:'#4caf50',terra:'#a8814f',ar:'#6fc3dc',arcano:'#9b6be0'};
-const ELN={fogo:'Fogo',agua:'Água',planta:'Planta',terra:'Terra',ar:'Ar',arcano:'Arcano'};
+const EL={humano:'#c9a27a',fogo:'#e8663a',agua:'#3f8fd8',planta:'#4caf50',terra:'#a8814f',ar:'#6fc3dc',arcano:'#9b6be0'};
+const ELN={humano:'Humano',fogo:'Fogo',agua:'Água',planta:'Planta',terra:'Terra',ar:'Ar',arcano:'Arcano'};
 // quem vence quem (×1,5 de dano; no sentido contrário, ×0,75).
 // Arcano tem uma fraqueza a mais (é a elite cara, com Golpe Místico); Ar tem uma vantagem a mais (é frágil).
 const VANT={
@@ -1303,6 +1308,8 @@ const ESP={
   armadura:{nome:'Armadura',cat:'terGra',el:'arcano',hp:64,atk:21,def:8,mov:3,alc:1,forma:'olho',tier:3},
   // terceiro ramo do Fogo: a matilha do crepúsculo. Mais rápida e um pouco mais frágil; no fim escolhe entre
   // o Cerberus (guardião pesado, lento) e a Mula sem Cabeça (a mais veloz das criaturas de chão)
+  // Fase 1: o camponês que defende a vila. Não fica no mapa (só aparece na tela de batalha, como os elementais)
+  campones:{nome:'Camponês',cat:'terPeq',el:'humano',hp:14,atk:3,def:0,mov:0,alc:1,forma:'coroa',tier:0},
   filhoteInf:{nome:'Filhote Infernal',cat:'terFogo',el:'fogo',hp:26,atk:12,def:0,mov:6,alc:1,custo:40,xp:45,evo:'caoInfernal',forma:'chama',tier:1},
   caoInfernal:{nome:'Cão Infernal',cat:'terFogo',el:'fogo',hp:44,atk:19,def:2,mov:6,alc:1,xp:90,evo:'cerberus',forma:'chama',tier:2},
   cerberus:{nome:'Cerberus',cat:'terFogo',el:'fogo',hp:74,atk:24,def:6,mov:5,alc:1,forma:'chama',tier:3},
@@ -1444,7 +1451,7 @@ const INVOCAVEIS=['brasa','semente','girino','essencia','ovoAlado','argila'];
 const EVO_CUSTO=200;
 const novaHj=()=>({atkDia:0,atkNoite:0,atkCresp:0,feito:0,sofrido:0,abates:0,torre:0,ter:{},parado:0,correu:0,saudavel:0,ferido:0,feridoDia:0,feridoNoite:0,perdas:0,beira:0});
 function hj(l){J.hj=J.hj||[];return J.hj[l]||(J.hj[l]=novaHj());}
-const contaHj=u=>u&&!u.elemental&&!ESP[u.esp].mestre&&u.dominado==null; // só as criaturas do próprio mestre
+const contaHj=u=>u&&!u.elemental&&!u.figurante&&!ESP[u.esp].mestre&&u.dominado==null; // só as criaturas do próprio mestre
 const hjTer=(h,...ts)=>ts.reduce((s,t)=>s+(h.ter[t]||0),0);
 // fim do turno: anota no histórico da partida onde a criatura parou, quanto andou e como estava de vida
 function anotaJogo(u){
@@ -1570,7 +1577,7 @@ const CAT_DEF={
 const IDX_TER=Object.fromEntries(ORD_TER.map((t,i)=>[t,i]));
 const catDe=esp=>CAT_DEF[ESP[esp].cat];
 const voa=esp=>!!catDe(esp).voo;
-function custoMov(esp,t){return catDe(esp).custo[IDX_TER[t]];}
+function custoMov(esp,t){if(t==='mont'&&J&&J.f1&&!voa(esp))return Infinity;return catDe(esp).custo[IDX_TER[t]];} // Fase 1: as montanhas são as paredes do corredor
 function defTer(esp,t){return catDe(esp).def[IDX_TER[t]];}
 // gelo: especialistas glaciais lutam melhor; as demais tropas de solo, 10% pior; voadores não são afetados
 function atkTer(esp,t){return atkCat(catDe(esp),t);}
@@ -1844,8 +1851,9 @@ function novoJogo(op=prefs(),semIntro=false){ // semIntro: a partida de fundo, a
   const seed=(Math.random()*1e9)|0;
   const f1=!!op.f1; // Fase 1 (introdução): mapa fixo, sem mestre rival, contra o Bando Infernal
   const np=f1?2:MODOS[op.modo]||2;
-  defineLinhas(np>2?17:13);
-  const m=f1?mapaF1():gerarMapa(seed,np,op.cristal!==false); // modo único: todo mapa tem a Torre do Cristal (false só para testes)
+  const mF1=f1?MAPAS_F1[RETRATO()?'empe':'deitado']:null; // celular em pé: corredor em pé; senão, deitado
+  defineLinhas(f1?mF1.linhas.length:np>2?17:13);
+  const m=f1?mapaF1(mF1):gerarMapa(seed,np,op.cristal!==false); // modo único: todo mapa tem a Torre do Cristal (false só para testes)
   // os rivais recebem mestres diferentes do seu e entre si, sorteados
   const outras=Object.keys(ORDENS).filter(o=>o!==op.ordem);
   for(let i=outras.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[outras[i],outras[j]]=[outras[j],outras[i]];}
@@ -1872,6 +1880,7 @@ function novoJogo(op=prefs(),semIntro=false){ // semIntro: a partida de fundo, a
   inicioTurno(0);
   atualiza();
   if(!semIntro)comecaIntro();
+  if(f1&&!semIntro)chegadaF1(); // Fase 1: abre com o Bando entrando no vale
 }
 // ---------- Introdução da partida ----------
 // Abre na Torre do Cristal com o cristal inteiro brilhando; um raio cai nele e ele se parte nos seis cacos
@@ -2293,7 +2302,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.71'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.72'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2334,32 +2343,58 @@ const ehF1=()=>!!(J&&J.f1);
 const selvagem=l=>!!(J&&J.f1)&&l===1;
 function fase1Info(){try{return JSON.parse(localStorage.getItem(F1_CHAVE))||{};}catch(e){return {};}}
 const estrelasTxt=n=>'★'.repeat(n||0)+'☆'.repeat(Math.max(0,3-(n||0)));
-// . planície  f floresta  m montanha  p pedreira  r rio  C castelo (as fortalezas vêm em volta)  T torre  V vila  a/b Filhotes
-const MAPA_F1=[
-  'mmf....r.....ffmm',
-  'mf.....r......f.m',
-  '.......r..V.....a',
-  '..ff.T.r....f....',
-  '.......r....ff...',
-  '......r......p...',
-  '..C...rV.......m.',
-  '......r......p...',
-  '.................',
-  '..ff.T......f....',
-  '..........V.....b',
-  'mf............f.m',
-  'mmf.....ff....fmm'];
-function mapaF1(){
+// . planície  f floresta  m montanha  p pedreira  r rio  C castelo (as fortalezas vêm em volta)  T torre  a/b Filhotes
+// V vila (vale estrela)  v vila da entrada: o Bando chega antes de qualquer ajuda, então ela não conta estrela
+// corredor sinuoso fechado por montanhas (na Fase 1 ninguém atravessa montanha). Deitado no PC e no celular deitado
+// (os Filhotes entram pela direita); em pé no celular em pé (descem do topo). Os dois têm o mesmo ritmo: vilas a
+// 5, ~13 e 22 passos da entrada e o castelo a ~30.
+const MAPAS_F1={ // bordas irregulares, pedreiras entre as montanhas, moitas de floresta no caminho e passagens
+  // estreitas (pedreira/floresta: mais curtas, porém lentas) que cortam as paredes e dão outras rotas
+  deitado:{entra:'direita',linhas:[
+    'mmmmfm....m......',
+    'mmmp.f...v.mff.a.',
+    'mmmppm....m..mmmb',
+    'mmm.f...mmmmmf.mm',
+    '.mmmm...f..Tm....',
+    'pmpmr.V.f...pf..m',
+    '.fpprpm.mf.p.....',
+    'mmmm..mmpmmmm....',
+    'pmmmmmmf.p..m..f.',
+    '..C..V.r...V..f..',
+    'm....T.rm....f.mp']},
+  empe:{entra:'cima',linhas:[
+    'mmmpmmmpmm.a.b.mm',
+    'pmmmmmmmmm....mmm',
+    'mpmmppmmmpp....fm',
+    'mmf.fppmpm.....pm',
+    'mp...mm..v.f....p',
+    'pm.....p...m..ppm',
+    '..ff.ffmmmfm.fmmm',
+    'mmfr..ffpmfmfpmmm',
+    'mm.rV.ffpfp.mmfpp',
+    'ff.r..m.mmfmmfmmm',
+    'mm.r.....T..mppmm',
+    'mf.r..mm......mmm',
+    'm.mmmffmmp...fmfm',
+    'mpmmmfp.pp..f.mmp',
+    'mppmpmmmmp..V..mm',
+    'ffmmmmffmp....fpm',
+    'ff....f.ff....fmm',
+    'mm..T...ffr...fmp',
+    'mpp..r.V......fff',
+    'fp..C.fr...mpf.pm',
+    'mmm....r....mmmfm']}};
+function mapaF1(M){
   const ter=new Array(COLS*ROWS).fill('plan'),dono=new Array(COLS*ROWS).fill(null),vilas={},filhotes=[];let f0=null;
-  const T={'.':'plan',f:'flor',m:'mont',p:'pedr',r:'rio',T:'torre',V:'plan',a:'plan',b:'plan',C:'cast'};
-  MAPA_F1.forEach((lin,r)=>[...lin].forEach((ch,c)=>{const k=K(c,r);ter[k]=T[ch];
-    if(ch==='C')f0=[c,r];if(ch==='V')vilas[k]={n:F1_CAMP,max:F1_CAMP};if(ch==='a'||ch==='b')filhotes.push([c,r]);}));
+  const T={'.':'plan',f:'flor',m:'mont',p:'pedr',r:'rio',T:'torre',V:'plan',v:'plan',a:'plan',b:'plan',C:'cast'};
+  M.linhas.forEach((lin,r)=>[...lin].forEach((ch,c)=>{const k=K(c,r);ter[k]=T[ch];
+    if(ch==='C')f0=[c,r];if(ch==='V'||ch==='v')vilas[k]={n:F1_CAMP,max:F1_CAMP,estrela:ch==='V'};if(ch==='a'||ch==='b')filhotes.push([c,r]);}));
   dono[K(...f0)]=0;for(const [a,b] of vizinhos(...f0)){ter[K(a,b)]='fort';dono[K(a,b)]=0;}
-  return {ter,dono,f0,f:[f0],tema:'Vale das Vilas',cristal:null,vilas,filhotes};
+  return {ter,dono,f0,f:[f0],tema:'Vale das Vilas',cristal:null,vilas,filhotes,entra:M.entra};
 }
 function iniciaF1(m){
-  J.f1={fila:['intro'],vistos:{}};J.vilas=m.vilas;
-  for(const a of Object.values(ARTE_F1)){imgF1(a.mapa);imgF1(a.luta);} // já começa a carregar a arte própria
+  J.f1={fila:['intro'],vistos:{},rostos:{},entra:m.entra};J.vilas=m.vilas;
+  for(const a of Object.values(ARTE_F1)){imgF1(a.mapa);imgF1(a.luta);}imgF1(CAMPONESES.img);imgF1(ROSTOS_F1.img); // já começa a carregar a arte própria
   for(const p of m.filhotes){const u=criaUnidade('filhoteInf',1,...p);u.selvagem=true;}
 }
 const vilasVivas=()=>Object.keys(J.vilas||{}).map(Number).filter(k=>J.vilas[k].n>0);
@@ -2376,15 +2411,17 @@ function rodaInv(cartao){
 }
 function dicaVila(k){
   const v=J.vilas[k];
+  if(v.estrela===false)return v.n>0?`Vila da entrada do vale, com ${v.n} de ${v.max} casas de pé. O Bando chega aqui antes de qualquer ajuda: ela não conta estrela no fim da fase.`:'O que sobrou da vila da entrada do vale, a primeira a cair. (Não contava estrela.)';
   return v.n>0?`Vila com ${v.n} de ${v.max} casas de pé. Filhote Infernal que termina o turno nela, ou ao lado, mata um camponês (uma casa cai) e ganha experiência. Proteja-a! (O chão é planície.)`
     :'O que sobrou de uma vila saqueada pelo Bando Infernal. (O chão é planície.)';
 }
 // avisos da Fase 1 (caixa do meio do mapa, na sua vez): cada um aparece uma vez por partida
 const AVISOS_F1={
   // a abertura é curta e entra em partes (.seq); o resto se explica quando acontece (camponês, vila destruída, evolução)
-  intro:['Fase 1 · O Bando Infernal','<span class="seq s1">Dois Filhotes Infernais invadiram o vale!</span><span class="seq s2">Invoque criaturas e derrote os dois antes que destruam todas as vilas.</span>','Começar'],
+  // falas: cada linha é dita por um camponês (rosto sorteado, um diferente por linha)
+  intro:{tit:'Fase 1 · O Bando Infernal',falas:['Dois Filhotes Infernais invadiram o vale!','Mande ajuda antes que destruam todas as vilas!'],bt:'Começar'},
   vila:['Uma vila caiu','Os Filhotes mataram todos os camponeses dela. No fim da fase, cada vila salva vale uma estrela: proteja as que restam!'],
-  campones:['Um camponês morreu','Os Filhotes ganham experiência a cada camponês que matam. Com 3, evoluem para Cão Infernal, bem mais forte. Mande suas criaturas para as vilas!'],
+  campones:{falas:['Um camponês morreu, rápido! Precisamos de ajuda!']},
   evoluiu:['Um Filhote evoluiu!','Agora é um Cão Infernal: mais vida, mais ataque e mais rápido. Ataque em grupo e use a Água, que vence o Fogo.'],
   evoMinha:['Sua criatura evoluiu!','Suas criaturas também ganham experiência lutando e evoluem para formas mais fortes. Mantenha as veteranas vivas.'],
 };
@@ -2403,6 +2440,26 @@ function dicaF1(){
   return '';
 }
 // ----- vez do Bando Infernal -----
+// abertura da Fase 1: a câmera abre na borda leste e os dois Filhotes entram correndo de fora do mapa, um depois
+// do outro; rosnam, e a câmera volta para o seu mestre. Só então aparece o aviso de abertura (que espera J.ocupado)
+async function chegadaF1(){
+  const jogo=J,fs=J.un.filter(u=>u.selvagem);if(!fs.length||!VEL||document.hidden)return;
+  J.ocupado=true;
+  // enquadra a borda leste inteira (as duas entradas): afasta o zoom se precisar, e devolve no fim (soltaEnquadra)
+  const cima=J.f1.entra==='cima',xs=fs.map(f=>centro(f.c,f.r));
+  {const [x0,y0]=[Math.min(...xs.map(p=>p[0]))-(cima?R*3:W*5),Math.min(...xs.map(p=>p[1]))-R],[x1,y1]=[Math.max(...xs.map(p=>p[0]))+(cima?R*3:W),Math.max(...xs.map(p=>p[1]))+(cima?R*6:R)],z=Math.max(zBase(),Math.min(CAM.zPref,TW/(x1-x0+R*4),TH/(y1-y0+R*3)));
+   CAM.z=CAM.zAlvo=z;CAM.enq=z!==CAM.zPref;CAM.x=(x0+x1)/2;CAM.y=(y0+y1)/2;CAM.alvo={fixo:true,px:CAM.x,py:CAM.y};CAM.centrar=true;CAM.mao=false;limitaCam();}
+  const fora=f=>{const [x,y]=centro(f.c,f.r);return cima?{x0:x,y0:y-R*9}:{x0:x+R*9,y0:y};}; // entram de fora do mapa
+  for(const f of fs)f.anim={...fora(f),t0:performance.now(),dur:1e9}; // esperando fora do mapa
+  atualiza();await dorme(800);
+  for(const f of fs){f.anim={...fora(f),t0:performance.now(),dur:1300};await dorme(550);}
+  await dorme(900);if(J!==jogo)return;
+  for(const f of fs){f.anim=null;flutua(f,'Grrr!','#ff8a50');}
+  await dorme(1400);if(J!==jogo)return;
+  soltaEnquadra();const m=mestreDe(0);if(m)seguir(m,true);
+  await dorme(700);if(J!==jogo)return;
+  J.ocupado=false;atualiza();
+}
 async function turnoSelvagem(l){
   RITMO_IA=J.turno<=2?RITMO_INICIO:1;J.ocupado=true;
   try{
@@ -2451,9 +2508,24 @@ async function agirSelvagem(u){
   for(const k of dests){const s=falta(k)-defTer(u.esp,terEvK(u.lado,k))*0.5;if(s<bs){bs=s;bk=k;}}
   await moverPara(u,bk,A.prev);u.agiu=true;
 }
+// os 8 camponeses da tela de batalha (folha 4×2, figuras de pé na base; olha = para onde a figura está virada)
+const ROSTOS_F1={img:'img/f1-rostos.png',n:8}; // figurinhas dos camponeses que falam nos avisos (tira de 8 rostos)
+const CAMPONESES={img:'img/f1-camponeses.png',olha:[-1,1,-1,-1,-1,-1,-1,-1]};
+// um camponês sai para defender a casa: luta de verdade (o Filhote leva uns arranhões), mas não tem como vencer
+async function lutaCampones(u,k){
+  const [c,r]=DK(k),p={id:-1,esp:'campones',lado:0,c,r,dir:1,hp:ESP.campones.hp,xp:0,figurante:true,arte:Math.random()*8|0,estVila:Math.max(0,Math.min(2,J.vilas[k].max-J.vilas[k].n))};
+  viraPara(u,centro(c,r)[0]);
+  await abreCena(u,p,{revida:true});
+  for(let n=0;n<3&&p.hp>0&&J.un.includes(u);n++){
+    await golpear(u,p,1,false);
+    if(p.hp>0&&J.un.includes(u))await golpear(p,u,CONTRA,true);
+  }
+  await fechaCena();
+}
 async function saqueiaVila(u){
   if(!J.un.includes(u)||J.fim)return;
   const k=vilasVivas().find(k=>pertoVila(u,k));if(k==null)return;
+  await lutaCampones(u,k);if(J.fim||!J.un.includes(u))return;
   const v=J.vilas[k];v.n--;
   const [x,y]=centro(...DK(k));
   fx.push({txt:'−1 camponês',x,y:y-6,t0:performance.now(),cor:'#ff8a80',dur:1400});piscaHex(k,'#ff5b52',900);
@@ -2491,7 +2563,7 @@ function desenhaVilas(now){
 }
 // fim da Fase 1: estrelas pelas vilas salvas; vencer leva à Fase 2
 function mostraFimF1(v,motivo){
-  const vs=Object.values(J.vilas),salvas=vs.filter(x=>x.n>0).length,camp=vs.reduce((s,x)=>s+x.n,0),tot=vs.reduce((s,x)=>s+x.max,0);
+  const vs=Object.values(J.vilas).filter(x=>x.estrela!==false),salvas=vs.filter(x=>x.n>0).length,camp=vs.reduce((s,x)=>s+x.n,0),tot=vs.reduce((s,x)=>s+x.max,0); // a vila da entrada não conta
   const b=document.getElementById('fimBt'),b2=document.getElementById('fimBt2');
   document.getElementById('fimTxt').textContent=v===0?'Fase 1 concluída!':'Você perdeu';
   b2.style.display='';
@@ -3010,7 +3082,8 @@ function estendeCeu(ch,base,E,CEU,corEst){
 // Avisos da torre ficam FORA do quadro de pixel art (texto da página, maior e nítido), acima dele:
 // 1ª torre do jogador: o objetivo; 2ª: Magia liberada; 3ª: Força Elemental liberada. Os do jogador só saem com um toque.
 const AVISO_TORRE={
-  primeira:{tit:'Domine mais torres para vencer',sub:'Cada torre rende energia e puxa o cabo de guerra a seu favor',cls:'ouro'},
+  // Fase 1: não há cabo de guerra nem vitória por torres, então o título só comemora a conquista
+  primeira:{tit:()=>J.f1?'Torre conquistada!':'Domine mais torres para vencer',sub:`<span class="ccMana">+${RENDA_TER.torre} Mana por turno</span>`,cls:'ouro'},
   'Magia liberada':{tit:'✦ Magia liberada',sub:l=>l===0?'Lance uma magia por turno':`${OM(l)} já pode lançar magias.`,cls:'roxo'},
   'Força Elemental liberada':{tit:'⚡ Força Elemental liberada',sub:l=>l===0?'Elementais atacam qualquer criatura adversária':`${OM(l)} já pode usar a Força Elemental.`,cls:'verm'}};
 // Toda cena de torre tem o mesmo tamanho: quadro alto (com a faixa de céu) e o espaço do título acima reservado,
@@ -3034,7 +3107,7 @@ function cenaTorre(u,{cristal=false,liberou=false,primeira=false}){
   const el=document.getElementById('cercoCena');
   const sub=av?(typeof av.sub==='function'?av.sub(l):av.sub):'';
   // sem aviso, o título fica invisível mas ocupa o mesmo lugar: o quadro não muda de tamanho nem de posição
-  el.querySelector('.ccAviso').innerHTML=av?`<div class="avTit ${av.cls}">${av.tit}</div>`:'<div class="avTit" style="visibility:hidden">.</div>';
+  el.querySelector('.ccAviso').innerHTML=av?`<div class="avTit ${av.cls}">${typeof av.tit==='function'?av.tit(l):av.tit}</div>`:'<div class="avTit" style="visibility:hidden">.</div>';
   el.querySelector('.cap').innerHTML=`<div class="ccTropas">${iconeSpr(u.esp,30,l)}</div>`;
   const E=CEU_TORRE;
   const bandeira=(g,t,now,mx,base,alt)=>{ // mastro e a bandeira subindo (150→450 ms), tremulando
@@ -3200,7 +3273,7 @@ function chanceAcerto(a,d,tD){
 // Fúria: +1 golpe neste turno; dormindo/petrificado: não revida
 const golpesDe=u=>GOLPES+(u.furia?1:0);
 const podeRevidar=u=>!u.sono&&!u.petra;
-const vivo=u=>u.elemental?u.hp>0:J.un.includes(u);
+const vivo=u=>u.elemental||u.figurante?u.hp>0:J.un.includes(u); // figurante: o camponês da Fase 1
 // valor esperado (usado pela IA)
 const danoEsperado=(a,d,tD)=>danoBase(a,d)*chanceAcerto(a,d,tD);
 const CONTRA=0.75;
@@ -3236,12 +3309,13 @@ async function golpear(a,d,mult,contra){
       if(!a.elemental)hist(a).feito=(hist(a).feito||0)+dano; // história do estágio (ramo da Argila)
       if(!d.elemental)hist(d).sofrido=(hist(d).sofrido||0)+dano;
       if(contaHj(a))hj(a.lado).feito+=dano;if(contaHj(d))hj(d.lado).sofrido+=dano;
-      ganhaXp(a,dano);
+      if(!d.figurante)ganhaXp(a,dano); // o saque já rende a XP do camponês
       if(CENA)await cenaGolpe(a,d,true,dano,i);
       if(d.hp<=0){
-        ganhaXp(a,20);if(!a.elemental)hist(a).abates=(hist(a).abates||0)+1;if(contaHj(a))hj(a.lado).abates++;registraGolpes(a,d,acertos,i+1,total,contra,ch);
+        if(!d.figurante)ganhaXp(a,20);if(!a.elemental)hist(a).abates=(hist(a).abates||0)+1;if(contaHj(a))hj(a.lado).abates++;registraGolpes(a,d,acertos,i+1,total,contra,ch);
         if(CENA)await cenaQueda(d);
-        if(d.elemental){d.hp=0;flutua(d,'Elemental desfeito','#ffb070',300);log(`${nome(d)} se desfez e não volta nesta partida.`);}
+        if(d.figurante)d.hp=0;
+        else if(d.elemental){d.hp=0;flutua(d,'Elemental desfeito','#ffb070',300);log(`${nome(d)} se desfez e não volta nesta partida.`);}
         else morre(d,a);
         return;
       }
@@ -4420,9 +4494,52 @@ function fundoCena(esq,dir){
       g.fillStyle=pal[Math.min(3,Math.max(0,Math.floor(n*2.2+prof*1.6)))];g.fillRect(x,y,4,4);}
   }
   g.fillStyle='rgba(0,0,0,.35)';g.fillRect(ax,chaoY,aw,3);
+  if(esq.figurante&&esq.estVila!=null)vilaCena(g,esq.estVila,chaoY); // Fase 1: a vila do camponês ao fundo
   g.restore();
   g.strokeStyle='#3c4356';g.lineWidth=2;g.strokeRect(ax,ay,aw,ah);
   return c;
+}
+// Fase 1: a vila atrás do camponês, na metade esquerda da arena, em três estágios:
+// 0 inteira (1º camponês), 1 meio destruída (2º), 2 em ruínas pegando fogo (3º; o fogo anima em fogoVilaCena)
+const CASAS_CENA=[[48,78,58],[132,92,70],[262,70,52],[342,84,64]]; // x, largura, altura das paredes
+const ESTADO_CASA=[[0,0,0,0],[2,1,0,2],[2,2,2,2]]; // no meio, as das pontas (o camponês fica na frente das do meio) // por estágio: 0 inteira, 1 danificada, 2 queimada
+function vilaCena(g,est,chao){
+  CASAS_CENA.forEach(([x,w,h],i)=>{
+    const e=ESTADO_CASA[est][i],y=chao-h,px=(a,b,c,d,cor)=>{g.fillStyle=cor;g.fillRect(Math.round(a),Math.round(b),Math.round(c),Math.round(d));};
+    // paredes (queimadas: escuras, mais baixas e com o topo quebrado)
+    if(e<2){
+      px(x,y,w,h,e?'#b8a47e':'#dcc79c');px(x,y,w,4,'#00000022');
+      for(let k=0;k<3;k++)px(x+6,y+12+k*16,w-12,2,'#a8916a55'); // tábuas
+      px(x+w*.4,chao-h*.5,w*.2,h*.5,'#4a3424'); // porta
+      px(x+w*.12,y+h*.25,w*.18,h*.2,e?'#1a1410':'#f2d27a');px(x+w*.7,y+h*.25,w*.18,h*.2,'#f2d27a'); // janelas acesas
+      // telhado: inteiro, ou com um rombo
+      g.fillStyle=e?'#8f3a26':'#b5482f';g.beginPath();g.moveTo(x-8,y+2);g.lineTo(x+w/2,y-h*.55);g.lineTo(x+w+8,y+2);g.closePath();g.fill();
+      g.fillStyle='#5e2516';g.fillRect(x-8,y,w+16,4);
+      if(e){g.fillStyle='#1a1410';g.beginPath();g.moveTo(x+w*.55,y-h*.35);g.lineTo(x+w*.85,y-h*.05);g.lineTo(x+w*.6,y+1);g.lineTo(x+w*.45,y-h*.1);g.closePath();g.fill();
+        px(x+w*.62,y-h*.42,4,h*.4,'#3a2a1c');} // viga aparecendo
+    }else{
+      g.fillStyle='#3a332d';g.beginPath();g.moveTo(x,chao);g.lineTo(x,y+h*.35);g.lineTo(x+w*.2,y+h*.15);g.lineTo(x+w*.35,y+h*.45);g.lineTo(x+w*.6,y+h*.2);g.lineTo(x+w*.8,y+h*.5);g.lineTo(x+w,y+h*.3);g.lineTo(x+w,chao);g.closePath();g.fill();
+      px(x+w*.4,chao-h*.45,w*.2,h*.45,'#120e0b');
+      g.save();g.strokeStyle='#1e1915';g.lineWidth=5;g.beginPath();g.moveTo(x+w*.15,y+h*.25);g.lineTo(x+w*.7,y-h*.15);g.moveTo(x+w*.9,y+h*.3);g.lineTo(x+w*.55,y-h*.05);g.stroke();g.restore(); // vigas carbonizadas
+    }
+    px(x-4,chao-3,w+8,3,'#00000044');
+  });
+}
+// fogo e fumaça das casas queimadas (por cima do fundo, a cada quadro)
+function fogoVilaCena(g,now,chao,est){
+  const t=now/1000;
+  CASAS_CENA.forEach(([x,w,h],i)=>{
+    if(ESTADO_CASA[est][i]<2)return; // só as queimadas soltam fumaça; chamas, só com a vila toda em ruínas
+    const cx=x+w/2,base=chao-h*.35;
+    for(let k=0;k<6;k++){ // fumaça subindo
+      const f=((t*.35+k/6+i*.17)%1);g.fillStyle=`rgba(40,36,34,${.5*(1-f)})`;g.beginPath();g.arc(cx+Math.sin(f*5+i)*14,base-30-f*120,10+f*22,0,Math.PI*2);g.fill();}
+    if(est<2)return;
+    for(let k=0;k<5;k++){ // chamas tremendo
+      const fx=x+w*(.15+k*.18),alt=18+16*Math.abs(Math.sin(t*7+k*1.7+i)),lg=7+3*Math.sin(t*5+k);
+      for(const [esc,cor] of [[1,'#e8501e'],[.66,'#ff9a2a'],[.36,'#ffe27a']]){
+        g.fillStyle=cor;g.beginPath();g.moveTo(fx-lg*esc,base+4);g.quadraticCurveTo(fx-lg*esc,base-alt*esc*.5,fx+Math.sin(t*9+k)*3,base-alt*esc);g.quadraticCurveTo(fx+lg*esc,base-alt*esc*.5,fx+lg*esc,base+4);g.closePath();g.fill();}
+    }
+  });
 }
 // ----- elementais da Força -----
 // arte em arte/elementais.png (4 células de 256 px: fogo, água, ar, terra; todos olham para a esquerda),
@@ -4484,7 +4601,12 @@ function desenhaLutador(g,u,now){
   else{
     const si=ORDEM_SPR.indexOf(spr(u.esp)),src=atlasCor&&temCor(u.esp)?atlasCor:atlasOk?atlasTime[u.lado]:null; // combate: monstros coloridos
     const aF=arteF1(u),iF=aF&&imgF1(aF.luta); // Fase 1: o Bando luta com o desenho próprio
-    if(iF){
+    const iC=u.figurante&&imgF1(CAMPONESES.img); // Fase 1: o camponês, um dos 8 desenhos da folha
+    if(iC){
+      g.translate(x,0);if((esq?1:-1)!==CAMPONESES.olha[u.arte])g.scale(-1,1);
+      g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
+      const S2=S*1.25,C2=iC.naturalWidth/4;g.drawImage(iC,(u.arte%4)*C2,Math.floor(u.arte/4)*C2,C2,C2,-S2/2,y-S2+8,S2,S2);
+    }else if(iF){
       g.translate(x,0);if((esq?1:-1)!==aF.olha)g.scale(-1,1);
       g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
       const S2=S*1.25;g.drawImage(iF,-S2/2,y-S2+8,S2,S2);
@@ -4581,6 +4703,7 @@ function desenhaCena(now){
   const g=cg;g.setTransform(2,0,0,2,0,0);g.globalAlpha=1;
   g.drawImage(CENA.fundo,0,0,CW,CH);
   g.save();g.beginPath();g.rect(ARENA.x,ARENA.y,ARENA.w,ARENA.h);g.clip();
+  if(CENA.esq.figurante&&CENA.esq.estVila>0)fogoVilaCena(g,now,440,CENA.esq.estVila); // Fase 1: a vila em chamas atrás do camponês
   for(const u of [CENA.esq,CENA.dir])desenhaLutador(g,u,now);
   // golpes: três riscos (ataque comum) ou estouro de partículas (elemental)
   for(let i=CENA.efe.length-1;i>=0;i--){const f=CENA.efe[i],t=(now-f.t0)/(300*fatorCena()||1);if(t>1){CENA.efe.splice(i,1);continue;}
@@ -5829,7 +5952,7 @@ function abreTerreno(k,refId){
   let dono='';
   if(ehConstrucao(t))dono=`<div class="vez">${J.dono[k]==null?'Sem dono':J.dono[k]===0?'Sua':OM(J.dono[k])+' controla'} · +${RENDA_TER[t]} MP por turno para quem controla</div>`;
   const html=`<div class="terTopo"><span class="terHex" style="background:${TER[t].cor}"></span><div><strong style="font-size:15px">${nomeTer(k)}</strong>${dono}</div></div>
-    <p class="terDesc">${J.vilas?.[k]?dicaVila(k):TER_DICA[t]}</p>${ehCristal(k)?`<p class="terDesc" style="color:#bfe3ff">💎 No fim do turno, cada mestre puxa o cristal 1 ponto por torre que controla, e quem controla esta torre puxa ${valorCristal()} por ela. Puxar um cristal de um rival primeiro o desfaz. Vence quem montar ${CRISTAL_META}. Ao contrário das outras torres, não cura quem está nela. Agora: ${J.cristal.v?`${J.cristal.v}/${CRISTAL_META} para ${J.cristal.lado?OM(J.cristal.lado):'você'}`:'desmontado'}.</p>`:''}
+    <p class="terDesc">${J.vilas?.[k]?dicaVila(k):J.f1&&t==='mont'?'Paredão de montanha: fecha o corredor do vale. Ninguém atravessa.':TER_DICA[t]}</p>${ehCristal(k)?`<p class="terDesc" style="color:#bfe3ff">💎 No fim do turno, cada mestre puxa o cristal 1 ponto por torre que controla, e quem controla esta torre puxa ${valorCristal()} por ela. Puxar um cristal de um rival primeiro o desfaz. Vence quem montar ${CRISTAL_META}. Ao contrário das outras torres, não cura quem está nela. Agora: ${J.cristal.v?`${J.cristal.v}/${CRISTAL_META} para ${J.cristal.lado?OM(J.cristal.lado):'você'}`:'desmontado'}.</p>`:''}
     <table class="terTab"><thead><tr><th>Tipo de criatura</th><th title="Pontos de movimento gastos para entrar na casa">Mov.</th><th title="Chance de o golpe inimigo errar">Evasão</th>${gelo?'<th>Ataque</th>':''}</tr></thead><tbody>${linhas}</tbody></table>${verTodos}
     <p class="vez" style="margin:6px 0 0">Mov. = pontos gastos para entrar. Evasão = chance de o golpe inimigo errar.${resto.length?' Primeiro, os tipos do seu exército':''}${ref?`${resto.length?'; em':' Em'} destaque: ${ESP[ref.esp].nome}`:''}${resto.length||ref?'.':''}</p>`;
   abreDet('Terreno',html);
@@ -6276,8 +6399,14 @@ function menus(){
   const evoAviso=minha&&J.avisoEvo&&!J.intro&&!CENA&&podeEvoluir(0)&&!J.evo&&!J.mg&&!J.fz&&J.invHex==null&&!J.invocando;
   const f1Aviso=minha&&J.f1&&J.f1.fila.length&&!J.intro&&!CENA&&!J.ocupado&&!J.fim;
   if(f1Aviso){
-    const [tit,tx,bt]=AVISOS_F1[J.f1.fila[0]];
-    poeHTML(ps,`<div class="evoTit">${tit}</div><div class="evoTx">${tx}</div><div class="linha"><button class="btEvo" onclick="fechaAvisoF1()">${bt||'Entendi'}</button></div>`);
+    const id=J.f1.fila[0],A=AVISOS_F1[id];
+    let corpo;
+    if(A.falas){
+      // um rosto diferente para cada fala, sorteado uma vez (o aviso não troca de rosto ao redesenhar)
+      const rs=J.f1.rostos[id]||(J.f1.rostos[id]=[...Array(ROSTOS_F1.n).keys()].sort(()=>Math.random()-.5).slice(0,A.falas.length));
+      corpo=`${A.tit?`<div class="evoTit">${A.tit}</div>`:''}${A.falas.map((f,i)=>`<div class="fala seq s${i+1}"><span class="rosto" style="background-position:${rs[i]/(ROSTOS_F1.n-1)*100}% 0"></span><div class="balao">${f}</div></div>`).join('')}`;
+    }else corpo=`<div class="evoTit">${A[0]}</div><div class="evoTx">${A[1]}</div>`;
+    poeHTML(ps,`${corpo}<div class="linha"><button class="btEvo" onclick="fechaAvisoF1()">${(A.bt||A[2])||'Entendi'}</button></div>`);
     ps.className='flut evo f1'+(J.f1.fila[0]==='intro'?' intro':'');ps.style.display='block';
   }else if(evoAviso){
     poeHTML(ps,`<div class="evoTit">▲ Evolução disponível</div><div class="evoTx">Sua reserva chegou a ${EVO_CUSTO} MP. Escolha uma criatura para evoluir permanentemente.</div><div class="linha"><button onclick="fechaAvisoEvo()">Agora não</button><button class="btEvo" onclick="avisoEvoluir()">▲ Evoluir</button></div>`);
