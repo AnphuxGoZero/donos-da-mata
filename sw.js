@@ -5,10 +5,10 @@
 //  - sem internet, ou se a rede demorar demais, abre a última versão guardada.
 // Por isso não é preciso mexer neste arquivo a cada atualização do jogo: basta publicar o index.html novo.
 // Só troque o número em CACHE se mudar a lista ARQUIVOS ou quiser forçar a limpeza do cache antigo.
-const CACHE = 'senhores-do-veu-v6';
+const CACHE = 'senhores-do-veu-v7';
 const ARQUIVOS = ['./', 'index.html', 'manifest.webmanifest', 'icones/icone-192.png', 'icones/icone-512.png', 'icones/icone-mask-512.png', 'icones/apple-180.png', 'fontes/PirataOne.woff2',
   'img/atlas.png', 'img/atlas-cor.png', 'img/elementais.png',
-  'img/f1-filhote-mapa.png', 'img/f1-filhote-luta.png', 'img/f1-camponeses.png', 'img/f1-rostos.png'];
+  'img/f1-filhote-mapa.png', 'img/f1-filhote-luta.png', 'img/f1-camponeses.png', 'img/f1-rostos.png', 'img/f1-soldados.png'];
 const ESPERA_REDE = 4000; // ms: passou disso, usa o cache (a resposta da rede ainda atualiza o cache quando chegar)
 
 self.addEventListener('install', ev => {
