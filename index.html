@@ -678,12 +678,6 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 
 /* ---------- Menu de invocação: grade de cartões, sem rolagem. No PC abre ao lado da construção; no toque, no meio do mapa ---------- */
 #menuM.grade{width:350px}
-#menuM .rodaInv{position:relative;width:300px;height:230px;margin:4px auto 0}
-#menuM .rodaInv svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-#menuM .rodaInv button{position:absolute;width:98px;margin:0;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 4px 6px;text-align:center}
-#menuM .rodaInv .spr{margin:0 0 2px}#menuM .rodaInv .nm{font-weight:600;font-size:13px;line-height:1.2}#menuM .rodaInv small{font-size:11.5px}
-#menuM .rodaInv .custo{position:absolute;right:6px;top:4px;font-size:12px;color:var(--acc)}
-@media (max-height:560px){#menuM .rodaInv{transform:scale(.8);transform-origin:top center;margin-bottom:-46px}} /* celular deitado: a roda encolhe para caber na altura */
 .toque #menuM.grade{left:50%!important;top:50%!important;transform:translate(-50%,-50%);width:min(350px,96%)!important;max-height:none;overflow:visible}
 #menuM .invG{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0 2px}
 #menuM .invG button{position:relative;margin:0;min-height:0;display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 4px 6px;text-align:center}
@@ -2316,7 +2310,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.84'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.85'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2404,16 +2398,6 @@ function iniciaF1(m){
 }
 const vilasVivas=()=>Object.keys(J.vilas||{}).map(Number).filter(k=>J.vilas[k].n>0);
 const pertoVila=(u,k)=>d6c(u.c,u.r,...DK(k))<=1;
-// roda da invocação na Fase 1: Planta no alto, Água embaixo à direita, Fogo embaixo à esquerda; cada flecha sai de quem
-// vence e aponta para quem perde (sem legenda: o desenho explica) (Planta → Água → Fogo → Planta). Devolve a abertura da roda (o </div> vem de quem chama).
-function rodaInv(cartao){
-  const pos={semente:'top:50px;left:50%',girino:'top:150px;left:calc(50% + 85px)',brasa:'top:150px;left:calc(50% - 85px)'};
-  const arco=(d,el)=>`<path d="${d}" fill="none" stroke="${EL[el]}" stroke-width="4" stroke-linecap="round" marker-end="url(#pontaRoda)"/>`;
-  let h=`<div class="rodaInv"><svg viewBox="0 0 300 230" aria-hidden="true"><defs><marker id="pontaRoda" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" fill="#e6e8ee"/></marker></defs>
-    ${arco('M210 29 A105 105 0 0 1 251 88','planta')}${arco('M194 210 A105 105 0 0 1 106 210','agua')}${arco('M49 88 A105 105 0 0 1 90 29','fogo')}</svg>`;
-  for(const s of invocaveis(0))h+=cartao(s,` style="${pos[s]||''}"`);
-  return h;
-}
 // avisos da Fase 1 (caixa do meio do mapa, na sua vez): cada um aparece uma vez por partida
 const AVISOS_F1={
   // a abertura é curta e entra em partes (.seq); o resto se explica quando acontece (camponês, vila destruída, evolução)
@@ -6510,8 +6494,7 @@ function menus(){
     let h=`<div class="mmTopo"><div><div class="tit" style="color:var(--p0)">Invocar</div><div class="vez">${mpHtml(0)}${J.turno>1?` · exército ${criaturas(0)}/${limite(0)}`:''}</div></div><div class="mmBts">${ehF1()?'':`<button class="btVant${VANT_INV?' on':''}${!VANT_INV_USADO&&J.turno>=4?' brilha':''}" onclick="alternaVantInv(event)" aria-pressed="${VANT_INV}" title="${VANT_INV?'Esconder':'Mostrar'} de quem cada elemento vence e para quem perde">▲▼<span class="rot"> Vence/perde</span></button>`}<button class="mmX" onclick="J.invHex=null;atualiza()" aria-label="Fechar">✕</button></div></div><div class="invG">`;
     const cartao=(s,extra='')=>{const e=ESP[s],ok=J.mp[0]>=e.custo&&podeTerMais(0);
       return `<button onclick="escolherInvocacao('${s}')" ${ok?'':'disabled'}${extra}><b class="custo">${e.custo}</b>${iconeSpr(s,48,'cor')}<span class="nm">${e.nome}</span><small style="color:${EL[e.el]}">${ELN[e.el]}</small>${VANT_INV&&!ehF1()?faixaVant(e.el):''}</button>`;};
-    if(ehF1())h=h.replace('<div class="invG">',rodaInv(cartao)); // Fase 1: os três monstros em círculo, com as flechas de quem vence quem
-    else for(const s of invocaveis(0))h+=cartao(s);
+    for(const s of invocaveis(0))h+=cartao(s); // Fase 1: os três iniciais lado a lado, sem flechas
     h+=`</div>${podeTerMais(0)?'':`<div class="vez">${motivoLimite()}</div>`}`;
     // Evoluir: o mesmo do menu do mestre, ao alcance de quem está escolhendo o que invocar
     if(podeEvoluir(0))h+=`<button class="btEvoInv" onclick="abrirEvo()" title="Fixa a forma de estágio 1 de uma criatura inicial: dali em diante ela já nasce evoluída."><span style="color:#6ee08a">▲</span> Evoluir · ${EVO_CUSTO} MP</button>`;
