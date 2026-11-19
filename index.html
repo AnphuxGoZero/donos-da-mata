@@ -200,6 +200,12 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 #fim h1{font-size:28px;margin-bottom:8px}
 #fim .cx{max-width:min(440px,calc(100vw - 20px))}
 #fimPorque:empty{display:none}
+#fim .fimBts{justify-content:center;gap:8px;flex-wrap:wrap}
+#fimPorque .estrelasF1{text-align:center;font-size:44px;letter-spacing:6px;color:#4a4f5c;margin:0 0 4px}#fimPorque .estrelasF1 .on{color:#f2c14e;text-shadow:0 0 12px #f2c14e88}
+#passar.f1{max-width:min(380px,90%)}
+#passar.f1 .seq{display:block;opacity:0;animation:f1Seq .6s ease-out forwards}#passar.f1 .seq.s1{font-size:15px;color:#f0e6d2;animation-delay:.2s}#passar.f1 .seq.s2{margin-top:8px;animation-delay:1.4s}
+#passar.f1.intro .linha{opacity:0;animation:f1Seq .5s ease-out 2.3s forwards}
+@keyframes f1Seq{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 #fimPorque{margin:12px 0 16px;text-align:left;font-size:13.5px;line-height:1.5}
 #fimPorque .porque{margin:0 0 8px}
 #fimPorque .placarFim{display:grid;grid-template-columns:auto 1fr 1fr;gap:2px 12px;font-size:12.5px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;margin:0 0 8px}
@@ -654,6 +660,12 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 
 /* ---------- Menu de invocação: grade de cartões, sem rolagem. No PC abre ao lado da construção; no toque, no meio do mapa ---------- */
 #menuM.grade{width:350px}
+#menuM .rodaInv{position:relative;width:300px;height:230px;margin:4px auto 0}
+#menuM .rodaInv svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#menuM .rodaInv button{position:absolute;width:98px;margin:0;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 4px 6px;text-align:center}
+#menuM .rodaInv .spr{margin:0 0 2px}#menuM .rodaInv .nm{font-weight:600;font-size:13px;line-height:1.2}#menuM .rodaInv small{font-size:11.5px}
+#menuM .rodaInv .custo{position:absolute;right:6px;top:4px;font-size:12px;color:var(--acc)}
+@media (max-height:560px){#menuM .rodaInv{transform:scale(.8);transform-origin:top center;margin-bottom:-46px}} /* celular deitado: a roda encolhe para caber na altura */
 .toque #menuM.grade{left:50%!important;top:50%!important;transform:translate(-50%,-50%);width:min(350px,96%)!important;max-height:none;overflow:visible}
 #menuM .invG{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0 2px}
 #menuM .invG button{position:relative;margin:0;min-height:0;display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 4px 6px;text-align:center}
@@ -808,7 +820,7 @@ html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
   <div id="instalarIn"></div>
   <div class="linha"><button class="pri" onclick="fechaInstalar()">Entendi</button></div>
 </div></div>
-<div id="fim"><div class="cx"><h1 id="fimTxt"></h1><p id="fimSub" class="vez"></p><div id="fimPorque"></div><button class="pri" onclick="abreConfig()">Jogar de novo</button></div></div>
+<div id="fim"><div class="cx"><h1 id="fimTxt"></h1><p id="fimSub" class="vez"></p><div id="fimPorque"></div><div class="linha fimBts"><button id="fimBt2" style="display:none"></button><button id="fimBt" class="pri" onclick="abreConfig()">Jogar de novo</button></div></div></div>
 
 <script>
 "use strict";
@@ -1461,9 +1473,9 @@ function opcoesEvo(l,base){
   return R.para.map((para,i)=>({para,pts:p[i][0],motivo:p[i][0]>0?p[i][1]:'Ainda sem histórico para este caminho',i})).sort((a,b)=>b.pts-a.pts||a.i-b.i).slice(0,2);
 }
 const espInv=(l,s)=>J.evoFixa?.[l]?.[s]||s; // o que nasce ao invocar a criatura inicial s
-const invocaveis=l=>INVOCAVEIS.map(s=>espInv(l,s));
+const invocaveis=l=>(ehF1()?INVOCAVEIS.slice(0,3):INVOCAVEIS).map(s=>espInv(l,s)); // Fase 1: só Fogo, Planta e Água
 const evoPendentes=l=>INVOCAVEIS.filter(s=>!J.evoFixa?.[l]?.[s]);
-const podeEvoluir=l=>J.mp[l]>=EVO_CUSTO&&evoPendentes(l).length>0;
+const podeEvoluir=l=>!ehF1()&&J.mp[l]>=EVO_CUSTO&&evoPendentes(l).length>0;
 function fixaEvo(l,base,para){
   J.mp[l]-=EVO_CUSTO;
   J.evoFixa=J.evoFixa||[];(J.evoFixa[l]||(J.evoFixa[l]={}))[base]=para;
@@ -1830,22 +1842,25 @@ function novoJogo(op=prefs(),semIntro=false){ // semIntro: a partida de fundo, a
   RITMO_IA=1;
   document.getElementById('fim').style.display='none';
   const seed=(Math.random()*1e9)|0;
-  const np=MODOS[op.modo]||2;
+  const f1=!!op.f1; // Fase 1 (introdução): mapa fixo, sem mestre rival, contra o Bando Infernal
+  const np=f1?2:MODOS[op.modo]||2;
   defineLinhas(np>2?17:13);
-  const m=gerarMapa(seed,np,op.cristal!==false); // modo único: todo mapa tem a Torre do Cristal (false só para testes)
+  const m=f1?mapaF1():gerarMapa(seed,np,op.cristal!==false); // modo único: todo mapa tem a Torre do Cristal (false só para testes)
   // os rivais recebem mestres diferentes do seu e entre si, sorteados
   const outras=Object.keys(ORDENS).filter(o=>o!==op.ordem);
   for(let i=outras.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[outras[i],outras[j]]=[outras[j],outras[i]];}
   const ordens=[op.ordem,...outras.slice(0,np-1)];
   J={ter:m.ter,dono:m.dono,tema:m.tema,un:[],turno:1,vez:0,np,fora:[],mp:Array(np).fill(100),sel:null,alc:null,alvosSet:new Set(),alvosMove:new Map(),
      deficit:Array(np).fill(0),invocando:null,invocHex:null,invHex:null,menuInv:false,hover:null,ocupado:false,fim:false,logs:[],
-     cristal:m.cristal!=null?{k:m.cristal,v:0,lado:null}:null,cabo:m.cristal!=null?null:{v:0,lado:null},evoFixa:Array.from({length:np},()=>({})),hj:Array.from({length:np},novaHj),
+     cristal:m.cristal!=null?{k:m.cristal,v:0,lado:null}:null,cabo:m.cristal!=null||f1?null:{v:0,lado:null},evoFixa:Array.from({length:np},()=>({})),hj:Array.from({length:np},novaHj),
      ...estadoMagiaNovo(ordens,0)}; // mana só pela renda (padrão do jogo)
   m.f.forEach((f,l)=>criaUnidade(ORDENS[ordens[l]].esp,l,...f));
-  J.tut=!semIntro&&tutorialPendente()?{n:0}:null;
+  if(f1)iniciaF1(m);
+  J.tut=!semIntro&&(f1||tutorialPendente())?{n:0}:null;
   zoomInicio(true);
   {const [x,y]=centro(...m.f0);CAM.x=x;CAM.y=y;CAM.alvo=null;limitaCam();}
-  if(np>2){
+  if(f1)log(`Fase 1: dois Filhotes Infernais atacam as vilas. Derrote os dois antes que destruam todas.`);
+  else if(np>2){
     log(`Mapa: ${m.tema}. ${NOME_MODO[np]}: todos contra todos, o último mestre de pé vence.`);
     log(`Seu mestre: ${NM(0)}. Rivais: ${NM(1)} (vermelho)${np>3?', ':' e '}${NM(2)} (âmbar)${np>3?` e ${NM(3)} (verde)`:''}.`);
   }else{
@@ -1979,7 +1994,7 @@ function desenhaIntro(now){
 // Dois espaços no navegador (localStorage): 'manual' (botão Salvar) e 'auto' (início de cada turno seu).
 const SAVE_VER=1,SAVE_CHAVE='senhoresDoVeu.save.';
 function lerSave(slot){try{const s=JSON.parse(localStorage.getItem(SAVE_CHAVE+slot));return s&&s.v===SAVE_VER?s:null;}catch(e){return null;}}
-function podeSalvar(){return J&&J.vez===0&&!J.ocupado&&!J.fim&&!J.invocando&&!J.mg&&!J.fz;}
+function podeSalvar(){return J&&!J.f1&&J.vez===0&&!J.ocupado&&!J.fim&&!J.invocando&&!J.mg&&!J.fz;}
 function gravar(slot){
   if(!podeSalvar())return false;
   const s={v:SAVE_VER,quando:Date.now(),nid,
@@ -2021,7 +2036,7 @@ function salvarJogo(){
   const el=document.getElementById('saves');el.classList.remove('cfg','tela','ini','arte');
   const ok=gravar('manual');
   el.innerHTML=`<div><strong>${ok?'Jogo salvo.':'Não foi possível salvar agora.'}</strong></div>
-    <div class="vez">${ok?descSave(lerSave('manual')):'Só dá para salvar no seu turno, sem ação em andamento.'}</div>
+    <div class="vez">${ok?descSave(lerSave('manual')):J&&J.f1?'A Fase 1 é curta e não fica salva.':'Só dá para salvar no seu turno, sem ação em andamento.'}</div>
     <div class="linha"><button class="pri" onclick="fecharSaves()">OK</button></div>`;
   el.style.display='block';
 }
@@ -2278,7 +2293,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.70'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.71'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2293,6 +2308,7 @@ function desenhaInicio(){
       <button class="pri grande" onclick="jogarRapido()">Jogar</button>
       <button class="grande" onclick="desenhaConfig()">Preparar Batalha</button>
       <button class="grande" onclick="abrirCarregar(true)" ${temSave?'':'disabled'}>Carregar Jogo</button>
+      ${fase1Info().venceu?`<button onclick="jogarFase1()" title="Joga de novo a fase de introdução">Rever tutorial · Fase 1 <span style="color:var(--acc)">${estrelasTxt(fase1Info().estrelas)}</span></button>`:''}
       ${cfgInicio?'':'<button onclick="fecharSaves()">Voltar ao jogo</button>'}
     </div>
     <div class="rodIni"><button onclick="abreCompart()" title="Mostra um QR code com o link do jogo">▦ Compartilhar</button>${podeInstalar()?'<button onclick="botaoInstalar()" title="Coloca o jogo na tela inicial do celular, em tela cheia e jogável sem internet">📲 Instalar app</button>':''}</div>
@@ -2301,7 +2317,202 @@ function desenhaInicio(){
   el.classList.remove('cfg');el.classList.add('tela','ini');el.style.display='block';
 }
 // Jogar: partida 1x1 clássica, com o último mestre escolhido (as opções salvas não mudam)
-function jogarRapido(){fecharSaves();novoJogo({...prefs(),modo:'1x1'});}
+// Jogar: começa pela Fase 1 (introdução) até o jogador vencê-la; depois disso, vai direto para a Fase 2 (o mapa sorteado)
+function jogarRapido(){if(!fase1Info().venceu)jogarFase1();else jogarFase2();}
+function jogarFase1(){fecharSaves();novoJogo({...prefs(),modo:'1x1',f1:true});}
+function jogarFase2(){fecharSaves();novoJogo({...prefs(),modo:'1x1'});}
+
+// ---------- Fase 1: introdução contra o Bando Infernal ----------
+// Mapa fixo, sem mestre rival. Dois Filhotes Infernais (lado 1, "selvagem") avançam até o seu mestre e saqueiam as vilas
+// do caminho: quem termina o turno numa vila (ou ao lado) mata um camponês e ganha XP; com 3, vira Cão Infernal (e para aí).
+// Vitória: derrubar o Bando. Derrota: o mestre cair ou todas as vilas serem destruídas. Cada vila salva vale uma estrela.
+// Só Fogo, Planta e Água para invocar; sem magia, Força, Evoluir, cristal nem cabo de guerra; a fase não é salva.
+const F1_CHAVE='senhoresDoVeu.fase1';
+const F1_MOV={filhoteInf:3,caoInfernal:4}; // o Bando anda devagar, para dar tempo de reagir
+const F1_CAMP=3,F1_XP=15; // camponeses por vila; XP por camponês (3 camponeses = a meta do Filhote)
+const ehF1=()=>!!(J&&J.f1);
+const selvagem=l=>!!(J&&J.f1)&&l===1;
+function fase1Info(){try{return JSON.parse(localStorage.getItem(F1_CHAVE))||{};}catch(e){return {};}}
+const estrelasTxt=n=>'★'.repeat(n||0)+'☆'.repeat(Math.max(0,3-(n||0)));
+// . planície  f floresta  m montanha  p pedreira  r rio  C castelo (as fortalezas vêm em volta)  T torre  V vila  a/b Filhotes
+const MAPA_F1=[
+  'mmf....r.....ffmm',
+  'mf.....r......f.m',
+  '.......r..V.....a',
+  '..ff.T.r....f....',
+  '.......r....ff...',
+  '......r......p...',
+  '..C...rV.......m.',
+  '......r......p...',
+  '.................',
+  '..ff.T......f....',
+  '..........V.....b',
+  'mf............f.m',
+  'mmf.....ff....fmm'];
+function mapaF1(){
+  const ter=new Array(COLS*ROWS).fill('plan'),dono=new Array(COLS*ROWS).fill(null),vilas={},filhotes=[];let f0=null;
+  const T={'.':'plan',f:'flor',m:'mont',p:'pedr',r:'rio',T:'torre',V:'plan',a:'plan',b:'plan',C:'cast'};
+  MAPA_F1.forEach((lin,r)=>[...lin].forEach((ch,c)=>{const k=K(c,r);ter[k]=T[ch];
+    if(ch==='C')f0=[c,r];if(ch==='V')vilas[k]={n:F1_CAMP,max:F1_CAMP};if(ch==='a'||ch==='b')filhotes.push([c,r]);}));
+  dono[K(...f0)]=0;for(const [a,b] of vizinhos(...f0)){ter[K(a,b)]='fort';dono[K(a,b)]=0;}
+  return {ter,dono,f0,f:[f0],tema:'Vale das Vilas',cristal:null,vilas,filhotes};
+}
+function iniciaF1(m){
+  J.f1={fila:['intro'],vistos:{}};J.vilas=m.vilas;
+  for(const a of Object.values(ARTE_F1)){imgF1(a.mapa);imgF1(a.luta);} // já começa a carregar a arte própria
+  for(const p of m.filhotes){const u=criaUnidade('filhoteInf',1,...p);u.selvagem=true;}
+}
+const vilasVivas=()=>Object.keys(J.vilas||{}).map(Number).filter(k=>J.vilas[k].n>0);
+const pertoVila=(u,k)=>d6c(u.c,u.r,...DK(k))<=1;
+// roda da invocação na Fase 1: Planta no alto, Água embaixo à direita, Fogo embaixo à esquerda; cada flecha sai de quem
+// vence e aponta para quem perde (sem legenda: o desenho explica) (Planta → Água → Fogo → Planta). Devolve a abertura da roda (o </div> vem de quem chama).
+function rodaInv(cartao){
+  const pos={semente:'top:50px;left:50%',girino:'top:150px;left:calc(50% + 85px)',brasa:'top:150px;left:calc(50% - 85px)'};
+  const arco=(d,el)=>`<path d="${d}" fill="none" stroke="${EL[el]}" stroke-width="4" stroke-linecap="round" marker-end="url(#pontaRoda)"/>`;
+  let h=`<div class="rodaInv"><svg viewBox="0 0 300 230" aria-hidden="true"><defs><marker id="pontaRoda" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z" fill="#e6e8ee"/></marker></defs>
+    ${arco('M210 29 A105 105 0 0 1 251 88','planta')}${arco('M194 210 A105 105 0 0 1 106 210','agua')}${arco('M49 88 A105 105 0 0 1 90 29','fogo')}</svg>`;
+  for(const s of invocaveis(0))h+=cartao(s,` style="${pos[s]||''}"`);
+  return h;
+}
+function dicaVila(k){
+  const v=J.vilas[k];
+  return v.n>0?`Vila com ${v.n} de ${v.max} casas de pé. Filhote Infernal que termina o turno nela, ou ao lado, mata um camponês (uma casa cai) e ganha experiência. Proteja-a! (O chão é planície.)`
+    :'O que sobrou de uma vila saqueada pelo Bando Infernal. (O chão é planície.)';
+}
+// avisos da Fase 1 (caixa do meio do mapa, na sua vez): cada um aparece uma vez por partida
+const AVISOS_F1={
+  // a abertura é curta e entra em partes (.seq); o resto se explica quando acontece (camponês, vila destruída, evolução)
+  intro:['Fase 1 · O Bando Infernal','<span class="seq s1">Dois Filhotes Infernais invadiram o vale!</span><span class="seq s2">Invoque criaturas e derrote os dois antes que destruam todas as vilas.</span>','Começar'],
+  vila:['Uma vila caiu','Os Filhotes mataram todos os camponeses dela. No fim da fase, cada vila salva vale uma estrela: proteja as que restam!'],
+  campones:['Um camponês morreu','Os Filhotes ganham experiência a cada camponês que matam. Com 3, evoluem para Cão Infernal, bem mais forte. Mande suas criaturas para as vilas!'],
+  evoluiu:['Um Filhote evoluiu!','Agora é um Cão Infernal: mais vida, mais ataque e mais rápido. Ataque em grupo e use a Água, que vence o Fogo.'],
+  evoMinha:['Sua criatura evoluiu!','Suas criaturas também ganham experiência lutando e evoluem para formas mais fortes. Mantenha as veteranas vivas.'],
+};
+function avisoF1(id){if(!id||!J.f1||J.f1.vistos[id])return;J.f1.vistos[id]=true;J.f1.fila.push(id);}
+function fechaAvisoF1(){if(J&&J.f1){J.f1.fila.shift();if(!J.f1.fila.length)J.f1.vistos.intro=true;}atualiza();}
+// dica do que fazer agora (topo da ficha no PC, faixa sobre o mapa no celular), quando nada está selecionado
+function dicaF1(){
+  if(J.f1.fila.length)return '';
+  const v=TOQUE()?'Toque':'Clique';
+  if(J.turno===1&&criaturas(0)<2&&podeInvocarAlgo())return `✚ ${v} numa construção com borda dourada, ao lado do seu mestre, para invocar. Água vence Fogo: o Girino leva vantagem contra os Filhotes.`;
+  const minhas=criaturasDe(0).filter(u=>!u.agiu);
+  if(minhas.some(u=>{const A=alcancaveis(u);return [...A.dest].some(k=>{const [c,r]=DK(k);return J.un.some(e=>e.selvagem&&d6c(c,r,e.c,e.r)<=ESP[u.esp].alc);});}))
+    return `⚔ Um Filhote está ao alcance! ${v} na sua criatura e depois no Filhote (em vermelho) para atacar.`;
+  if(J.turno===2&&minhas.some(u=>!u.movido))return `${v} numa criatura sua e depois numa casa clara para andar. Vá proteger as vilas!`;
+  if(J.turno>=3&&torresDe(0)===0&&minhas.length)return '🏰 Torres rendem mana e deixam seu exército maior. Termine o movimento de uma criatura numa torre para tomá-la.';
+  return '';
+}
+// ----- vez do Bando Infernal -----
+async function turnoSelvagem(l){
+  RITMO_IA=J.turno<=2?RITMO_INICIO:1;J.ocupado=true;
+  try{
+    for(const u of J.un.filter(x=>x.lado===l)){
+      if(J.fim)break;
+      await agirSelvagem(u);atualiza();if(J.fim)break;
+      await saqueiaVila(u);atualiza();if(J.fim)break;
+      await dorme(150);
+    }
+  }finally{RITMO_IA=1;J.ocupado=false;}
+}
+// alvo: a vila que já está saqueando; senão, a viva mais perto pelo caminho; sem vilas, o seu mestre
+function alvoSelvagem(u){
+  const vs=vilasVivas();
+  if(vs.length){
+    const aqui=vs.find(k=>pertoVila(u,k));if(aqui!=null)return {k:aqui,vila:true};
+    let b=vs[0],bd=Infinity;
+    for(const k of vs){const d=distanciasAte(k,u.esp).get(K(u.c,u.r))??999;if(d<bd){bd=d;b=k;}}
+    return {k:b,vila:true};
+  }
+  const m=mestreDe(0);return m?{k:K(m.c,m.r),vila:false}:null;
+}
+async function agirSelvagem(u){
+  if(!J.un.includes(u)||u.agiu)return;
+  await focar(u.c,u.r);
+  if(RITMO_IA>1)await dorme(250);
+  const alvo=alvoSelvagem(u);if(!alvo){u.movido=u.agiu=true;return;}
+  const A=alcancaveis(u),D=distanciasAte(alvo.k,u.esp),[ac,ar]=DK(alvo.k);
+  // distância que falta: na vila ou ao lado dela já chegou
+  const falta=k=>{const [c,r]=DK(k);if(alvo.vila&&d6c(c,r,ac,ar)<=1)return 0;return D.get(k)??(500+d6c(c,r,ac,ar));};
+  const dests=alvo.vila&&pertoVila(u,alvo.k)?[K(u.c,u.r)]:[...A.dest]; // saqueando: não sai da vila
+  let melhor=Infinity;for(const k of dests)melhor=Math.min(melhor,falta(k));
+  // ataca quem estiver no caminho: de uma casa que desvia no máximo 1 passo do trajeto
+  let atk=null;
+  for(const k of dests){
+    if(falta(k)>melhor+1)continue;
+    const [c,r]=DK(k);
+    for(const e of J.un){
+      if(e.lado===u.lado||d6c(c,r,e.c,e.r)>ESP[u.esp].alc)continue;
+      const s=Math.min(danoEsperado(u,e,terEv(e)),e.hp)*(ESP[e.esp].mestre?2:1)-falta(k)*2+defTer(u.esp,terEvK(u.lado,k))*5;
+      if(!atk||s>atk.s)atk={s,k,e};
+    }
+  }
+  if(atk){await moverPara(u,atk.k,A.prev);await atacar(u,atk.e);return;}
+  let bk=dests[0],bs=Infinity;
+  for(const k of dests){const s=falta(k)-defTer(u.esp,terEvK(u.lado,k))*0.5;if(s<bs){bs=s;bk=k;}}
+  await moverPara(u,bk,A.prev);u.agiu=true;
+}
+async function saqueiaVila(u){
+  if(!J.un.includes(u)||J.fim)return;
+  const k=vilasVivas().find(k=>pertoVila(u,k));if(k==null)return;
+  const v=J.vilas[k];v.n--;
+  const [x,y]=centro(...DK(k));
+  fx.push({txt:'−1 camponês',x,y:y-6,t0:performance.now(),cor:'#ff8a80',dur:1400});piscaHex(k,'#ff5b52',900);
+  log(`${nome(u)} atacou uma vila: um camponês morreu${v.n?` (restam ${v.n})`:''}.`);
+  ganhaXp(u,F1_XP);avisoF1('campones');
+  if(!v.n){log('🔥 Uma vila foi destruída!');avisoF1('vila');
+    if(!vilasVivas().length){log('Todas as vilas foram destruídas.');fimDeJogo(1,'vilas');return;}}
+  atualiza();await dorme(600);
+  await checaEvo(u);
+}
+// casinhas desenhadas por cima do terreno: uma casa por camponês. Cada camponês morto derruba uma casa
+// (fica sem telhado, escura e soltando fumaça); sem número, só o desenho mostra o quanto a vila ainda tem
+const CASAS_VILA=[[-9,-5,6],[8,-8,5],[2,7,5.5]]; // a 1ª a cair é a última da lista
+function desenhaVilas(now){
+  for(const [ks,v] of Object.entries(J.vilas)){
+    const [x,y]=centro(...DK(+ks));
+    ctx.save();
+    CASAS_VILA.forEach(([dx,dy,s],i)=>{
+      const viva=i<v.n,cx=x+dx,cy=y+dy;
+      ctx.fillStyle=viva?'#dcc79c':'#5c534b';ctx.fillRect(cx-s,cy-s*.2,s*2,s*1.3);
+      ctx.strokeStyle='#2a1f17';ctx.lineWidth=1;ctx.strokeRect(cx-s,cy-s*.2,s*2,s*1.3);
+      if(viva){
+        ctx.fillStyle='#b5482f';ctx.beginPath();ctx.moveTo(cx-s*1.3,cy-s*.1);ctx.lineTo(cx,cy-s*1.35);ctx.lineTo(cx+s*1.3,cy-s*.1);ctx.closePath();ctx.fill();ctx.stroke();
+        ctx.fillStyle='#4a3424';ctx.fillRect(cx-s*.3,cy+s*.45,s*.6,s*.65);
+      }else{
+        // parede quebrada e fumaça subindo
+        ctx.fillStyle='#2b2622';ctx.beginPath();ctx.moveTo(cx-s,cy-s*.2);ctx.lineTo(cx-s*.4,cy-s*.75);ctx.lineTo(cx+s*.1,cy-s*.2);ctx.closePath();ctx.fill();
+        ctx.save();
+        for(let n=0;n<2;n++){const t=((now/1700)+n/2+i*.31)%1;ctx.globalAlpha=.4*(1-t);ctx.fillStyle='#8a8580';ctx.beginPath();ctx.arc(cx+Math.sin(t*6+i)*2,cy-s*.6-t*12,2+t*3,0,Math.PI*2);ctx.fill();}
+        ctx.restore();
+      }
+    });
+    ctx.restore();
+  }
+}
+// fim da Fase 1: estrelas pelas vilas salvas; vencer leva à Fase 2
+function mostraFimF1(v,motivo){
+  const vs=Object.values(J.vilas),salvas=vs.filter(x=>x.n>0).length,camp=vs.reduce((s,x)=>s+x.n,0),tot=vs.reduce((s,x)=>s+x.max,0);
+  const b=document.getElementById('fimBt'),b2=document.getElementById('fimBt2');
+  document.getElementById('fimTxt').textContent=v===0?'Fase 1 concluída!':'Você perdeu';
+  b2.style.display='';
+  if(v===0){
+    const info=fase1Info();
+    try{localStorage.setItem(F1_CHAVE,JSON.stringify({venceu:true,estrelas:Math.max(info.estrelas||0,salvas)}));}catch(e){}
+    document.getElementById('fimSub').textContent=`O Bando Infernal caiu no turno ${J.turno}.`;
+    document.getElementById('fimPorque').innerHTML=`<div class="estrelasF1">${[0,1,2].map(i=>`<span class="${i<salvas?'on':''}">★</span>`).join('')}</div>
+      <p class="porque" style="text-align:center">${salvas} de ${vs.length} vilas salvas · ${camp} de ${tot} camponeses vivos</p>
+      <p class="dicaFim">💡 Na Fase 2 você enfrenta um mestre de verdade: ele invoca criaturas, toma torres e lança magias.</p>`;
+    b.textContent='Continuar para a Fase 2';b.onclick=()=>jogarFase2();
+    b2.textContent=salvas<3?'Tentar 3 estrelas':'Jogar de novo';b2.onclick=()=>jogarFase1();
+  }else{
+    document.getElementById('fimSub').textContent=motivo==='vilas'?`O Bando Infernal destruiu todas as vilas no turno ${J.turno}.`:`${OM(0)} caiu no turno ${J.turno}.`;
+    document.getElementById('fimPorque').innerHTML=`<p class="porque">${motivo==='vilas'?'Os Filhotes saquearam vila por vila sem ninguém para pará-los.':'Os Filhotes chegaram até o seu mestre e o derrubaram.'}</p>
+      <p class="dicaFim">💡 Invoque criaturas logo no primeiro turno e mande-as para as vilas. Girinos (Água) causam mais dano no Fogo, e duas criaturas atacando o mesmo Filhote o derrubam rápido.</p>`;
+    b.textContent='Tentar de novo';b.onclick=()=>jogarFase1();
+    b2.textContent='Menu';b2.onclick=()=>abreConfig();
+  }
+  document.getElementById('fim').style.display='flex';
+}
 function desenhaConfig(){
   const el=document.getElementById('saves');
   // tela cheia (classe "tela"), com o nome do jogo no alto
@@ -2364,7 +2575,7 @@ let CRISTAL_META=50,CRISTAL_VALOR=3; // let: o simulador testa outros valores
 // senão só avança quem tem mais torres que todos os rivais somados
 const valorCristal=()=>CRISTAL_VALOR*(NP()-1);
 const ehCristal=k=>!!(J&&J.cristal)&&J.cristal.k===k;
-const nomeTer=k=>ehCristal(k)?'Torre do Cristal':TER[J.ter[k]].nome;
+const nomeTer=k=>ehCristal(k)?'Torre do Cristal':J.vilas?.[k]?(J.vilas[k].n>0?'Vila':'Vila destruída'):TER[J.ter[k]].nome;
 const forcaCristal=l=>torresDe(l)+(J.dono[J.cristal.k]===l?valorCristal()-1:0);
 function puxaCristal(l){
   const C=J.cristal;if(!C||J.fim)return;
@@ -2451,7 +2662,7 @@ function inicioTurno(l){
   for(const u of J.un){const k=K(u.c,u.r);
     if(u.lado===l&&u.dominado==null&&!ESP[u.esp].mestre&&J.ter[k]==='torre'&&J.dono[k]!==l){
       J.dono[k]=l;log(`${nome(u)} retomou ${ehCristal(k)?'a Torre do Cristal':'a torre'} em que estava.`);}}
-  cobrarMana(l);
+  if(!selvagem(l))cobrarMana(l); // o Bando Infernal não tem mana nem manutenção
   if(l===0&&podeEvoluir(0)&&!J.evoAvisado){J.evoAvisado=true;J.avisoEvo=true;}
   if(l===0){J.passarDispensado=null;if(J.turno>1)setTimeout(()=>{if(J&&J.vez===0&&!J.fim)gravar('auto');},0);} // turno 1 não grava: "Novo jogo" sem querer não apaga o automático da partida anterior
   J.magiaUsada[l]=false;J.forcaUsada[l]=false;
@@ -2943,7 +3154,7 @@ function captura(u){
   const k=K(u.c,u.r);
   // criatura dominada obedece ao outro mestre, mas não toma torre para ele: senão a torre (até a do Cristal)
   // passava para o inimigo e não voltava quando a criatura era libertada, já em cima dela
-  if(u.dominado!=null)return;
+  if(u.dominado!=null||u.selvagem)return; // o Bando Infernal não toma torres
   if(J.ter[k]==='torre'&&J.dono[k]!==u.lado){
     const antes=J.dono[k];
     J.dono[k]=u.lado;flutua(u,'Torre!',COR[u.lado]);
@@ -2952,7 +3163,8 @@ function captura(u){
     let liberou=false;
     J.conq=J.conq||[];J.conq[u.lado]=(J.conq[u.lado]||0)+1; // torres conquistadas na partida (a mesma torre retomada conta de novo)
     const primeira=J.conq[u.lado]===1;
-    if(J.magiaLib&&!J.magiaLib[u.lado]&&J.conq[u.lado]>=2){J.magiaLib[u.lado]=true;liberou='Magia liberada';
+    if(J.f1){}
+    else if(J.magiaLib&&!J.magiaLib[u.lado]&&J.conq[u.lado]>=2){J.magiaLib[u.lado]=true;liberou='Magia liberada';
       log(u.lado===0?'✦ Magias liberadas! Seu mestre já pode lançar uma magia por turno.':`✦ ${OM(u.lado)} agora pode lançar magias.`);}
     else if(J.forcaLib&&!J.forcaLib[u.lado]&&J.magiaLib&&J.magiaLib[u.lado]&&J.conq[u.lado]>=3){J.forcaLib[u.lado]=true;liberou='Força Elemental liberada';
       log(u.lado===0?'⚡ Força Elemental liberada! Seus elementais já podem atacar, uma vez por turno.':`⚡ ${OM(u.lado)} agora pode usar a Força Elemental.`);}
@@ -3043,7 +3255,7 @@ function registraGolpes(a,d,acertos,tent,total,contra,ch){
   const m=multEl(ESP[a.esp].el,ESP[d.esp].el);
   log(`${nome(a)} ${contra?'revida':'ataca'} ${nome(d)} (${Math.round(ch*100)}% de acerto): ${acertos}/${tent} golpes, ${total} de dano${m>1?' (vantagem!)':m<1?' (desvantagem)':''}.`);
 }
-function ganhaXp(u,v){if(ESP[u.esp].evo)u.xp+=v;}
+function ganhaXp(u,v){if(u.selvagem&&u.esp!=='filhoteInf')return;if(ESP[u.esp].evo)u.xp+=v;} // Fase 1: o Bando evolui uma vez só
 async function checaEvo(u){
   const e=ESP[u.esp];
   if(!J.un.includes(u)||!e.evo||u.xp<e.xp)return;
@@ -3054,6 +3266,7 @@ async function checaEvo(u){
   const sobra=n.evo?u.xp-e.xp:0;
   u.hp+=n.hp-e.hp;u.esp=para;u.xp=Math.max(0,sobra);u.h=novaHist(); // novo estágio, nova história
   flutua(u,'Evoluiu!','#f2c14e',100);
+  if(J.f1)avisoF1(u.selvagem?'evoluiu':u.lado===0?'evoMinha':null);
   log(`${e.nome}${sufixo(u.lado)} evoluiu para ${n.nome}!`);
   atualiza();
 }
@@ -3065,6 +3278,7 @@ function morre(u,por){
   log(`${nome(u)} foi derrotado.`);
   if(J.sel===u)desseleciona();
   if(ESP[u.esp].mestre)eliminar(u.lado,null,'mestre');
+  else if(J.f1&&u.selvagem&&!J.un.some(x=>x.selvagem)&&!J.fim)fimDeJogo(0,'f1'); // Fase 1: o Bando caiu
 }
 // um lado perde (mestre derrotado ou castelo cercado). No 1x1 a partida acaba; no 1x1x1 o lado sai:
 // o exército dele se desfaz, as construções ficam sem dono, e vence o último mestre de pé.
@@ -3116,6 +3330,8 @@ function fimDeJogo(v,motivo='mestre',por=null){
   const jogo=J;
   const mostra=()=>{
     if(J!==jogo)return; // um novo jogo já começou
+    if(J.f1){mostraFimF1(v,motivo);return;}
+    {const b=document.getElementById('fimBt');b.textContent='Jogar de novo';b.onclick=()=>abreConfig();document.getElementById('fimBt2').style.display='none';}
     document.getElementById('fimTxt').textContent=v===0?'Vitória!':'Você perdeu';
     document.getElementById('fimPorque').innerHTML=v===0?'':porqueDerrota(v,motivo,por);
     document.getElementById('fimSub').textContent=motivo==='cabo'
@@ -3171,7 +3387,7 @@ const quem=l=>OM(l);
 const ehCriatura=u=>u&&!ESP[u.esp].mestre;
 const criaturasDe=l=>J.un.filter(u=>u.lado===l&&ehCriatura(u));
 const criaturasContra=l=>J.un.filter(u=>u.lado!==l&&ehCriatura(u));
-const movDe=u=>u.passo?PASSO_LARGO_MOV:ESP[u.esp].mov;
+const movDe=u=>u.passo?PASSO_LARGO_MOV:(u.selvagem&&F1_MOV[u.esp])||ESP[u.esp].mov; // Fase 1: o Bando anda devagar
 const PASSO_LARGO_MOV=12;
 // força das magias num lugar só: curas em fração da vida máxima do alvo; danos em [mínimo, máximo] por alvo
 // (referência: um ataque comum tira em média 9 / 13 / 18 de vida em criaturas de nível 1 / 2 / 3)
@@ -3373,7 +3589,7 @@ const ORDENS={
   coro:   {nome:'Summoner',art:'a',esp:'arquimaga',forca:['fogo','agua','ar','terra'],magias:['tufao','santuario'],desc:'Comanda os quatro elementais e protege quem guarda as torres.'},
 };
 // nome do mestre de cada lado, com artigo: OM(1) = "O Warlock", doM(1) = "do Warlock", aoM / peloM idem
-const NM=l=>ORDENS[J.ordem[l]].nome,ART=l=>ORDENS[J.ordem[l]].art;
+const NM=l=>selvagem(l)?'Bando Infernal':ORDENS[J.ordem[l]].nome,ART=l=>selvagem(l)?'o':ORDENS[J.ordem[l]].art;
 const OM=l=>ART(l).toUpperCase()+' '+NM(l);
 const doM=l=>(ART(l)==='a'?'da ':'do ')+NM(l),aoM=l=>(ART(l)==='a'?'à ':'ao ')+NM(l),peloM=l=>(ART(l)==='a'?'pela ':'pelo ')+NM(l);
 const magiasDe=l=>[...Object.keys(MAGIAS).filter(id=>!MAGIAS[id].ordem),...ORDENS[J.ordem[l]].magias];
@@ -3665,6 +3881,7 @@ async function clique(c,r){
   if(J.vez!==0||J.ocupado||J.fim)return;
   const k=K(c,r),alvo=unidadeEm(c,r),s=J.sel;
   // a ficha "presa" de um inimigo (ou de criatura sua que já agiu) solta a cada clique; clicar nela de novo só solta
+  if(J.f1&&J.f1.fila.length&&!J.intro){if(J.f1.fila[0]!=='intro'){J.f1.fila.shift();atualiza();}return;} // Fase 1: com um aviso aberto, o clique no mapa só o fecha (a abertura pede o botão)
   if(J.avisoEvo){J.avisoEvo=false;} // clicar no mapa com o aviso de evolução aberto vale como "Agora não"
   const inspAntes=J.insp,menuAntes=J.menuAlvo;J.insp=null;J.menuAlvo=null;
   if(J.mg||J.fz){await cliqueMagia(k);return;}
@@ -3840,11 +4057,11 @@ async function fimTurnoJogo(){
   // os rivais jogam em ordem (1, depois 2 no 1x1x1); quem já saiu da partida é pulado
   for(const l of LADOS().slice(1)){
     if(J.fim)return;
-    if(!ativo(l)||!mestreDe(l))continue;
+    if(!ativo(l)||(!mestreDe(l)&&!selvagem(l)))continue;
     J.vez=l;inicioTurno(l);atualiza();
     if(J.fim)return;
     await dorme(350);
-    await turnoIA(l);
+    if(selvagem(l))await turnoSelvagem(l);else await turnoIA(l);
     if(J.fim)return;
     fimDeTurno(l);
     J.ocupado=true;await mostraCerco(l);J.ocupado=false;
@@ -4266,7 +4483,12 @@ function desenhaLutador(g,u,now){
   if(u.elemental)desenhaElemental(g,ESP[u.esp].el,x,y,S,now,esq);
   else{
     const si=ORDEM_SPR.indexOf(spr(u.esp)),src=atlasCor&&temCor(u.esp)?atlasCor:atlasOk?atlasTime[u.lado]:null; // combate: monstros coloridos
-    if(src&&si>=0){
+    const aF=arteF1(u),iF=aF&&imgF1(aF.luta); // Fase 1: o Bando luta com o desenho próprio
+    if(iF){
+      g.translate(x,0);if((esq?1:-1)!==aF.olha)g.scale(-1,1);
+      g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
+      const S2=S*1.25;g.drawImage(iF,-S2/2,y-S2+8,S2,S2);
+    }else if(src&&si>=0){
       g.translate(x,0);if((esq?1:-1)!==(OLHA_SPR[spr(u.esp)]||1))g.scale(-1,1);
       g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
       celSpr(g,src,si,-S/2,y-S+4+(voa(u.esp)?-16:0),S);
@@ -5179,6 +5401,29 @@ function contornar(img,r,cor){
   return c;
 }
 // desenha a célula si do atlas contornado ocupando o quadrado (x, y, s, s) da figura original (a margem fica por fora)
+// Arte própria da Fase 1: o Filhote Infernal do Bando tem desenho novo (o do mapa normal continua o do atlas).
+// mapa = miniatura (recolorida na cor do time, como as outras criaturas); luta = a da tela de batalha, nas cores dela.
+// Cada imagem é um quadrado com a figura de pé na base, virada para a esquerda (olha −1).
+const ARTE_F1={filhoteInf:{mapa:'img/f1-filhote-mapa.png',luta:'img/f1-filhote-luta.png',olha:-1}};
+const IMG_F1={},TINTA_F1={};
+function imgF1(url){let i=IMG_F1[url];if(!i){i=IMG_F1[url]=new Image();i.src=url;}return i.complete&&i.naturalWidth?i:null;}
+const arteF1=u=>J&&J.f1&&u.selvagem?ARTE_F1[u.esp]:null;
+// miniatura na rampa do time: mesmo critério do atlas (contorno escuro fica escuro; o resto vai pelo brilho normalizado)
+function mapaF1Arte(a,lado){
+  const key=a.mapa+'|'+lado;if(TINTA_F1[key])return TINTA_F1[key];
+  const img=imgF1(a.mapa);if(!img)return null;
+  const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;const g=c.getContext('2d');g.drawImage(img,0,0);
+  try{
+    const d=g.getImageData(0,0,c.width,c.height),p=d.data,rampa=RAMPA[lado]||RAMPA[0],lum=i=>(0.299*p[i]+0.587*p[i+1]+0.114*p[i+2])/255;
+    let mn=1,mx=0;for(let i=0;i<p.length;i+=4){if(p[i+3]<40)continue;const l=lum(i);if(l<0.13)continue;if(l<mn)mn=l;if(l>mx)mx=l;}
+    const amp=Math.max(0.05,mx-mn),mix=(x,y,t)=>x.map((v,j)=>v+(y[j]-v)*t);
+    for(let i=0;i<p.length;i+=4){if(!p[i+3])continue;const l=lum(i);
+      const cor=l<0.13?rampa[0].map(v=>v*0.35):(t=>t<0.55?mix(rampa[0],rampa[1],t/0.55):mix(rampa[1],rampa[2],(t-0.55)/0.45))(0.12+0.88*Math.min(1,Math.max(0,(l-mn)/amp)));
+      p[i]=cor[0];p[i+1]=cor[1];p[i+2]=cor[2];}
+    g.putImageData(d,0,0);
+  }catch(e){}
+  return TINTA_F1[key]=c;
+}
 function celSpr(g,src,si,x,y,s){
   const m=s*MARG/CEL;
   g.drawImage(src,(si%6)*CELP,Math.floor(si/6)*CELP,CELP,CELP,x-m,y-m,s+2*m,s+2*m);
@@ -5294,8 +5539,9 @@ function desenhaSprite(u,e,si,x,y,now){
   const voo=voa(u.esp)?-5:0; // voadores ficam um pouco acima da base, parados
   // já agiu: a criatura mantém a cor; só o selo ✓ indica
   ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
-  ctx.translate(x,0);if((u.dir||1)!==(OLHA_SPR[spr(u.esp)]||1))ctx.scale(-1,1);
-  celSpr(ctx,atlasTime[u.lado],si,-s/2,base-s+voo,s);
+  const aF=arteF1(u),cF=aF&&mapaF1Arte(aF,u.lado); // Fase 1: miniatura própria do Bando
+  ctx.translate(x,0);if((u.dir||1)!==(cF?aF.olha:OLHA_SPR[spr(u.esp)]||1))ctx.scale(-1,1);
+  if(cF){const S=s*1.25;ctx.drawImage(cF,-S/2,base-S+voo+2,S,S);}else celSpr(ctx,atlasTime[u.lado],si,-s/2,base-s+voo,s);
   ctx.restore();
   {const mv=multVant(u);if(mv!==1)seloVant(mv,x+rx+2,base-1);} // o elemento fica só na ficha
   // barra de vida + marcadores de estágio (◆ por estágio) logo acima dela
@@ -5434,6 +5680,7 @@ function desenha(now){
   }
   // a brasa dos vulcões pulsa: redesenha só eles por cima (quando coloridos)
   for(const k of cam.vulc)if(!(mostraAlc&&!J.alc.dest.has(k))){const [x,y]=centro(...DK(k));brilhoVulcao(x,y,k);}
+  if(J.vilas)desenhaVilas(now);
   const tom=faseAtual().tom;
   if(tom){ctx.fillStyle=tom;ctx.fillRect(0,0,VW,VH);}
   const marca=(k,fill,stroke,tracejado)=>{const [c,r]=DK(k),[x,y]=centro(c,r);hexPath(x,y,R-1.5);if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2.5;if(tracejado)ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);}};
@@ -5502,7 +5749,7 @@ function fichaUnidade(u,completa){
       <div class="fichaNome"><strong style="color:${COR[u.lado]}">${e.nome}</strong> <span class="tags" style="display:inline;flex:1" title="Vence ${VANT[e.el].map(x=>ELN[x]).join(', ')} · perde para ${perdePara(e.el).map(x=>ELN[x]).join(', ')}. ${e.mestre?'Mestres não são afetados pelo horário.':(e.hora?`Linhagem ${e.hora==='dia'?'Solar':'Lunar'}: `+HORA_DESC[e.hora].replace(/^Elemento \S+: /,''):HORA_DESC[HORA_EL[e.el]])}">${tagEl(e.el)}</span><span class="vez">${e.mestre?'Mestre':'Nível '+e.tier}</span></div>
       <div class="barraVida"><i style="width:${frac*100}%;background:${corV}"></i><span>${u.hp} / ${e.hp}</span></div>${e.evo?`<div class="barraXp" title="Experiência: ${u.xp} / ${e.xp} (evolui para ${evoTxt(u)}${RAMOS[u.esp]?". "+RAMOS[u.esp].dica:""})"><i style="width:${Math.min(100,u.xp/e.xp*100)}%"></i></div>`:''}
     </div></div>
-    <div class="nums nums${e.mestre?4:e.evo?6:5}">${num('Atq',e.atk,'','Ataque')}${num('Def',e.def,'','Defesa')}${num('Mov',e.mov,'','Movimento')}${num('Prec',Math.round(precisao(u.esp)*100)+'%',mh?`<em style="color:${mh>0?'#6ee08a':'#ff8a80'}">${mh>0?'▲':'▼'}</em>`:'',`Precisão${mh?' ('+motivoHora(u.esp)+')':''}`)}${e.evo?num('XP',`${u.xp}/${e.xp}`,'',`Experiência; evolui para ${evoTxt(u)}${RAMOS[u.esp]?". "+RAMOS[u.esp].dica:""}`):''}${e.mestre?'':num('Manut',manutEsp(u.esp),'','Manutenção em MP por turno')}</div>
+    <div class="nums nums${e.mestre?4:e.evo?6:5}">${num('Atq',e.atk,'','Ataque')}${num('Def',e.def,'','Defesa')}${num('Mov',movDe(u),'','Movimento')}${num('Prec',Math.round(precisao(u.esp)*100)+'%',mh?`<em style="color:${mh>0?'#6ee08a':'#ff8a80'}">${mh>0?'▲':'▼'}</em>`:'',`Precisão${mh?' ('+motivoHora(u.esp)+')':''}`)}${e.evo?num('XP',`${u.xp}/${e.xp}`,'',`Experiência; evolui para ${evoTxt(u)}${RAMOS[u.esp]?". "+RAMOS[u.esp].dica:""}`):''}${e.mestre?'':num('Manut',manutEsp(u.esp),'','Manutenção em MP por turno')}</div>
     ${RAMOS[u.esp]?`<div class="vez" style="color:#f2c14e" title="${RAMOS[u.esp].dica}">Evolui para: ${evoTxt(u)}</div>`:''}
     ${u.semMana?`<div class="vez" style="color:#b48cff">Sem mana: ataca 25% mais fraco e recebe 25% mais dano.</div>`:''}
     ${efeitosHtml(u)}${e.mestre&&u.lado!==0?mpRivalHtml(u.lado):''}${e.mestre?mestreHtml(u.lado):''}
@@ -5582,7 +5829,7 @@ function abreTerreno(k,refId){
   let dono='';
   if(ehConstrucao(t))dono=`<div class="vez">${J.dono[k]==null?'Sem dono':J.dono[k]===0?'Sua':OM(J.dono[k])+' controla'} · +${RENDA_TER[t]} MP por turno para quem controla</div>`;
   const html=`<div class="terTopo"><span class="terHex" style="background:${TER[t].cor}"></span><div><strong style="font-size:15px">${nomeTer(k)}</strong>${dono}</div></div>
-    <p class="terDesc">${TER_DICA[t]}</p>${ehCristal(k)?`<p class="terDesc" style="color:#bfe3ff">💎 No fim do turno, cada mestre puxa o cristal 1 ponto por torre que controla, e quem controla esta torre puxa ${valorCristal()} por ela. Puxar um cristal de um rival primeiro o desfaz. Vence quem montar ${CRISTAL_META}. Ao contrário das outras torres, não cura quem está nela. Agora: ${J.cristal.v?`${J.cristal.v}/${CRISTAL_META} para ${J.cristal.lado?OM(J.cristal.lado):'você'}`:'desmontado'}.</p>`:''}
+    <p class="terDesc">${J.vilas?.[k]?dicaVila(k):TER_DICA[t]}</p>${ehCristal(k)?`<p class="terDesc" style="color:#bfe3ff">💎 No fim do turno, cada mestre puxa o cristal 1 ponto por torre que controla, e quem controla esta torre puxa ${valorCristal()} por ela. Puxar um cristal de um rival primeiro o desfaz. Vence quem montar ${CRISTAL_META}. Ao contrário das outras torres, não cura quem está nela. Agora: ${J.cristal.v?`${J.cristal.v}/${CRISTAL_META} para ${J.cristal.lado?OM(J.cristal.lado):'você'}`:'desmontado'}.</p>`:''}
     <table class="terTab"><thead><tr><th>Tipo de criatura</th><th title="Pontos de movimento gastos para entrar na casa">Mov.</th><th title="Chance de o golpe inimigo errar">Evasão</th>${gelo?'<th>Ataque</th>':''}</tr></thead><tbody>${linhas}</tbody></table>${verTodos}
     <p class="vez" style="margin:6px 0 0">Mov. = pontos gastos para entrar. Evasão = chance de o golpe inimigo errar.${resto.length?' Primeiro, os tipos do seu exército':''}${ref?`${resto.length?'; em':' Em'} destaque: ${ESP[ref.esp].nome}`:''}${resto.length||ref?'.':''}</p>`;
   abreDet('Terreno',html);
@@ -5822,6 +6069,7 @@ function atualiza(){
   else if(minha&&ehMestreSel()&&J.menuMestre==='invocar')dicaAcao=`<div class="prev">✚ ${TOQUE()?'Toque':'Clique'} numa construção piscando para invocar ali (${TC()} volta ao menu).</div>`;
   else if(minha&&ehMestreSel()&&J.menuMestre==='mover')dicaAcao=`<div class="prev">Clique numa casa azul para mover ${ART(0)} ${NM(0)} (${TC()} volta ao menu).</div>`;
 
+  if(!dicaAcao&&J.f1&&minha&&!J.sel&&J.invHex==null&&!menuAberto()){const d=dicaF1();if(d)dicaAcao=`<div class="prev">${d}</div>`;}
   // celular em pé: a dica da ação vai para uma faixa sobre o mapa, e a ficha fica só com a criatura
   document.getElementById('dicaMapa').innerHTML=TELA_LIVRE()?dicaAcao:'';
   let inf=TELA_LIVRE()?'':dicaAcao;
@@ -5981,11 +6229,11 @@ function menus(){
   }else if(minha&&J.invHex!=null){
     const [hc,hr]=DK(J.invHex);
     // grade de cartões (desenho, nome, elemento e custo), sem rolagem; os números da criatura ficam na ficha, depois de invocar
-    let h=`<div class="mmTopo"><div><div class="tit" style="color:var(--p0)">Invocar</div><div class="vez">${mpHtml(0)}${J.turno>1?` · exército ${criaturas(0)}/${limite(0)}`:''}</div></div><div class="mmBts"><button class="btVant${VANT_INV?' on':''}${!VANT_INV_USADO&&J.turno>=4?' brilha':''}" onclick="alternaVantInv(event)" aria-pressed="${VANT_INV}" title="${VANT_INV?'Esconder':'Mostrar'} de quem cada elemento vence e para quem perde">▲▼<span class="rot"> Vence/perde</span></button><button class="mmX" onclick="J.invHex=null;atualiza()" aria-label="Fechar">✕</button></div></div><div class="invG">`;
-    for(const s of invocaveis(0)){
-      const e=ESP[s],ok=J.mp[0]>=e.custo&&podeTerMais(0);
-      h+=`<button onclick="escolherInvocacao('${s}')" ${ok?'':'disabled'}><b class="custo">${e.custo}</b>${iconeSpr(s,48,'cor')}<span class="nm">${e.nome}</span><small style="color:${EL[e.el]}">${ELN[e.el]}</small>${VANT_INV?faixaVant(e.el):''}</button>`;
-    }
+    let h=`<div class="mmTopo"><div><div class="tit" style="color:var(--p0)">Invocar</div><div class="vez">${mpHtml(0)}${J.turno>1?` · exército ${criaturas(0)}/${limite(0)}`:''}</div></div><div class="mmBts">${ehF1()?'':`<button class="btVant${VANT_INV?' on':''}${!VANT_INV_USADO&&J.turno>=4?' brilha':''}" onclick="alternaVantInv(event)" aria-pressed="${VANT_INV}" title="${VANT_INV?'Esconder':'Mostrar'} de quem cada elemento vence e para quem perde">▲▼<span class="rot"> Vence/perde</span></button>`}<button class="mmX" onclick="J.invHex=null;atualiza()" aria-label="Fechar">✕</button></div></div><div class="invG">`;
+    const cartao=(s,extra='')=>{const e=ESP[s],ok=J.mp[0]>=e.custo&&podeTerMais(0);
+      return `<button onclick="escolherInvocacao('${s}')" ${ok?'':'disabled'}${extra}><b class="custo">${e.custo}</b>${iconeSpr(s,48,'cor')}<span class="nm">${e.nome}</span><small style="color:${EL[e.el]}">${ELN[e.el]}</small>${VANT_INV&&!ehF1()?faixaVant(e.el):''}</button>`;};
+    if(ehF1())h=h.replace('<div class="invG">',rodaInv(cartao)); // Fase 1: os três monstros em círculo, com as flechas de quem vence quem
+    else for(const s of invocaveis(0))h+=cartao(s);
     h+=`</div>${podeTerMais(0)?'':`<div class="vez">${motivoLimite()}</div>`}`;
     // Evoluir: o mesmo do menu do mestre, ao alcance de quem está escolhendo o que invocar
     if(podeEvoluir(0))h+=`<button class="btEvoInv" onclick="abrirEvo()" title="Fixa a forma de estágio 1 de uma criatura inicial: dali em diante ela já nasce evoluída."><span style="color:#6ee08a">▲</span> Evoluir · ${EVO_CUSTO} MP</button>`;
@@ -6026,10 +6274,15 @@ function menus(){
   // fim de turno: sem caixa sobre o mapa; quem avisa é o Encerrar turno dourado (veja atualiza).
   // A caixa do meio do mapa serve ao aviso de evolução do começo do turno (espera a abertura e os combates)
   const evoAviso=minha&&J.avisoEvo&&!J.intro&&!CENA&&podeEvoluir(0)&&!J.evo&&!J.mg&&!J.fz&&J.invHex==null&&!J.invocando;
-  if(evoAviso){
+  const f1Aviso=minha&&J.f1&&J.f1.fila.length&&!J.intro&&!CENA&&!J.ocupado&&!J.fim;
+  if(f1Aviso){
+    const [tit,tx,bt]=AVISOS_F1[J.f1.fila[0]];
+    poeHTML(ps,`<div class="evoTit">${tit}</div><div class="evoTx">${tx}</div><div class="linha"><button class="btEvo" onclick="fechaAvisoF1()">${bt||'Entendi'}</button></div>`);
+    ps.className='flut evo f1'+(J.f1.fila[0]==='intro'?' intro':'');ps.style.display='block';
+  }else if(evoAviso){
     poeHTML(ps,`<div class="evoTit">▲ Evolução disponível</div><div class="evoTx">Sua reserva chegou a ${EVO_CUSTO} MP. Escolha uma criatura para evoluir permanentemente.</div><div class="linha"><button onclick="fechaAvisoEvo()">Agora não</button><button class="btEvo" onclick="avisoEvoluir()">▲ Evoluir</button></div>`);
     ps.className='flut evo';ps.style.display='block';
-  }else{ps.style.display='none';ps.classList.remove('evo');}
+  }else{ps.style.display='none';ps.classList.remove('evo','f1');}
   // no toque não há botão direito nem Esc: um botão no canto do mapa cancela (os menus já têm o próprio ✕ Fechar)
   document.getElementById('btCancela').style.display=
     TOQUE()&&minha&&mm.style.display==='none'&&(J.sel||J.invocando||J.invHex!=null||J.mg||J.fz||J.insp)?'block':'none';
