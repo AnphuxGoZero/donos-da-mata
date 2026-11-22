@@ -952,6 +952,7 @@ function atualizaCam(now){
   const dt=Math.min(.05,(now-(CAM.t||now))/1000);CAM.t=now;
   if(J.intro){camIntro(now);if(J.intro)return;}
   if(Math.abs(CAM.zAlvo-CAM.z)>.002)CAM.z+=(CAM.zAlvo-CAM.z)*(1-Math.exp(-dt*7));else CAM.z=CAM.zAlvo;
+  if(J.f1&&J.f1.chegando)CAM.mao=false; // cena com roteiro (chegadas, Caipora): arrastar o mapa não tira a câmera dela
   const movendo=J.f1&&J.f1.chegando?null:J.un.find(u=>u.anim); // chegada da Fase 1: a câmera segue só o roteiro dela
   if(movendo){CAM.alvo=movendo;CAM.mao=false;}
   const u=CAM.alvo;
@@ -2354,7 +2355,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.90'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.91'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2734,7 +2735,7 @@ function trazExercitoF1(proibidas){
 async function aberturaF2(semAnim){
   const jogo=J,caes=(J.f1.caes||[]).map(x=>({u:J.un.find(u=>u.id===x.id),focos:x.focos})).filter(x=>x.u);
   if(semAnim||!VEL||document.hidden||!caes.length){for(const k of J.f1.focosIni)criaChama(k);return;}
-  J.ocupado=true;J.f1.chegando=true;
+  J.ocupado=true;J.f1.chegando=true;zoomCena(); // de perto; o zoom volta ao normal quando a câmera vai até o mestre
   const mira=(x,y)=>{CAM.alvo={fixo:true,px:x,py:y};CAM.centrar=true;CAM.mao=false;};
   // o 2º Cão espera fora da tela (a câmera nunca mostra de onde ele vem)
   const [c2,...resto]=caes.slice(1),fora2=c2?(()=>{const [x,y]=centro(c2.u.c,c2.u.r);return {x0:x,y0:y-R*11};})():null; // vem de cima, de fora da tela
@@ -2766,6 +2767,8 @@ function grrCanto(lado){
   d.className='grrCanto '+(lado<0?'esq':'dir');d.textContent='GRRRR!';m.appendChild(d);
   setTimeout(()=>d.remove(),1700);
 }
+// câmera de perto nas cenas (a mesma aproximação da chegada da Fase 1); soltaEnquadra() devolve o zoom de antes
+function zoomCena(){CAM.zAlvo=RETRATO()?zBase()*1.2:Math.min(zBase()*2.4,Math.max(CAM.zPref*1.5,zBase()*1.6));CAM.enq=true;}
 // o Cão cospe uma bola de fogo que cai na floresta e vira chama
 async function cospeFogo(cao,k){
   if(J.fim)return;
@@ -2793,10 +2796,10 @@ function apagaChama(u){J.un=J.un.filter(x=>x!==u);if(J.sel===u)desseleciona();}
 const avisosF=()=>ehF2()?AVISOS_F2:AVISOS_F1;
 const AVISOS_F2={
   intro1:{tit:'Fase 2 · A Mata em Chamas',falas:['Fogo! A mata está pegando fogo!'],bt:'Começar'},
-  caiporaChega:{falas:[{quem:'caipora',txt:'Sou Caipora, guardião desta mata.'},{quem:'caipora',txt:'Me ajude a salvá-la!'}],bt:'Continuar',volta:true},
+  caiporaChega:{falas:[{quem:'caipora',txt:'Sou Caipora, guardião desta mata.'},{quem:'caipora',txt:'Me ajude a salvá-la!'}],bt:'Continuar'},
   alimentou:{falas:['Eita, o fogo aumentou o fogo!','Acho melhor usar água!']},
   apagou:{falas:['Apagou! A Água acaba com o fogo!',{quem:'caipora',txt:'Essa parte da mata foi salva.'}]},
-  cinza:{falas:['Essa parte da mata queimou toda...','Rápido, antes que o fogo chegue nas casas!']},
+  cinza:{falas:['Essa parte da mata queimou toda...','Rápido, antes que o fogo se espalhe!']},
   vilaQueima:{falas:['A vila está pegando fogo!','Um camponês não conseguiu fugir...']},
   vila:{falas:['A vila virou cinzas!','Não sobrou ninguém...']},
   cao:{falas:[{quem:'grr',txt:'GRRRRR!'},{quem:'soldado',txt:'O Cão Infernal chegou! Não deixe ele pôr fogo nas vilas!'}],cao:true},
@@ -2822,8 +2825,31 @@ function checaCaiporaF2(){
   if(J.f1.caiporaK==null&&J.turno>=F2_CAIPORA_TURNO){
     const k=casaCaipora();if(k==null)return;
     J.f1.caiporaK=k;log('🌿 A Caipora, guardiã da mata, apareceu.');
-    if(VEL&&!document.hidden)chegaCaiporaF2(k);else avisoF1('caiporaChega');}
-  if(J.f1.caiporaK!=null&&J.turno>=F2_CONSELHO_TURNO&&!J.f1.vistos.caipora)avisoF1('caipora');
+    if(VEL&&!document.hidden)chegaCaiporaF2(k);else{avisoF1('caiporaChega');vaiAoPostoF2();}}
+  if(J.f1.caiporaK!=null&&J.turno>=F2_CONSELHO_TURNO&&!J.f1.vistos.caipora){
+    if(VEL&&!document.hidden&&J.f1.caiporaFogo!=null)conselhoCaiporaF2();else avisoF1('caipora');}
+}
+// o conselho: a câmera vai até o posto dela, ela vence um foguinho (e outro nasce), e então fala
+async function conselhoCaiporaF2(){
+  const jogo=J,k=J.f1.caiporaK,[x,y]=centro(...DK(k));
+  J.ocupado=true;J.f1.chegando=true;J.f1.vistos.caipora=true;
+  await dorme(50);if(J!==jogo)return;
+  CAM.alvo={fixo:true,px:x,py:y};CAM.centrar=true;CAM.mao=false;
+  J.f1.caiporaT0=performance.now()+1100; // o golpe vem logo depois que a câmera chega
+  await dorme(1100+CAIPORA_RENASCE+500);if(J!==jogo)return;
+  J.f1.chegando=false;J.f1.vistos.caipora=false;
+  await avisoJaF1('caipora');if(J!==jogo)return; // ao fechar: câmera no mestre, Evoluir piscando (liberaEvoF2)
+  J.ocupado=false;atualiza();
+}
+// o posto da Caipora: o mais no alto e à direita possível, com uma floresta livre ao lado (onde está o foguinho dela)
+function postoCaipora(){
+  const livre=k=>!J.vilas[k]&&!unidadeEm(...DK(k))&&k!==J.f1.caiporaK;
+  let b=null,bd=Infinity;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const k=K(c,r);
+    if(!['plan','flor'].includes(J.ter[k])||!livre(k)||J.f1.queim.includes(k))continue;
+    const f=vizinhos(c,r).map(([a,bb])=>K(a,bb)).find(kk=>J.ter[kk]==='flor'&&livre(kk));if(f==null)continue;
+    const d=d6c(c,r,COLS-1,0);if(d<bd){bd=d;b=[k,f];}}
+  return b;
 }
 async function chegaCaiporaF2(k){
   const jogo=J,[x,y]=centro(...DK(k));
@@ -2840,8 +2866,18 @@ async function chegaCaiporaF2(k){
   await dorme(1450);if(J!==jogo)return;
   J.f1.caiporaAnim=null;piscaHex(k,'#6ee08a',900);atualiza();await dorme(500);if(J!==jogo)return;
   J.f1.chegando=false;
-  await avisoJaF1('caiporaChega');if(J!==jogo)return; // ao fechar, a câmera volta ao mestre (volta:true)
+  await avisoJaF1('caiporaChega');if(J!==jogo)return;
+  // ela volta para dentro da mata (a câmera ainda vê) e reaparece, sem ninguém ver, no posto lá no alto à direita
+  J.f1.caiporaAnim={x0:x,y0:y,x1:ox,y1:oy,t0:performance.now(),dur:900,sai:true};
+  await dorme(950);if(J!==jogo)return;
+  vaiAoPostoF2();
+  soltaEnquadra();seguir(mestreDe(0),true);await dorme(300);if(J!==jogo)return;
   J.ocupado=false;atualiza();
+}
+function vaiAoPostoF2(){
+  J.f1.caiporaAnim=null;const p=postoCaipora();if(!p)return;
+  [J.f1.caiporaK,J.f1.caiporaFogo]=p;J.f1.caiporaT0=performance.now();
+  log('🌿 A Caipora foi combater o fogo no alto da mata.');
 }
 function casaCaipora(){
   const mata=(c,r)=>{let n=0;for(let rr=r-2;rr<=r+2;rr++)for(let cc=c-3;cc<=c+3;cc++)if(dentro(cc,rr)&&d6c(cc,rr,c,r)<=2&&J.ter[K(cc,rr)]==='flor'&&!chamaEm(K(cc,rr)))n++;return n;};
@@ -2852,15 +2888,55 @@ function casaCaipora(){
     const sc=mata(c,r)*10-d6c(c,r,...J.f1.castelo);if(sc>bs){bs=sc;b=k;}}
   return b;
 }
+// O duelo da Caipora é só de enfeite: ela golpeia o foguinho, ele se apaga, outro nasce no lugar (o fogo não avança
+// por ali, mas também não acaba). Um ciclo a cada CAIPORA_CICLO ms, contado a partir de J.f1.caiporaT0.
+const CAIPORA_CICLO=4200,CAIPORA_RENASCE=1900;
 function desenhaCaipora(){
   const k=J.f1.caiporaK,si=ORDEM_SPR.indexOf('caipora'),src=atlasCor||atlasTime[0];if(k==null||si<0||!src)return;
+  const now=performance.now();
   let [x,y]=centro(...DK(k));const s=TAM_SPR[2];
-  const a=J.f1.caiporaAnim;let al=1;if(a){const t=Math.min(1,(performance.now()-a.t0)/a.dur);x=a.x0+(x-a.x0)*t;y=a.y0+(y-a.y0)*t;if(a.some)al=Math.min(1,t*2.5);} // saindo de dentro da mata
+  const a=J.f1.caiporaAnim;let al=1;
+  if(a){const t=Math.min(1,(now-a.t0)/a.dur),x1=a.x1??x,y1=a.y1??y;x=a.x0+(x1-a.x0)*t;y=a.y0+(y1-a.y0)*t;
+    if(a.some)al=Math.min(1,t*2.5);if(a.sai)al=1-Math.min(1,Math.max(0,(t-.35)/.65));} // saindo da mata / entrando nela
+  // o foguinho do duelo e a fase do ciclo
+  const fk=a?null:J.f1.caiporaFogo,fase=fk!=null?(((now-(J.f1.caiporaT0||0))%CAIPORA_CICLO)+CAIPORA_CICLO)%CAIPORA_CICLO:-1;
+  const ligado=fk!=null&&now>=(J.f1.caiporaT0||0);
+  let dir=Math.floor(now/2600+k*.37)%2?1:-1; // olha para um lado e para o outro
+  let dx=0;
+  if(fk!=null){const [fx2]=centro(...DK(fk));const lado=fx2>=x?1:-1;
+    if(ligado&&fase<CAIPORA_RENASCE+400)dir=lado; // de olho no fogo
+    if(ligado&&fase<380)dx=lado*Math.sin(fase/380*Math.PI)*R*.5;} // o golpe: avança e volta
+  if(fk!=null)desenhaFogoCaipora(fk,ligado?fase:CAIPORA_CICLO-1,now);
   if(al<=0)return;
-  const base=y+R*0.5;
+  const base=y+R*0.5,resp=1+Math.sin(now/520)*.025; // respira
   ctx.save();ctx.globalAlpha=al;ctx.fillStyle='#2f7a3a90';ctx.strokeStyle='#7fc36a';ctx.lineWidth=2;
   ctx.beginPath();ctx.ellipse(x,base-2,BASE_RX[2],5.5,0,0,Math.PI*2);ctx.fill();ctx.stroke();
-  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';celSpr(ctx,src,si,x-s/2,base-s,s);ctx.restore();
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  ctx.translate(x+dx,base);if(dir!==(OLHA_SPR.caipora||1))ctx.scale(-1,1);ctx.scale(1,resp);
+  celSpr(ctx,src,si,-s/2,-s,s);ctx.restore();
+  // folhinhas caindo em volta dela
+  ctx.save();
+  for(let i=0;i<3;i++){const t=((now/2200)+i/3+k*.13)%1;
+    ctx.globalAlpha=al*.85*Math.sin(t*Math.PI);ctx.fillStyle=i%2?'#7fc36a':'#4f9a3e';
+    ctx.fillRect(Math.round(x+dx+Math.sin(t*7+i*2)*R*.45+(i-1)*R*.25),Math.round(base-s+t*s*.95),3,2);}
+  ctx.restore();
+}
+// o foguinho do duelo: some com fumaça logo depois do golpe e nasce de novo, crescendo
+function desenhaFogoCaipora(fk,fase,now){
+  const si=ORDEM_SPR.indexOf(spr('focoLabareda')),src=atlasTime[1];if(si<0||!src)return;
+  const [x,y]=centro(...DK(fk)),base=y+R*0.5,s=TAM_SPR[ESP.focoLabareda.tier];
+  let esc=1+Math.sin(now/170)*.04,al=1; // tremula
+  if(fase>=250&&fase<650){const t=(fase-250)/400;esc*=1-t;al=1-t;}
+  else if(fase>=650&&fase<1500){esc=0;}
+  else if(fase>=1500&&fase<CAIPORA_RENASCE){const t=(fase-1500)/(CAIPORA_RENASCE-1500);esc*=t<.7?t/.7*1.15:1.15-(t-.7)/.3*.15;}
+  if(esc>0){ctx.save();ctx.globalAlpha=al;ctx.imageSmoothingEnabled=true;ctx.translate(x,base);ctx.scale(esc,esc);celSpr(ctx,src,si,-s/2,-s,s);ctx.restore();}
+  ctx.save(); // o acerto: folhas verdes estourando no fogo; depois a fumaça sobe
+  if(fase>=230&&fase<560){const t=(fase-230)/330;ctx.globalAlpha=1-t;ctx.fillStyle='#7fe08a';
+    for(let i=0;i<7;i++){const ang=i/7*Math.PI*2;ctx.fillRect(Math.round(x+Math.cos(ang)*t*R*.7-2),Math.round(base-s*.5+Math.sin(ang)*t*R*.6-2),4,4);}}
+  if(fase>=300&&fase<1400){const t=(fase-300)/1100;
+    for(let i=0;i<3;i++){const rr=R*(.1+t*.22);ctx.globalAlpha=.6*(1-t);ctx.fillStyle=i%2?'#8f8a84':'#6e6660';
+      ctx.fillRect(Math.round(x+(i-1)*R*.3-rr+Math.sin(t*5+i)*3),Math.round(base-s*.4-t*R*1.4-rr-i*4),Math.round(rr*2),Math.round(rr*2));}}
+  ctx.restore();
 }
 // ao fechar o conselho: libera o Evoluir (só Girino → Sapinho, sem custo); a câmera vai até o mestre, com o menu aberto
 function liberaEvoF2(){
@@ -2904,7 +2980,7 @@ function caiuF2(u){
 async function finalF2(){
   const jogo=J;J.f1.fila=J.f1.fila.filter(x=>x==='vitoria'||x==='semente');atualiza(); // falas da partida que ficaram na fila não vêm depois da vitória
   await chuvaF2();if(J!==jogo)return;
-  const k=casaCaipora();if(k!=null)J.f1.caiporaK=k;
+  J.f1.caiporaFogo=null;if(J.f1.caiporaK==null){const k=casaCaipora();if(k!=null)J.f1.caiporaK=k;} // a chuva apagou o foguinho do duelo
   const ck=J.f1.caiporaK;
   if(ck!=null){await focar(...DK(ck));piscaHex(ck,'#6ee08a',900);atualiza();await dorme(700);if(J!==jogo)return;}
   await avisoJaF1('vitoria');if(J!==jogo)return;
@@ -2972,14 +3048,15 @@ async function turnoFogo(l){
     if(u.esp==='focoLabareda'&&!J.vilas[k]&&u.idade>=F2_QUEIMA){
       const primeira=!J.f1.vistos.cinza&&VEL&&!document.hidden;
       if(primeira){ // a primeira vez a câmera mostra: a chama treme, a fumaça sobe e a mata escurece
-        await focar(u.c,u.r);if(J.fim)return;
+        zoomCena();const [bx,by]=centro(u.c,u.r);CAM.alvo={fixo:true,px:bx,py:by};CAM.centrar=true;CAM.mao=false;
+        await dorme(900);if(J.fim)return;
         u.balanca=performance.now();piscaHex(k,'#ff7a30',900);atualiza();await dorme(600);
         const [fx0,fy0]=centro(...DK(k));for(let i=0;i<6;i++)fx.push({fumaca:true,x:fx0+(i%3-1)*R*.45,y:fy0-R*.1,t0:performance.now()+i*110,dur:1300});
         await dorme(300);}
       J.ter[k]='plan';J.f1.queim.push(k);J.terV=(J.terV||0)+1;J.f1.cinzas++;J.f1.cinzaK=k;apagaChama(u);
       const [x,y]=centro(...DK(k));fx.push({txt:'Queimou',x,y:y-6,t0:performance.now(),cor:'#b8b0a8',dur:1400});
       log('A floresta queimou até o fim.');
-      if(primeira){piscaHex(k,'#b8b0a8',900);atualiza();await dorme(1100);if(J.fim)return;await avisoJaF1('cinza');}else avisoF1('cinza');
+      if(primeira){piscaHex(k,'#b8b0a8',900);atualiza();await dorme(1100);if(J.fim)return;await avisoJaF1('cinza');soltaEnquadra();}else avisoF1('cinza');
     }
   }
   atualiza();
@@ -2993,7 +3070,7 @@ async function espalhaFogo(){
   const chamas=J.un.filter(x=>x.chama),cast=J.f1.castelo,novas=[];let total=chamas.length;
   let n=1+chamas.filter(u=>u.esp==='focoFogareu').length+2*chamas.filter(u=>u.esp==='focoQueimada').length;
   const cands=new Map(); // casa que pode pegar fogo → a chama de onde o foguinho sai
-  for(const u of chamas)for(const [c,r] of vizinhos(u.c,u.r)){const k=K(c,r);if(inflamavel(k)&&!unidadeEm(c,r)&&k!==J.f1.caiporaK&&!cands.has(k))cands.set(k,u);}
+  for(const u of chamas)for(const [c,r] of vizinhos(u.c,u.r)){const k=K(c,r);if(inflamavel(k)&&!unidadeEm(c,r)&&k!==J.f1.caiporaK&&k!==J.f1.caiporaFogo&&!cands.has(k))cands.set(k,u);}
   const ord=[...cands.keys()].sort((a,b)=>d6c(...DK(a),...cast)-d6c(...DK(b),...cast)||a-b);
   const anima=VEL&&!document.hidden;
   for(const k of ord){if(n<=0||total>=F2_MAX_CHAMAS||J.fim)break;if(unidadeEm(...DK(k)))continue;
@@ -3311,7 +3388,7 @@ function alcancaveis(u){
   }
   // mestres (categoria Mago) só terminam o movimento em construções
   const soCons=catDe(u.esp).soConstrucao;
-  const dest=new Set([...dist.keys()].filter(k=>{const o=ocup.get(k);if(o&&o!==u)return false;if(J.f1&&k===J.f1.caiporaK)return false; // ninguém para na casa da Caipora
+  const dest=new Set([...dist.keys()].filter(k=>{const o=ocup.get(k);if(o&&o!==u)return false;if(J.f1&&(k===J.f1.caiporaK||k===J.f1.caiporaFogo))return false; // ninguém para na casa da Caipora (nem no foguinho do duelo dela)
    return !soCons||k===ini||ehConstrucao(J.ter[k]);}));
   return {dist,prev,dest};
 }
@@ -6889,7 +6966,7 @@ function menus(){
     poeHTML(mm,h);mm.classList.add('magias');if(lista.length&&lista.length<4)mm.classList.add('mg'+lista.length);mm.style.width='280px';mm.style.display='block';posMenu(mm,m);
   }else if(minha&&m&&J.evo?.fase==='lista'){
     let h=`<div class="mmTopo"><div class="tit" style="color:#6ee08a">▲ Evoluir · ${ehF2()?'presente da Caipora':`${EVO_CUSTO} MP <span class="vez">· ${mpHtml(0)}</span>`}</div><button class="mmX" onclick="sairEvo()" aria-label="Fechar">✕</button></div>
-      <div class="vez" style="margin-top:4px">Escolha uma criatura inicial. A forma escolhida fica fixa: ao invocar, ela já nasce evoluída.</div><div class="invG">`;
+      <div class="vez" style="margin-top:4px">Escolha uma criatura inicial. A forma escolhida fica fixa: ao invocar, ela já nasce evoluída.</div><div class="invG"${ehF2()?` style="grid-template-columns:repeat(${evoLista().length},1fr)"`:''}>`;
     for(const s of evoLista()){
       const fx=J.evoFixa?.[0]?.[s],e=ESP[fx||s],trava=!evoBases().includes(s),pisca=ehF2()&&!fx&&!trava; // Fase 2: o Girino pisca; a Brasa fica para depois
       h+=`<button onclick="evoBase('${s}')" ${fx||trava?'disabled':''}${pisca?' class="pisca"':''}>${iconeSpr(fx||s,48,'cor')}<span class="nm">${e.nome}</span><small style="color:${fx?'#6ee08a':EL[e.el]}">${fx?'fixada':trava?'mais tarde':ELN[e.el]}</small></button>`;
@@ -6899,7 +6976,7 @@ function menus(){
   }else if(minha&&m&&J.evo?.fase==='ramo'){
     const b=J.evo.base,ops=opcoesEvo(0,b),ok=ehF2()||J.mp[0]>=EVO_CUSTO; // Fase 2: presente da Caipora
     let h=`<div class="mmTopo"><div class="tit" style="color:#6ee08a">▲ Evoluir ${ESP[b].nome}</div><button class="mmX" onclick="sairEvo()" aria-label="Fechar">✕</button></div>
-      ${ehF2()?'':`<div class="vez" style="margin-top:4px">O que seu exército mais viveu na partida abriu estes dois caminhos. Custa ${EVO_CUSTO} MP e não dá para trocar depois.</div>`}<div class="invG" style="grid-template-columns:repeat(2,1fr)">`;
+      ${ehF2()?'':`<div class="vez" style="margin-top:4px">O que seu exército mais viveu na partida abriu estes dois caminhos. Custa ${EVO_CUSTO} MP e não dá para trocar depois.</div>`}<div class="invG" style="grid-template-columns:repeat(${Math.max(1,Math.min(2,ops.length))},1fr)">`; // sem espaço sobrando quando há um caminho só
     for(const o of ops){
       const e=ESP[o.para];
       h+=`<button onclick="escolheEvo('${o.para}')" ${ok?'':'disabled'}${ehF2()?' class="pisca"':''}><b class="custo">${e.custo}</b>${iconeSpr(o.para,56,'cor')}<span class="nm">${e.nome}</span><small>Vida ${e.hp} · Atq ${e.atk} · Def ${e.def} · Mov ${e.mov}</small>${o.motivo?`<small style="color:#f2c14e;margin-top:3px">${o.motivo}</small>`:''}</button>`;
