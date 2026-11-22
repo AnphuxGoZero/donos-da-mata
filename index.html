@@ -13,8 +13,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="Senhores da Guerra">
-<title>Senhores da Guerra</title>
+<meta name="apple-mobile-web-app-title" content="A Mata Tem Dono">
+<title>A Mata Tem Dono: Guerra dos Encantados</title>
 <style>
 @font-face{font-family:"Pirata One";src:url(fontes/PirataOne.woff2) format("woff2");font-display:block} /* títulos das cenas; OFL, ver fontes/OFL-PirataOne.txt */
 :root{--bg:#14161c;--panel:#1d2029;--line:#2e3340;--txt:#e6e8ee;--dim:#9aa1b2;--p0:#4aa8ff;--p1:#ff5b52;--p2:#f2b335;--p3:#35d688;--acc:#f2c14e}
@@ -525,6 +525,10 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 #compart .linha,#instalar .linha{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
 #saves.tela .rodIni{position:absolute;left:max(10px,var(--sl));bottom:max(6px,var(--sb));width:auto;max-width:none;display:flex;gap:8px;flex-wrap:wrap}
 #saves.tela .rodIni button{padding:5px 12px;font-size:13px;opacity:.9}
+#saves .emObras{max-width:460px;margin:14px auto 22px;padding:14px 18px;background:#0e1015cc;border:1px solid #4a5268;border-radius:10px;font-size:15px;line-height:1.5;text-align:center}
+#saves .emObras p{margin:0 0 10px}#saves .emObras p:last-child{margin:0}
+#saves .botaoDiscord{display:flex;align-items:center;justify-content:center;min-height:54px;border-radius:8px;background:#5865f2;border:1px solid #7983ff;color:#fff;text-decoration:none;font:400 24px "Pirata One",serif;letter-spacing:.04em}
+#saves .botaoDiscord:hover{background:#6a76ff}
 #instalar .passos{text-align:left;margin:10px 0 0;padding-left:22px;font-size:13.5px;line-height:1.5}
 #instalar .passos li{margin:6px 0}
 #instalar .icShare{display:inline-block;vertical-align:-4px;width:18px;height:20px}
@@ -640,7 +644,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 #saves.tela.arte[data-cena=carregar]{background:linear-gradient(180deg,#0008 0%,#0003 35%,#0004 65%,#000b 100%),var(--fundoMenu,none) var(--fundoX,50%) 72%/cover no-repeat,#14040c}
 #saves.tela.arte .vez{text-shadow:0 1px 3px #000}
 #saves.tela.arte.ini{justify-content:space-between;background:linear-gradient(180deg,#0007 0%,#0000 28%,#0000 52%,#000b 100%),var(--fundoMenu,none) var(--fundoX,50%) 72%/cover no-repeat,#14040c}
-/* título da abertura em três andares: "Senhores", um "da" pequeno entre filetes dourados, e "Guerra" maior;
+/* título da abertura em três andares: "A Mata", "Tem Dono" maior, e o subtítulo "Guerra dos Encantados" pequeno entre filetes dourados;
    desce um pouco do topo, e os botões sobem do rodapé */
 #saves.tela.ini .tituloJogo{margin-top:clamp(18px,11vh,130px);display:flex;flex-direction:column;align-items:center;white-space:normal;
   background:none;-webkit-background-clip:border-box;background-clip:border-box;color:inherit}
@@ -648,17 +652,17 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
   background:linear-gradient(180deg,#fff3c4 0%,#ffd36a 45%,#c8861e 75%,#8a5512 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
 #saves.tela.ini .tituloJogo .tl1{font-size:min(84px,17vw)}
 #saves.tela.ini .tituloJogo .tl2{font-size:min(118px,24vw);letter-spacing:.04em}
-#saves.tela.ini .tituloJogo .tlDa{display:flex;align-items:center;gap:.5em;font-size:min(30px,6.5vw);line-height:1;margin:.12em 0 .02em;color:#ffd36a}
-#saves.tela.ini .tituloJogo .tlDa::before,#saves.tela.ini .tituloJogo .tlDa::after{content:"";width:min(110px,22vw);height:2px;border-radius:2px}
+#saves.tela.ini .tituloJogo .tlDa{display:flex;align-items:center;gap:.5em;font-size:min(32px,6.5vw);line-height:1;margin:.3em 0 0;color:#ffd36a;white-space:nowrap;letter-spacing:.06em}
+#saves.tela.ini .tituloJogo .tlDa::before,#saves.tela.ini .tituloJogo .tlDa::after{content:"";width:min(90px,9vw);height:2px;border-radius:2px}
 #saves.tela.ini .tituloJogo .tlDa::before{background:linear-gradient(90deg,#ffd36a00,#ffd36a)}
 #saves.tela.ini .tituloJogo .tlDa::after{background:linear-gradient(90deg,#ffd36a,#ffd36a00)}
 #saves.tela.ini>.menuIni{margin-bottom:clamp(24px,15vh,170px)}
 #saves.tela .versaoJogo{position:absolute;right:max(10px,var(--sr));bottom:max(8px,var(--sb));width:auto;max-width:none;font-size:12px;color:#fff9;text-shadow:0 1px 3px #000;cursor:default;padding:6px 0 0 12px}
 /* tela baixa (celular deitado): o título volta a uma linha só, e os botões ficam mais compactos */
 @media (max-height:560px){
-  #saves.tela.ini .tituloJogo{flex-direction:row;justify-content:center;align-items:center;gap:.3em;margin-top:clamp(8px,5vh,40px)}
+  #saves.tela.ini .tituloJogo{flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:center;gap:0 .3em;margin-top:clamp(8px,5vh,40px)}
   #saves.tela.ini .tituloJogo .tl1,#saves.tela.ini .tituloJogo .tl2{font-size:min(64px,15vh,9vw);letter-spacing:.02em}
-  #saves.tela.ini .tituloJogo .tlDa{font-size:min(26px,6vh);margin:0;gap:.3em}
+  #saves.tela.ini .tituloJogo .tlDa{flex-basis:100%;justify-content:center;font-size:min(24px,5.5vh);margin:.2em 0 0;gap:.5em}
   #saves.tela.ini .tituloJogo .tlDa::before,#saves.tela.ini .tituloJogo .tlDa::after{width:min(28px,4vw)}
   #saves.tela .menuIni{gap:8px}
   #saves.tela .menuIni button.grande{min-height:44px;padding:6px 18px;font-size:22px}
@@ -696,6 +700,11 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
 #saves.tela.arte button:hover:not(:disabled){background:#2c0e12e6}
 #saves.tela.arte button.pri{background:linear-gradient(180deg,#b23a1e,#6e1510);border-color:#ffb060}
 #saves.tela.arte button.pri:hover:not(:disabled){background:linear-gradient(180deg,#c84a24,#821a12)}
+/* na mata da Caipora (tela inicial e "em construção"), botões em verde-musgo; o principal num verde mais aceso */
+#saves.tela.arte[data-cena=inicio] button{background:#08140fd9;border-color:#2f5a48;color:#e6f0dc}
+#saves.tela.arte[data-cena=inicio] button:hover:not(:disabled){background:#10241ce6}
+#saves.tela.arte[data-cena=inicio] button.pri{background:linear-gradient(180deg,#2f7a52,#14402c);border-color:#8ad8a0}
+#saves.tela.arte[data-cena=inicio] button.pri:hover:not(:disabled){background:linear-gradient(180deg,#3a9064,#1a4e36)}
 #saves.tela.arte small,#saves.tela.arte .vez{color:#e0c4ac}
 #saves.tela.arte .mestres .spr{background-color:#14050acc}
 .paisagem #saves.tela.arte:not(.ini) .tituloJogo{font-size:22px}
@@ -789,7 +798,7 @@ html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
 <div id="app">
   <div id="colMapa">
   <div class="barra-mapa" id="topoMapa">
-    <div><h1><span class="nomeJogo">Senhores da Guerra</span><button class="bt" id="btJogo" onclick="alternaMenuJogo(event)" title="Menu principal, salvar e carregar">☰</button></h1><div class="vez" id="vez"></div></div>
+    <div><h1><span class="nomeJogo">A Mata Tem Dono</span><button class="bt" id="btJogo" onclick="alternaMenuJogo(event)" title="Menu principal, salvar e carregar">☰</button></h1><div class="vez" id="vez"></div></div>
     <div id="relogio" title=""></div>
     <div id="rodape"></div>
     <div id="zoomUI"><button onclick="mudaZoom(-1)" title="Afastar (−)">−</button><span id="zoomN">160%</span><button onclick="mudaZoom(1)" title="Aproximar (+)">+</button><button onclick="seguir(mestreDe(0),true)" title="Centralizar no seu mestre">⌖</button></div>
@@ -1919,7 +1928,6 @@ function novoJogo(op=prefs(),semIntro=false){ // semIntro: a partida de fundo, a
   m.f.forEach((f,l)=>criaUnidade(ORDENS[ordens[l]].esp,l,...f));
   J.op=op; // para Reiniciar partida
   if(f1){if(fase===3)iniciaF3(m);else if(fase===2)iniciaF2(m);else iniciaF1(m);if(fase===3){const cp=campanhaInfo();if(cp.evoFixa)J.evoFixa[0]={...cp.evoFixa};}}
-  else if(op.campanha){const cp=campanhaInfo();if(cp.evoFixa)J.evoFixa[0]={...cp.evoFixa};} // fase final da campanha: as evoluções fixadas antes seguem valendo
   J.tut=!semIntro&&(f1?fase===1:tutorialPendente())?{n:0}:null;
   zoomInicio(true);
   {const [x,y]=centro(...m.f0);CAM.x=x;CAM.y=y;CAM.alvo=null;limitaCam();}
@@ -2153,7 +2161,7 @@ let cfgSel=null,cfgInicio=false;
 // O sol nasce atrás de uma torre meio caída; o céu vermelho se abre em raios. Em volta, espadas cravadas e corpos,
 // e restos dos seres míticos que lutaram ali: o esqueleto de um dragão, a espada de um titã, o crânio e a asa de feras.
 // Desenhado uma vez (384×216, ampliado sem suavizar) e guardado.
-// cena: 'inicio' (a torre caída), 'batalha' (o acampamento de guerra) ou 'carregar' (o campo da memória).
+// cena: 'inicio' (a mata da Caipora, desenhada à parte logo abaixo), 'batalha' (o acampamento de guerra) ou 'carregar' (o campo da memória).
 // As três são trechos do mesmo campo, sob o mesmo amanhecer: só muda onde o sol nasce e o que está em volta.
 const fundosMenu={};
 function fundoMenu(cena='inicio'){
@@ -2173,6 +2181,119 @@ function fundoMenu(cena='inicio'){
       xs.sort((a,b)=>a-b);for(let k=0;k+1<xs.length;k+=2)for(let x=Math.round(xs[k]);x<Math.round(xs[k+1]);x++)px(x,y,typeof cor==='function'?cor(x,y):cor);}};
   const elip=(cx,cy,rx,ry,cor)=>{for(let y=-ry;y<=ry;y++)for(let x=-rx;x<=rx;x++)if((x*x)/(rx*rx)+(y*y)/(ry*ry)<=1)px(cx+x,cy+y,typeof cor==='function'?cor(cx+x,cy+y):cor);};
 
+  // ---------- 'inicio': A Mata Tem Dono ----------
+  // Noite de lua cheia sobre o vale. A Caipora, montada na queixada, vigia do alto de uma pedra o campo de casas (hexágonos)
+  // onde as criaturas do jogador (azul) esperam os Cães Infernais (vermelho) que vêm do lado em que a mata pega fogo.
+  // Árvores enormes emolduram a cena; olhos de encantados espiam do escuro, vaga-lumes no ar.
+  if(cena==='inicio'){
+    const HZ2=124,MX=192,MY=86,MR=22,FX=322; // horizonte, lua (atrás da Caipora), foco do incêndio ao longe
+    const NOITE=['#04070d','#060c16','#09131f','#0c1b28','#112531','#173039','#1e3c41','#284a48','#3a5c52','#57705a','#7f8660','#b39c64'];
+    const FOGO=['#2a2a30','#3e2a2c','#5a2a24','#7e321e','#a8441e','#d8642a','#f58a3a'];
+    const ceu=(x,y)=>{const d=Math.hypot(x-MX,y-MY);return Math.pow(Math.max(0,y)/HZ2,1.7)*6.2+4.2*Math.exp(-Math.max(0,d-MR)/26);};
+    const fogoV=(x,y)=>5.2*Math.exp(-Math.hypot(x-FX,(y-HZ2)*1.8)/46);
+    for(let y=0;y<=HZ2+30;y++)for(let x=0;x<W;x++){const f=fogoV(x,y);px(x,y,f>.7+dt(x,y)*1.1?pal(FOGO,f,x,y):pal(NOITE,ceu(x,y),x,y));}
+    for(let i=0;i<130;i++){const x=rnd()*W,y=rnd()*72;if(Math.hypot(x-MX,y-MY)>MR+12&&ceu(x,y)<3.2)px(x,y,rnd()<.25?'#f4f0d8':'#6f7f98');} // estrelas
+    // fumaça do incêndio, subindo e deitando para a esquerda
+    for(let i=0;i<1400;i++){const t=rnd(),x=FX-t*100+Math.sin(t*9)*6+(rnd()-.5)*(10+t*34),y=HZ2-4-t*84+(rnd()-.5)*8;
+      if(dt(Math.round(x),Math.round(y))<.6-t*.4)px(x,y,t<.12?'#6a2a22':t<.3?'#3a2a2e':'#22262e');}
+    // a lua cheia, com manchas
+    elip(MX,MY,MR,MR,(x,y)=>{const n=Math.sin(x*.4)+Math.sin(y*.5+x*.13)+Math.sin((x+y)*.21);
+      return n>1.4?'#d6d0ac':Math.hypot(x-MX+5,y-MY+5)<MR-3?'#fbf6df':'#ece4c0';});
+    for(let i=0;i<8;i++){const x=30+rnd()*320,y=12+rnd()*52,c='#05080c';px(x,y,c);px(x-1,y-1,c);px(x+1,y-1,c);px(x-2,y,c);px(x+2,y,c);} // morcegos
+
+    // duas camadas de mata ao longe (copas redondas e palmeiras); a crista pega a luz da lua e, perto do incêndio, o fogo
+    const copa=(x,s,a)=>a*(.55*Math.abs(Math.sin(x*.11+s))+.3*Math.abs(Math.sin(x*.27+s*3))+.15*Math.abs(Math.sin(x*.61+s*5)));
+    const palmeira=(x,b,h,cor)=>{for(let i=0;i<h;i++)px(x+Math.sin(i*.08)*1.5,b-i,cor);const tx=x+Math.sin(h*.08)*1.5,ty=b-h;
+      for(const [dx,dy] of [[-7,3],[-5,-2],[0,-4],[5,-2],[7,3],[-3,4],[3,4]]){lin(tx,ty,tx+dx,ty+dy,cor);px(tx+dx,ty+dy+1,cor);}};
+    const camada=(base,amp,s,cor,luz,palmas,chamas)=>{
+      for(const p of palmas)palmeira(p,Math.round(base-copa(p,s,amp))+2,10+(p*7)%9,cor);
+      for(let x=0;x<W;x++){const t=Math.round(base-copa(x,s,amp));for(let y=t;y<=HZ2+34;y++)px(x,y,cor);
+        const lm=Math.exp(-Math.abs(x-MX)/60),lf=Math.exp(-Math.abs(x-FX)/36);
+        px(x,t,lf>(chamas?.35:.7)?'#c8482a':lm>.3&&dt(x,t)<lm+.2?luz:null);
+        if(chamas&&lf>.45&&rnd()<.55){const h=1+Math.round(rnd()*5*lf);for(let k=1;k<=h;k++)px(x,t-k,k>h-2?'#ffd577':'#ff8a3a');}}};
+    camada(HZ2+2,12,1,'#132a30','#3c6460',[60,140,250,358],true);
+    camada(HZ2+14,14,4,'#0c1e22','#2c5050',[30,212,300],false);
+
+    // o campo do vale em perspectiva, com o rio e as casas do tabuleiro
+    const V=112,K=260,F=260,gt=x=>Math.round(HZ2+16+2*Math.sin(x*.05+1));
+    const mundo=(x,y)=>{const z=K/(y-V);return [(x-MX)*z/F,z];},proj=(u,z)=>[MX+F*u/z,V+K/z];
+    const rioU=z=>1.7-.5*z+.35*Math.sin(z*1.4);
+    const ehRio=(x,y)=>{if(y<gt(x))return false;const [u,z]=mundo(x,y);return Math.abs(u-rioU(z))<.22+.02*z;};
+    for(let x=0;x<W;x++){for(let y=gt(x);y<H;y++){
+        if(ehRio(x,y)){const reflexo=Math.abs(x-MX+Math.sin(y*1.7)*3)<2+(y-140)*.06&&y%3!==1;px(x,y,reflexo?'#b8d0c0':(x+y*3)%11===0?'#3a6a70':'#1c3c46');continue;}
+        px(x,y,pal(['#0d1d1f','#0f2321','#122a22','#153024'],(y-gt(x))/(H-gt(x))*3.2,x,y));}
+      px(x,gt(x),'#24453c');}
+    const S=.5,R3=Math.sqrt(3),centroHex=(q,r)=>[S*R3*(q+r/2),2.2+S*1.5*r];
+    for(let r=0;r<=11;r++)for(let q=-15;q<=10;q++){const [cu,cz]=centroHex(q,r);if(cz>10)continue;
+      const vs=[0,1,2,3,4,5].map(k=>{const a=Math.PI/180*(60*k-30);return proj(cu+S*Math.cos(a),cz+S*Math.sin(a));});
+      if(vs.every(([x])=>x<-20)||vs.every(([x])=>x>W+20))continue;
+      const cor=cz<4?'#4c9476':cz<6.5?'#356e5a':'#25504a';
+      for(let k=0;k<6;k++){const [x0,y0]=vs[k],[x1,y1]=vs[(k+1)%6];
+        lin(x0,y0,x1,y1,(x,y)=>y<=gt(x)?null:ehRio(x,y)?'#4f8a8a':cor);}}
+    // as peças: Brasas e um Sapinho (azul) de um lado do rio, Cães Infernais (vermelho) vindo do incêndio
+    const peca=(q,r,tipo)=>{const [cu,cz]=centroHex(q,r),[x,y]=proj(cu,cz),s=26/cz,cor=tipo==='cao'?'#ff5b52':'#4aa8ff',X=Math.round(x),Y=Math.round(y);
+      elip(X,Y,Math.max(2,Math.round(s*.8)),Math.max(1,Math.round(s*.28)),(xx,yy)=>dt(xx,yy)<.6?cor:null);
+      if(tipo==='brasa'){poly([[x-s*.42,y],[x-s*.1,y-s*1.1],[x+s*.05,y-s*.8],[x+s*.15,y-s*1.4],[x+s*.42,y]],(xx,yy)=>yy<y-s*.75?'#ffd577':'#ff7a2a');
+        px(x-s*.15,y-s*.45,'#3a1008');px(x+s*.15,y-s*.45,'#3a1008');}
+      else if(tipo==='sapo'){elip(X,Math.round(y-s*.35),Math.round(s*.6),Math.round(s*.36),(xx,yy)=>yy<y-s*.55?'#3f8a6a':'#1f5a4a');
+        elip(Math.round(x-s*.3),Math.round(y-s*.72),1,1,'#1f5a4a');elip(Math.round(x+s*.3),Math.round(y-s*.72),1,1,'#1f5a4a');
+        px(x-s*.3,y-s*.78,'#e8f0b0');px(x+s*.3,y-s*.78,'#e8f0b0');}
+      else{const c='#140608';elip(X,Math.round(y-s*.5),Math.round(s*.62),Math.max(1,Math.round(s*.3)),c);
+        elip(Math.round(x-s*.62),Math.round(y-s*.78),Math.max(1,Math.round(s*.26)),Math.max(1,Math.round(s*.22)),c);
+        for(let i=0;i<Math.round(s*.6);i++)px(x-s*.4+i*.5,y-s*.5+i,c);for(let i=0;i<Math.round(s*.6);i++)px(x+s*.4-i*.3,y-s*.5+i,c); // patas
+        px(x-s*.72,y-s*1.05,c);px(x-s*.68,y-s*.8,'#ff3a20');px(x+s*.1,y-s*.82,'#ff7a2a');px(x+s*.45,y-s*.7,'#ffb045');}};
+    peca(-2,1,'brasa');peca(-3,3,'sapo');peca(-5,5,'brasa');
+    peca(1,5,'cao');peca(0,7,'cao');peca(-1,9,'cao');
+
+    // a pedra da Caipora, recortada contra a lua, com a borda acesa
+    poly([[146,152],[156,131],[170,122],[186,118],[204,119],[220,125],[232,136],[242,152]],(x,y)=>dt(x,y)<.22?'#0f1d1e':'#0a1416');
+    for(let x=150;x<=238;x++){let t=-1;for(let y=116;y<152;y++){const i=(y*W+x)*4;if(D[i]===10&&D[i+1]===20||D[i]===15&&D[i+1]===29){t=y;break;}}
+      if(t>0&&Math.abs(x-MX)<44)px(x,t,dt(x,t)<.7?'#4a7068':'#2c4a44');}
+    // a queixada
+    {const c='#04080a';elip(194,112,11,5,c);poly([[203,107],[212,110],[215,114],[204,117]],c);
+     for(const [a,b,d] of [[187,116,-1],[191,116,0],[198,116,1],[201,116,2]])lin(a,b,a+d,b+4,c);
+     for(let x=186;x<=202;x+=2)px(x,106,c);px(204,105,c);lin(183,111,181,113,c);
+     px(213,115,'#e8e0c8');px(214,116,'#e8e0c8');px(207,110,'#ff5a3a');}
+    // a Caipora, montada, com a vara erguida e o cabelo de fogo
+    {const c='#04080a';
+     lin(182,118,207,81,c);px(207,81,'#d8d0b0');px(208,80,'#d8d0b0'); // vara
+     lin(191,107,193,98,c,3);elip(194,94,3,3,c);                       // tronco e cabeça
+     lin(193,100,199,98,c);lin(191,101,187,105,c);                      // braços
+     lin(190,108,188,113,c,2);lin(188,113,190,116,c);                   // perna pendurada
+     for(const [dx,dy] of [[-7,-1],[-6,-4],[-4,-7],[-1,-8],[2,-7],[4,-5]]){
+       lin(194,92,194+dx,92+dy,(x,y)=>Math.hypot(x-194,y-92)>Math.hypot(dx,dy)*.6?'#ffb045':'#e8582a');
+       px(194+dx+(dx<0?-1:1)*(dt(194+dx,92+dy)<.5?1:0),92+dy-1,'#7a2a1a');}
+     px(196,94,'#fff2a0');}
+
+    // olhos de encantados no escuro da mata
+    for(const [x,y,cor] of [[84,133,'#e8f070'],[262,131,'#9af0c0'],[122,136,'#e8f070'],[300,134,'#ff9a5a']]){px(x,y,cor);px(x+3,y,cor);}
+
+    // árvores enormes nos cantos: tronco com casca, a face de dentro acesa pela lua, raízes tabulares
+    const tronco=(cx,dir)=>{for(let y=0;y<H;y++){const w=13+Math.max(0,y-150)*.45,c=cx+Math.sin(y*.03)*4,l=Math.round(c-w),r=Math.round(c+w);
+        for(let x=l;x<=r;x++){const borda=dir>0?x===r:x===l,borda2=dir>0?x===r-1:x===l+1,casca=Math.sin(x*1.3+Math.sin(y*.15)*2)>.6;
+          px(x,y,borda?'#3a5a50':borda2&&dt(x,y)<.5?'#1e3430':casca?'#060c0c':'#0a1414');}}
+      for(let i=0;i<3;i++){const y0=146+i*16,ex=cx+dir*(34+i*16);
+        poly([[cx,y0],[ex,H],[cx,H]],(x,y)=>dt(x,y)<.15?'#0f1c1c':'#080f10');lin(cx+dir*6,y0+6,ex,H,'#2c4a44');}};
+    tronco(8,1);tronco(376,-1);
+    // copas por cima, fechando os cantos
+    const fundoCopa=x=>8+30*Math.exp(-((x/110)**2))+30*Math.exp(-(((x-W)/110)**2))+6*Math.abs(Math.sin(x*.15))+4*Math.abs(Math.sin(x*.41));
+    for(let x=0;x<W;x++){const b=Math.round(fundoCopa(x));for(let y=0;y<=b;y++){
+        if(y===b){if(dt(x,y)<.6)px(x,y,'#2c4a40');continue;}
+        px(x,y,Math.sin(x*.9+y*.4)+Math.sin(y*1.1-x*.3)>.9?'#0f2420':'#060e0d');}}
+    for(let i=0;i<60;i++){const x=rnd()*W,b=fundoCopa(x),y=b+rnd()*6;if(x>140&&x<244)continue;elip(Math.round(x),Math.round(y),1+Math.round(rnd()*2),1,'#060e0d');px(x,y+1,'#1e3a34');}
+    // cipós pendurados
+    for(const [x0,len] of [[40,70],[58,44],[78,90],[310,60],[330,96],[350,40]]){let x=x0,y=fundoCopa(x0);
+      for(let i=0;i<len;i++){x=x0+Math.sin(i*.07)*3;px(x,y+i,'#0a1614');if(i%6===3){px(x+1,y+i,'#1e3a34');px(x+2,y+i+1,'#0a1614');}}}
+    // samambaias na frente
+    for(const [x,s] of [[30,1],[70,.8],[110,.6],[280,.7],[318,.9],[356,1.1]]){const b=H+2;
+      for(const a of [-1.2,-.7,-.25,.25,.7,1.2]){let px0=x,py0=b;
+        for(let i=0;i<22*s;i++){const t=i/(22*s),nx=x+Math.sin(a)*i*1.1,ny=b-Math.cos(a)*i*1.2+t*t*10*s*Math.abs(a);
+          px(nx,ny,t>.85?'#1e3a34':'#050b0a');if(i%3===0){px(nx+1,ny+1,'#050b0a');px(nx-1,ny+1,'#050b0a');}px0=nx;py0=ny;}}}
+    for(const [x,y] of [[96,204],[300,207]]){px(x,y,'#e8f070');px(x+3,y,'#e8f070');} // mais olhos, na samambaia
+    // vaga-lumes
+    for(let i=0;i<55;i++){const x=20+rnd()*344,y=60+rnd()*140;if(Math.abs(x-MX)<26&&y<120)continue;
+      px(x,y,'#eaff9a');if(rnd()<.5){px(x+1,y,'#4a6a3a');px(x-1,y,'#4a6a3a');px(x,y-1,'#4a6a3a');px(x,y+1,'#4a6a3a');}}
+  }else{
   // céu: escuro no alto, sangue no meio, ouro no horizonte; clarão e raios saindo do sol
   const CEU=['#14040c','#22060f','#3a0914','#580c16','#7c1218','#a21e1a','#c8361c','#e5571f','#f5822b','#ffae45','#ffd577','#fff1b8'];
   const ceuV=(x,y)=>{const dx=x-SX,dy=y-SY,d=Math.hypot(dx,dy*1.15),a=Math.atan2(dy,dx);
@@ -2195,24 +2316,11 @@ function fundoMenu(cena='inicio'){
    poly([[ox+26,oy-14],[ox+14,oy-4],[ox+6,oy+2],[ox+2,oy-1],[ox+10,oy-10]],cor);            // asa direita
    lin(ox-2,oy+1,ox+3,oy+1,cor,2);lin(ox+3,oy,ox+8,oy-3,cor);px(ox+9,oy-4,cor);px(ox+9,oy-5,cor); // corpo e cabeça
    lin(ox-3,oy+2,ox-12,oy+7,cor);lin(ox-12,oy+7,ox-16,oy+6,cor);};                          // cauda
-  if(cena==='inicio')serpe(78,58);else if(cena==='batalha'){serpe(150,40);serpe(196,70);}else serpe(260,46);
+  if(cena==='batalha'){serpe(150,40);serpe(196,70);}else serpe(260,46);
 
   // morros distantes, com a crista acesa perto do sol
   const rf=x=>HZ-3-5*Math.sin(x*.028+1+FASE)-3*Math.sin(x*.083+FASE*2)-2*Math.sin(x*.21+3);
   for(let x=0;x<W;x++){const t=Math.round(rf(x));for(let y=t;y<=HZ+16;y++)px(x,y,'#340912');px(x,t,pal(CEU,10.5-Math.abs(x-SX)/14,x,t));}
-  if(cena==='inicio'){
-  // esqueleto de dragão deitado no morro da esquerda: espinha arqueada, costelas, crânio com chifres
-  {const cor='#22050d',sp=t=>[22+t*112,rf(22+t*112)-2-20*Math.sin(Math.PI*Math.min(1,t*1.15))];
-   for(let i=0;i<=90;i++){const [x,y]=sp(i/90);for(let a=-1;a<=1;a++)px(x,y+a,cor);}
-   for(let i=8;i<=44;i+=3){const t=i/60,[x,y]=sp(t),ch=rf(x)-1;for(const s of [-1,1]){const mx=x+s*3,my=(y+ch)/2;lin(x,y,mx,my,cor);lin(mx,my,x+s*1,ch,cor);}}
-   const [hx,hy]=sp(1);poly([[hx-2,hy-6],[hx+12,hy-3],[hx+16,hy],[hx+4,hy+1],[hx-2,hy]],cor);px(hx+4,hy-3,pal(CEU,9,hx,hy));
-   lin(hx,hy-6,hx-5,hy-13,cor);lin(hx-5,hy-13,hx-3,hy-16,cor);}
-  // espada de um titã cravada no morro da direita
-  {const x=304,b=Math.round(rf(304))+2,cor='#1e050b',luz='#ff8a3a';
-   poly([[x-3,b],[x+3,b],[x+4,b-46],[x-4,b-46]],cor);lin(x-3,b,x-4,b-46,luz);     // lâmina, acesa do lado do sol
-   poly([[x-15,b-47],[x+15,b-47],[x+13,b-51],[x-13,b-51]],cor);lin(x-15,b-48,x-13,b-51,luz); // guarda
-   poly([[x-2,b-51],[x+2,b-51],[x+2,b-63],[x-2,b-63]],cor);elip(x,b-66,3,3,cor);px(x-2,b-67,luz);}
-  }
 
   if(cena==='batalha'){
     // um colosso de guerra (fera de presas com uma torre de cerco nas costas) atravessando o morro da esquerda
@@ -2242,26 +2350,10 @@ function fundoMenu(cena='inicio'){
   const rm=x=>HZ+12+4*Math.sin(x*.05+FASE)+3*Math.sin(x*.13+2+FASE);
   for(let x=0;x<W;x++){const t=Math.round(rm(x));for(let y=t;y<H;y++)px(x,y,(x+y)%5===0?'#240810':'#1c060c');px(x,t,'#6a1414');}
 
-  // a torre: alta, inclinada, com o topo quebrado; o sol atrás acende as bordas e atravessa as janelas
-  if(cena==='inicio'){const B=184,T=70,hw=y=>13+(y-T)/(B-T)*5,off=y=>(B-y)*.1;
-   const topo=r=>r<7?(r%5<3?T:T+3):T+4+(r-7)*1.05+Math.sin(r*1.7)*2.2; // ameias à esquerda, quebra descendo para a direita
-   const buraco=(x,y)=>((x-(SX+9+off(y)))**2)/30+((y-104)**2)/110<1;
-   for(let y=T;y<=B;y++){const l=Math.round(SX-hw(y)+off(y)),r=Math.round(SX+hw(y)+off(y));
-     for(let x=l;x<=r;x++){const rel=x-l;if(y<topo(rel)||buraco(x,y))continue;
-       const borda=x===l||x===r||y<topo(rel)+1||buraco(x+1,y)||buraco(x,y-1);
-       const fil=Math.floor((B-y)/5),arg=(B-y)%5===0||(rel+(fil&1)*4)%8===0;
-       px(x,y,borda?pal(CEU,11.3-Math.abs(y-SY)/11,x,y):arg?'#12050a':dt(x,y)<.25?'#3a141c':'#2a0e14');}}
-   const jan=(y0,y1,cor,brilho)=>{for(let y=y0;y<=y1;y++){const cx=Math.round(SX+off(y));for(let x=cx-1;x<=cx+1;x++)px(x,y,(y===y0&&x!==cx)?'#2a0e14':(x===cx?brilho:cor));}};
-   jan(136,148,'#ffae45','#fff8dc');jan(112,120,'#c8361c','#f5822b');
-   let fx=SX-4+off(78),fy=78;for(let i=0;i<14;i++){const nx=fx+(i%2?3:-2),ny=fy+4;lin(fx,fy,nx,ny,'#0a0204');fx=nx;fy=ny;} // rachadura
-   for(const [x,y,s] of [[SX+24,64,3],[SX+31,52,2],[SX+20,46,2],[SX+36,72,2]]){for(let a=0;a<s;a++)for(let b=0;b<s;b++)px(x+a,y+b,'#2a0e14');px(x,y,'#ff8a3a');} // pedras caindo
-   for(const [x,y,w,h] of [[SX+16,184,8,4],[SX+24,186,6,3],[SX-26,185,7,3],[SX+31,187,4,2]])poly([[x,y],[x+w,y],[x+w-1,y-h],[x+1,y-h]],(xx,yy)=>yy===Math.round(y-h)?'#a8301c':'#22080e'); // entulho
-  }
-
   // chão da frente, com poças de sangue que refletem o céu
   const gf=x=>184+4*Math.sin(x*.02+FASE)+3*Math.sin(x*.071+1+FASE)+Math.abs(x-SX)*.02;
   for(let x=0;x<W;x++){const t=Math.round(gf(x));for(let y=t;y<H;y++){const v=(y-t)/22;px(x,y,v<1&&dt(x,y)>v?'#2e0c12':dt(x,y)<.2?'#22080e':'#18050a');}px(x,t,'#8a2a1a');}
-  if(cena!=='batalha')for(const [x,y,rx,ry] of cena==='inicio'?[[120,200,14,3],[262,196,10,2],[200,209,18,3],[40,212,10,2],[340,206,12,2]]:[[150,206,12,2],[60,212,9,2]])
+  if(cena!=='batalha')for(const [x,y,rx,ry] of [[150,206,12,2],[60,212,9,2]])
     elip(x,y,rx,ry,(xx,yy)=>yy<y?'#7a1414':(xx+yy)%3?'#3a060c':'#4e0a10');
 
   // espadas cravadas no chão, lanças com estandartes rasgados, corpos caídos
@@ -2275,22 +2367,6 @@ function fundoMenu(cena='inicio'){
     elip(x,y,9,3,cor);elip(x+dir*11,y-1,3,3,cor);lin(x-dir*3,y-2,x-dir*7,y-8,cor,2);lin(x+dir*2,y+1,x+dir*4,y+4,cor,2); // tronco, elmo, braço erguido, perna
     for(let i=-8;i<=8;i++)px(x+i,y-3,luz);px(x+dir*10,y-4,luz);px(x+dir*11,y-4,luz);px(x+dir*12,y-4,'#ffb070');px(x-dir*7,y-9,luz);
     elip(x-dir*13,y+1,4,3,'#1e0a0c');lin(x-dir*16,y-1,x-dir*10,y-1,luz);px(x-dir*13,y+1,'#c08040');}; // escudo
-  if(cena==='inicio'){
-  for(const [x,len,ang,w] of [[30,36,-.25,2],[70,24,.18,1],[96,18,-.12,1],[148,14,.3,1],[232,16,-.22,1],[278,22,.15,1],[160,30,.2,2],[226,26,-.3,2],[176,12,-.4,1],[214,11,.35,1]])
-    espada(x,gf(x)+(w>1?10:3),len,ang,w);
-  lanca(84,gf(84)+4,48,.12,1);lanca(300,gf(300)+5,52,-.16,-1);lanca(160,gf(160)+2,30,-.08,-1);
-  for(const [x,dy,dir] of [[56,10,1],[136,8,-1],[192,20,1],[250,11,-1],[300,15,1],[104,22,1]])corpo(x,gf(x)+dy,dir);
-  // crânio chifrudo de uma fera gigante (esquerda) e a asa rasgada de outra (direita)
-  {const x=18,y=198,cor='#0e0306',luz='#c0481e';
-   poly([[x-8,y+10],[x-6,y-8],[x+10,y-12],[x+26,y-6],[x+30,y+2],[x+20,y+10]],cor);
-   elip(x+8,y-4,3,2,'#000000');elip(x+20,y-2,2,2,'#000000');
-   for(let i=0;i<=18;i++){const a=i/18;px(x+2+a*14+Math.sin(a*3)*4,y-12-a*22+a*a*10,luz);px(x+3+a*14+Math.sin(a*3)*4,y-12-a*22+a*a*10,cor);}
-   lin(x-6,y-8,x+10,y-12,luz);lin(x+10,y-12,x+26,y-6,luz);lin(x+26,y-6,x+30,y+2,luz);px(x+8,y-4,'#ff7a2a');}
-  {const x=346,y=204,cor='#0e0306',luz='#c0481e',ded=[[-30,-46],[-12,-54],[6,-50],[22,-38]];
-   poly([[x,y],...ded.map(([a,b])=>[x+a,y+b]),[x+28,y-10]],cor);
-   for(const [a,b] of ded)lin(x,y,x+a,y+b,luz);
-   for(const [a,b,r] of [[-8,-30,3],[10,-28,2],[-18,-40,2]])elip(x+a,y+b,r,r,(xx,yy)=>pal(CEU,ceuV(xx,yy),xx,yy));} // furos na membrana mostram o céu
-  }
 
   if(cena==='batalha'){
     // o acampamento: tendas listradas com fogo lá dentro, o pavilhão do comando, estandartes das ordens, fogueiras
@@ -2354,6 +2430,7 @@ function fundoMenu(cena='inicio'){
   // brasas e cinzas subindo
   for(let i=0;i<90;i++){const x=rnd()*W,y=50+rnd()*150,cor=(cena==='carregar'?['#ffb045','#6a4a4a','#8a6a62','#c8361c']:['#ffb045','#ff7a2a','#ffd577','#c8361c'])[i%4];px(x,y,cor);if(rnd()<.3)px(x,y+1,'#7c1218');}
 
+  }
   // vinheta pontilhada nas bordas
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const vx=(x-W/2)/(W/2),vy=(y-H*.45)/(H*.62),v=vx*vx*.55+vy*vy*.5;
     if(dt(x,y)<v-.32){const i=(y*W+x)*4;D[i]*=.55;D[i+1]*=.55;D[i+2]*=.55;}}
@@ -2362,7 +2439,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.96'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.97'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2372,7 +2449,7 @@ function abreConfig(inicio=false){
 }
 function desenhaInicio(){
   const el=document.getElementById('saves'),temSave=!!(lerSave('manual')||lerSave('auto'));
-  el.innerHTML=`<div class="tituloJogo" aria-label="Senhores da Guerra"><span class="tl1">Senhores</span><span class="tlDa">da</span><span class="tl2">Guerra</span></div>
+  el.innerHTML=`<div class="tituloJogo" aria-label="A Mata Tem Dono: Guerra dos Encantados"><span class="tl1">A Mata</span><span class="tl2">Tem Dono</span><span class="tlDa">Guerra dos Encantados</span></div>
     <div class="menuIni">
       <button class="pri grande" onclick="jogarRapido()">Jogar</button>
       <button class="grande" onclick="desenhaConfig()">Preparar Batalha</button>
@@ -2388,12 +2465,30 @@ function desenhaInicio(){
   el.classList.remove('cfg');el.classList.add('tela','ini');el.style.display='block';
 }
 // Jogar: partida 1x1 clássica, com o último mestre escolhido (as opções salvas não mudam)
-// Jogar segue a campanha: Fase 1, 2, 3 e, vencidas as três, a fase final (o mapa sorteado contra um mestre rival)
-function jogarRapido(){if(!fase1Info().venceu)jogarFase1();else if(!fase2Info().venceu)jogarFase2();else if(!fase3Info().venceu)jogarFase3();else jogarFaseFinal();}
+// Jogar segue a campanha: Fase 1, 2, 3 e, vencidas as três, a tela de "em construção" (convite para o Discord)
+function jogarRapido(){if(!fase1Info().venceu)jogarFase1();else if(!fase2Info().venceu)jogarFase2();else if(!fase3Info().venceu)jogarFase3();else telaEmObras();}
 function jogarFase1(){fecharSaves();novoJogo({...prefs(),modo:'1x1',f1:true});}
 function jogarFase2(){fecharSaves();novoJogo({...prefs(),modo:'1x1',f1:true,fase:2});}
 function jogarFase3(){fecharSaves();novoJogo({...prefs(),modo:'1x1',f1:true,fase:3});}
-function jogarFaseFinal(){fecharSaves();novoJogo({...prefs(),modo:'1x1',campanha:true});}
+// fim da campanha (por enquanto): as próximas fases estão em construção; convite para o Discord
+const DISCORD_LINK='https://discord.gg/Jx5xv8jT5'; // convite do servidor do jogo
+function telaEmObras(){
+  if(J&&J.intro)fimIntro();
+  fechaMenuJogo();document.getElementById('fim').style.display='none';cfgInicio=true;
+  const el=document.getElementById('saves');
+  el.innerHTML=`<div class="tituloJogo" style="font-family:'Pirata One',serif;font-weight:400;font-size:min(46px,10vw);text-align:center">Continua em breve…</div>
+    <div class="emObras">
+      <p>Você chegou ao fim do que já está pronto. As próximas fases ainda estão sendo construídas!</p>
+      <p>Tem uma sugestão, uma crítica ou achou algum problema? Venha conversar com a gente no Discord. Sua opinião ajuda a decidir o que vem a seguir.</p>
+    </div>
+    <div class="menuIni">
+      <a class="botaoDiscord" href="${DISCORD_LINK}" target="_blank" rel="noopener">Entrar no Discord</a>
+      <button onclick="desenhaInicio()">Menu</button>
+    </div>
+    <div class="versaoJogo" onclick="contaDiag()">v${VERSAO}</div>`;
+  poeArte(el,'inicio');
+  el.classList.remove('cfg','ini');el.classList.add('tela');el.style.display='block';
+}
 
 // ---------- Fase 1: introdução contra o Bando Infernal ----------
 // Mapa fixo, sem mestre rival. Dois Filhotes Infernais (lado 1, "selvagem") avançam até o seu mestre e saqueiam as vilas
@@ -3603,7 +3698,7 @@ function desenhaF3(now){
     ctx.fillStyle='#7fe08a';ctx.fillRect(bx-3,by-alt,3,2);ctx.fillRect(bx+2,by-alt-2,3,2);ctx.fillStyle='#4f9a3e';ctx.fillRect(bx-2,by-alt+3,2,2);ctx.restore();}
   desenhaCheiaF3(now);
 }
-// fim da Fase 3: estrelas (vencer, nenhum broto comido, poucos turnos); vencer leva à fase final
+// fim da Fase 3: estrelas (vencer, nenhum broto comido, poucos turnos); vencer leva à tela de "em construção"
 function mostraFimF3(v,motivo){
   const b=document.getElementById('fimBt'),b2=document.getElementById('fimBt2');
   document.getElementById('fimTxt').textContent=v===0?'Fase 3 concluída!':'Você perdeu';
@@ -3617,7 +3712,7 @@ function mostraFimF3(v,motivo){
     document.getElementById('fimPorque').innerHTML=`<div class="estrelasF1">${[0,1,2].map(i=>`<span class="${i<est?'on':''}">★</span>`).join('')}</div>
       <p class="porque" style="text-align:center">${J.f1.brotos.length} matas com brotos · ${J.f1.comidos?`${J.f1.comidos} ${J.f1.comidos>1?'brotos comidos':'broto comido'} pelas saúvas`:'nenhum broto comido'} · ${camp} camponeses</p>
       <p class="dicaFim" style="text-align:center">★ vencer · ★ nenhum broto comido · ★ até o turno ${J.f1.meta}</p>`;
-    b.textContent='Continuar';b.onclick=()=>jogarFaseFinal();
+    b.textContent='Continuar';b.onclick=()=>telaEmObras();
     b2.textContent='Tentar novamente';b2.onclick=()=>jogarFase3();
   }else{
     document.getElementById('fimSub').textContent=`${OM(0)} caiu no turno ${J.turno}.`;
@@ -7242,7 +7337,7 @@ async function copiaLink(){
   try{await navigator.clipboard.writeText(URL_JOGO);bt.textContent='✓ Copiado';}
   catch(e){const r=document.createRange();r.selectNodeContents(document.getElementById('compartUrl'));const s=getSelection();s.removeAllRanges();s.addRange(r);bt.textContent='Selecionado: copie';}
 }
-function compartNativo(){if(navigator.share)navigator.share({title:'Senhores da Guerra',text:'Jogue Senhores da Guerra no navegador:',url:URL_JOGO}).catch(()=>{});}
+function compartNativo(){if(navigator.share)navigator.share({title:'A Mata Tem Dono: Guerra dos Encantados',text:'Jogue A Mata Tem Dono no navegador:',url:URL_JOGO}).catch(()=>{});}
 function abreAjuda(){fechaMenuJogo();document.getElementById('ajuda').classList.add('aberto');}
 function fechaAjuda(){document.getElementById('ajuda').classList.remove('aberto');}
 function alternaMenuJogo(ev){ev.stopPropagation();document.getElementById('menuJogo').classList.toggle('aberto');}

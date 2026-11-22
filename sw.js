@@ -1,4 +1,4 @@
-// Service worker de "Senhores da Guerra": deixa o jogo instalável e jogável sem internet.
+// Service worker de "A Mata Tem Dono: Guerra dos Encantados": deixa o jogo instalável e jogável sem internet.
 //
 // Estratégia: rede primeiro, cache como reserva (as imagens com ?v=<hash> vêm direto do cache: não mudam).
 //  - com internet, o jogo sempre abre na versão mais nova publicada (e ela vai para o cache);
