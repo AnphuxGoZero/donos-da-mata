@@ -2355,7 +2355,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.93'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.94'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2486,7 +2486,7 @@ function avisoF1(id){if(!id||!J.f1||J.f1.vistos[id])return;J.f1.vistos[id]=true;
 // da outra sem uma ação no meio (andar, atacar, invocar, um saque do Bando). Uma fala que não pôde sair espera a próxima
 // ação; se passarem 2 ações sem ela sair, perdeu o contexto e é descartada. As da abertura, do alerta do camponês, da
 // evolução do Cão e da vitória saem sempre. A da torre é conferida de novo na hora de aparecer.
-const PRIOR_F1=new Set(['intro1','intro2','vitoria','semente','campones','evoluiu','cao','caipora','caiporaChega','sapinho','vilaQueima','incendiou','cinza','alimentou']);
+const PRIOR_F1=new Set(['intro1','intro2','vitoria','semente','campones','evoluiu','cao','caipora','caiporaChega','sapinho','vilaQueima','incendiou','cinza','alimentou','cacaCaes']);
 const acaoF1=()=>{if(J&&J.f1)J.f1.acao=(J.f1.acao||0)+1;};
 const podeFalarF1=id=>PRIOR_F1.has(id)||(J.f1.acao||0)>(J.f1.ultFala??-1);
 function proxAvisoF1(){
@@ -2531,7 +2531,7 @@ async function chegadaF1(){
 // o saque junto da vila atacada. Sem lugar definido, ela fica no meio do mapa (como antes).
 const ANCORA_F1={
   intro1:()=>ehF2()?(J.f1.foco2??J.f1.foco0):+Object.keys(J.vilas).find(k=>J.vilas[k].estrela===false),
-  incendiou:()=>J.f1.vilaK,caiporaChega:()=>J.f1.caiporaK,caipora:()=>J.f1.caiporaK,semente:()=>ehF2()?J.f1.caiporaK:null,vilaQueima:()=>J.f1.vilaK,cinza:()=>J.f1.cinzaK,apagou:()=>J.f1.apagouK,alimentou:()=>J.f1.alimK,cao:()=>J.f1.caoK,
+  incendiou:()=>J.f1.vilaK,cacaCaes:()=>J.f1.cacaK,caiporaChega:()=>J.f1.caiporaK,caipora:()=>J.f1.caiporaK,semente:()=>ehF2()?J.f1.caiporaK:null,vilaQueima:()=>J.f1.vilaK,cinza:()=>J.f1.cinzaK,apagou:()=>J.f1.apagouK,alimentou:()=>J.f1.alimK,cao:()=>J.f1.caoK,
   torreMagica:()=>J.f1.torreK,torre:()=>J.f1.torreFrenteK,
   campones:()=>J.f1.vilaK,vila:()=>J.f1.vilaK,resistiu:()=>J.f1.vilaK};
 // a fala apareceu: se a casa dela está fora da tela (ou colada na borda), a câmera vai até ela, e a casa pisca
@@ -2585,20 +2585,32 @@ async function turnoSelvagem(l){
 }
 // alvo: a vila que já está saqueando; senão, a viva mais perto pelo caminho; sem vilas, o seu mestre
 const fogoDoJogador=()=>J.un.filter(e=>e.lado===0&&!ESP[e.esp].mestre&&ESP[e.esp].el==='fogo');
-// o Cão caçador: o mais perto de uma criatura de Fogo sua (fica o mesmo enquanto estiver vivo); o outro segue nas vilas
+// quem vence a luta: quem precisa de menos golpes de média para derrubar o outro
+const turnosPara=(a,b)=>b.hp/Math.max(.1,danoEsperado(a,b,terEv(b)));
+const venceF2=(a,b)=>turnosPara(a,b)<=turnosPara(b,a);
+// criaturas de Fogo suas que o Cão consegue vencer (as mais fortes que ele, ele evita: elas caçam os Cães)
+const fogoFraco=u=>fogoDoJogador().filter(e=>venceF2(u,e));
+const fogoForte=u=>fogoDoJogador().filter(e=>!venceF2(u,e));
+// o Cão caçador: o mais perto de uma criatura de Fogo sua que ele vence (fica o mesmo enquanto estiver vivo); o outro segue nas vilas
 function cacadorF2(){
-  const fogo=fogoDoJogador(),caes=J.un.filter(x=>x.esp==='caoInfernal'&&x.selvagem);if(!fogo.length||!caes.length)return null;
-  let c=caes.find(x=>x.id===J.f1.cacador);
-  if(!c){let bd=Infinity;for(const x of caes){const d=Math.min(...fogo.map(e=>d6c(x.c,x.r,e.c,e.r)));if(d<bd){bd=d;c=x;}}J.f1.cacador=c.id;}
+  const caes=J.un.filter(x=>x.esp==='caoInfernal'&&x.selvagem);if(!caes.length)return null;
+  let c=caes.find(x=>x.id===J.f1.cacador&&fogoFraco(x).length);
+  if(!c){c=null;let bd=Infinity;for(const x of caes){const f=fogoFraco(x);if(!f.length)continue;const d=Math.min(...f.map(e=>d6c(x.c,x.r,e.c,e.r)));if(d<bd){bd=d;c=x;}}J.f1.cacador=c?.id;}
   return c;
 }
 function alvoSelvagem(u){
   if(ehF2()&&cacadorF2()===u){ // Fase 2: uma criatura de Fogo sua não apaga o fogo; UM dos Cães vai atrás dela
-    const fogo=fogoDoJogador();let b=null,bd=Infinity;
+    const fogo=fogoFraco(u);let b=null,bd=Infinity;
     for(const e of fogo){const d=d6c(u.c,u.r,e.c,e.r);if(d<bd){bd=d;b=e;}}
     return {k:K(b.c,b.r),vila:false};
   }
   const vs=vilasVivas().filter(k=>!vilaAmeacada(k)); // Fase 2: o Cão procura vila que o fogo ainda não alcançou
+  if(ehF2()&&vs.length){ // uma criatura de Fogo mais forte que ele por perto: foge para a vila mais longe dela
+    const forte=fogoForte(u).filter(e=>d6(u,e)<=5);
+    if(forte.length){const perto=k=>Math.min(...forte.map(e=>d6c(e.c,e.r,...DK(k))));
+      let b=null,bs=-Infinity;for(const k of vs){const sc=perto(k)*2-(distanciasAte(k,u.esp).get(K(u.c,u.r))??30)*.5;if(sc>bs){bs=sc;b=k;}}
+      return {k:b,vila:true};}
+  }
   if(vs.length){
     const aqui=vs.find(k=>pertoVila(u,k));if(aqui!=null)return {k:aqui,vila:true};
     let b=vs[0],bd=Infinity;
@@ -2624,6 +2636,7 @@ async function agirSelvagem(u){
     const [c,r]=DK(k);
     for(const e of J.un){
       if(e.lado===u.lado||d6c(c,r,e.c,e.r)>ESP[u.esp].alc)continue;
+      if(ehF2()&&e.lado===0&&ESP[e.esp].el==='fogo'&&!ESP[e.esp].mestre&&!venceF2(u,e))continue; // não provoca quem é mais forte que ele
       const s=Math.min(danoEsperado(u,e,terEv(e)),e.hp)*(ESP[e.esp].mestre?2:1)-falta(k)*2+defTer(u.esp,terEvK(u.lado,k))*5+(ehF2()&&ESP[e.esp].el==='fogo'&&cacadorF2()===u?40:0); // Fase 2: o caçador ataca a criatura de Fogo primeiro
       if(!atk||s>atk.s)atk={s,k,e};
     }
@@ -2818,6 +2831,7 @@ const AVISOS_F2={
   cao:{falas:[{quem:'grr',txt:'GRRRRR!'},{quem:'soldado',txt:'O Cão Infernal chegou! Não deixe ele pôr fogo nas vilas!'}],cao:true},
   incendiou:{falas:['Salve-se quem puder!']},
   caoCaiu1:{falas:['Tchau, cãozinho!']},
+  cacaCaes:{falas:()=>['Fogo não queima fogo.',{quem:'soldado',txt:`Mas ${['filhoteInf','caoInfernal','cerberus'].includes(J.f1.cacaEsp)?'seu Cão':'sua criatura de Fogo'} pode caçar os Cães inimigos!`}]},
   caoCaiu:{falas:['O último Cão Infernal caiu!',{quem:'caipora',txt:'Agora apague o que sobrou do fogo!'}]},
   // o conselho, logo depois de ela se apresentar: ao fechar, a câmera vai até o mestre e o Evoluir pisca no menu dele
   caipora:{falas:[{quem:'caipora',txt:'Seus Girinos nadam bem, mas na terra eles se arrastam...'},{quem:'caipora',txt:'Eles precisam evoluir.'}],bt:'Evoluir'},
@@ -2841,6 +2855,13 @@ function checaCaiporaF2(){
   if(J.f1.caiporaK!=null&&J.turno>=F2_CONSELHO_TURNO&&!J.f1.vistos.caipora){
     if(VEL&&!document.hidden&&J.f1.caiporaFogo!=null){conselhoCaiporaF2();return;}else avisoF1('caipora');}
   golpeCaiporaF2();
+  checaCacaF2();
+}
+function checaCacaF2(){
+  if(J.f1.vistos.cacaCaes||J.turno<2)return;
+  const caes=J.un.filter(x=>x.esp==='caoInfernal'&&x.selvagem);if(!caes.length)return;
+  const e=fogoDoJogador().find(e=>caes.every(c=>!venceF2(c,e)));if(!e)return;
+  J.f1.cacaK=K(e.c,e.r);J.f1.cacaEsp=e.esp;avisoF1('cacaCaes');
 }
 // a Caipora apaga o foguinho dela (só de enfeite); ele volta no turno seguinte, na vez do fogo (renasceFogoCaipora)
 function golpeCaiporaF2(){
