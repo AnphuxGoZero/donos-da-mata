@@ -209,10 +209,14 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 #passar.f1 .f1Cao b{position:absolute;right:90px;top:-6px;font:400 30px "Pirata One",serif;color:#ff8a40;letter-spacing:1px;transform:rotate(-12deg);text-shadow:0 2px 0 #000,0 0 10px #ff5020;white-space:nowrap}
 @keyframes f1Rosna{from{transform:translate(0,0) rotate(-2deg)}to{transform:translate(-2px,1px) rotate(2deg)}}
 #passar.f1 .seq.s3{animation-delay:2.8s}#passar.f1 .seq.s4{animation-delay:4.4s}
+.grrCanto{position:absolute;top:12%;z-index:4;pointer-events:none;font:400 46px "Pirata One",serif;color:#ff8a40;letter-spacing:2px;text-shadow:0 3px 0 #000,0 0 18px #ff5020;animation:grrCanto 1.7s ease-out forwards}
+.grrCanto.dir{right:4%}.grrCanto.esq{left:4%}
+@keyframes grrCanto{0%{opacity:0;transform:scale(.6) rotate(-8deg)}15%{opacity:1;transform:scale(1.1) rotate(-6deg)}25%,35%,45%,55%{transform:scale(1) translate(-3px,1px) rotate(-6deg)}30%,40%,50%,60%{transform:scale(1) translate(3px,-1px) rotate(-6deg)}80%{opacity:1}100%{opacity:0;transform:scale(1) rotate(-6deg)}}
 #passar.f1 .grr{margin:10px 0 4px;text-align:center;font:400 34px "Pirata One",serif;color:#ff8a40;letter-spacing:2px;text-shadow:0 2px 0 #000,0 0 14px #ff5020}
 #passar.f1 .grr.seq{animation:f1Seq .4s ease-out 2.8s forwards,f1Rosna .12s ease-in-out 2.8s 14 alternate}
 #passar.f1.vitoria .linha{opacity:0;animation:f1Seq .5s ease-out 5.2s forwards}
 #passar.f1.sobreEvo{top:auto;bottom:4%;transform:translateX(-50%);z-index:6;pointer-events:none}
+#passar.f1.sobreCena{top:auto;bottom:4%;transform:translateX(-50%);z-index:6} /* por cima da tela de luta */
 #passar.f1.ancora{transform:none} /* posição dada por posAvisoF1 (perto do evento) */
 #passar.f1.baixo{top:auto;bottom:14px;transform:translateX(-50%)}
 #passar.f1 .seq{opacity:0;animation:f1Seq .6s ease-out forwards}#passar.f1 .seq.s1{animation-delay:.2s}#passar.f1 .seq.s2{animation-delay:1.4s}
@@ -226,10 +230,19 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 .chuvaF2 i+i{background:repeating-linear-gradient(105deg,transparent 0 13px,#eef5ff80 13px 14px,transparent 14px 31px);animation-duration:.3s}
 @keyframes chuvaCai{from{transform:translate(0,0)}to{transform:translate(-12px,60px)}}
 @media (hover:hover) and (pointer:fine){#passar.f1 .rosto{width:76px;height:76px}} /* PC: rostos maiores */
+#passar.f1 .rosto.oculto{visibility:hidden;height:0}
+#passar.f1 .fala:has(.rosto.oculto){margin-top:2px}
 #passar.f1 .rosto.caipora{background-size:100% 100%;background-color:#2c4a2a;border-color:#7fc36a}
 #passar.f1 .rosto.soldado{background-color:#2f3a55;border-color:#8fa6d8}
 #passar.f1 .balao{position:relative;flex:1;background:#f4ead0;color:#2b2118;border-radius:10px;padding:8px 11px;font-size:14px;line-height:1.35;font-weight:600}
 #passar.f1 .balao::before{content:'';position:absolute;left:-7px;top:50%;margin-top:-6px;border:6px solid transparent;border-right:7px solid #f4ead0;border-left:0}
+/* conversa: o balão tem o tamanho da fala e encosta no rosto; quem fala em seguida fica do outro lado */
+#passar.f1 .balao{flex:0 1 auto;text-align:left}
+#passar.f1 .fala.dir{flex-direction:row-reverse}
+#passar.f1 .baloes{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0}
+#passar.f1 .fala.dir .baloes{align-items:flex-end}
+#passar.f1 .baloes .balao+.balao::before{display:none} /* a mesma pessoa continua: sem o bico */
+#passar.f1 .fala.dir .balao::before{left:auto;right:-7px;border-right:0;border-left:7px solid #f4ead0}
 #passar.f1.intro .linha{opacity:0;animation:f1Seq .5s ease-out 2.3s forwards}
 @keyframes f1Aparece{from{opacity:0}to{opacity:1}} /* só opacidade: não mexe no transform de quem a usa */
 @keyframes f1Seq{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
@@ -932,7 +945,9 @@ function limitaCam(){CAM.x=limX(CAM.x);CAM.y=limY(CAM.y);}
 const paraTela=(x,y)=>[(x-CAM.x)*CAM.z+TW/2,(y-CAM.y)*CAM.z+TH/2];
 const paraMundo=(x,y)=>[(x-TW/2)/CAM.z+CAM.x,(y-TH/2)/CAM.z+CAM.y];
 function seguir(u,centrar=false){if(!u)return;CAM.alvo=u;CAM.centrar=centrar;CAM.mao=false;}
-function posUn(u){if(u.px!=null)return [u.px,u.py];let [x,y]=centro(u.c,u.r);if(u.anim){const t=Math.min(1,(performance.now()-u.anim.t0)/u.anim.dur);x=u.anim.x0+(x-u.anim.x0)*t;y=u.anim.y0+(y-u.anim.y0)*t;}return [x,y];}
+function posUn(u){if(u.px!=null)return [u.px,u.py];let [x,y]=centro(u.c,u.r);if(u.anim){const t=Math.min(1,(performance.now()-u.anim.t0)/u.anim.dur);x=u.anim.x0+(x-u.anim.x0)*t;y=u.anim.y0+(y-u.anim.y0)*t-pulo(u.anim,t);}return [x,y];}
+// altura do pulo: um arco só (arco) ou vários saltos seguidos (pulos)
+const pulo=(a,t)=>a.arco?Math.abs(Math.sin(t*Math.PI*(a.pulos||1)))*a.arco:0;
 function atualizaCam(now){
   const dt=Math.min(.05,(now-(CAM.t||now))/1000);CAM.t=now;
   if(J.intro){camIntro(now);if(J.intro)return;}
@@ -1504,7 +1519,7 @@ const EVO_HJ={
 };
 // as duas formas que o histórico mais favorece (empate: a ordem dos ramos decide, para não mudar a cada clique)
 function opcoesEvo(l,base){
-  if(ehF2()&&base==='girino')return [{para:'sapinho',pts:1,motivo:'Conselho da Caipora: salta bem em terra firme',i:0}];
+  if(ehF2()&&base==='girino')return [{para:'sapinho',pts:1,motivo:'',i:0}];
   const R=RAMOS[base],p=EVO_HJ[base](hj(l));
   return R.para.map((para,i)=>({para,pts:p[i][0],motivo:p[i][0]>0?p[i][1]:'Ainda sem histórico para este caminho',i})).sort((a,b)=>b.pts-a.pts||a.i-b.i).slice(0,2);
 }
@@ -2339,7 +2354,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.89'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.90'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2470,7 +2485,7 @@ function avisoF1(id){if(!id||!J.f1||J.f1.vistos[id])return;J.f1.vistos[id]=true;
 // da outra sem uma ação no meio (andar, atacar, invocar, um saque do Bando). Uma fala que não pôde sair espera a próxima
 // ação; se passarem 2 ações sem ela sair, perdeu o contexto e é descartada. As da abertura, do alerta do camponês, da
 // evolução do Cão e da vitória saem sempre. A da torre é conferida de novo na hora de aparecer.
-const PRIOR_F1=new Set(['intro1','intro2','vitoria','semente','campones','evoluiu','cao','caipora','caiporaChega','sapinho','vilaQueima','incendiou']);
+const PRIOR_F1=new Set(['intro1','intro2','vitoria','semente','campones','evoluiu','cao','caipora','caiporaChega','sapinho','vilaQueima','incendiou','cinza','alimentou']);
 const acaoF1=()=>{if(J&&J.f1)J.f1.acao=(J.f1.acao||0)+1;};
 const podeFalarF1=id=>PRIOR_F1.has(id)||(J.f1.acao||0)>(J.f1.ultFala??-1);
 function proxAvisoF1(){
@@ -2658,7 +2673,7 @@ async function saqueiaVila(u){
 // Estrelas: vencer; todas as vilas de pé; ao menos F2_MATA_ESTRELA da mata salva.
 // Os camponeses vêm da Fase 1 (campanha): quem sobreviveu lá é quem mora nestas vilas.
 const F2_CHAVE='senhoresDoVeu.fase2';
-const F2_QUEIMA=4,F2_MAX_CHAMAS=8,F2_CAIPORA_TURNO=3,F2_CONSELHO_TURNO=4,F2_XP=0.35,F2_CAO=[12,2],F2_CAO2=[5,4],F2_ALIMENTA_XP=8,F2_ALIMENTA_HP=3,F2_MATA_ESTRELA=0.6;
+const F2_QUEIMA=4,F2_MAX_CHAMAS=8,F2_CAIPORA_TURNO=3,F2_CONSELHO_TURNO=5,F2_XP=0.35,F2_CAO=[12,2],F2_CAO2=[5,4],F2_ALIMENTA_XP=8,F2_ALIMENTA_HP=3,F2_MATA_ESTRELA=0.6;
 const ehF2=()=>!!(J&&J.f1&&J.f1.n===2);
 function fase2Info(){try{return JSON.parse(localStorage.getItem(F2_CHAVE))||{};}catch(e){return {};}}
 // A Fase 2 acontece no MESMO vale da Fase 1 (MAPAS_F1): o Cão entra por onde os Filhotes entraram, e as vilas
@@ -2722,18 +2737,22 @@ async function aberturaF2(semAnim){
   J.ocupado=true;J.f1.chegando=true;
   const mira=(x,y)=>{CAM.alvo={fixo:true,px:x,py:y};CAM.centrar=true;CAM.mao=false;};
   // o 2º Cão espera fora da tela (a câmera nunca mostra de onde ele vem)
-  const [c2,...resto]=caes.slice(1),fora2=c2?(()=>{const [x,y]=centro(c2.u.c,c2.u.r);return {x0:x-W*7,y0:y};})():null;
+  const [c2,...resto]=caes.slice(1),fora2=c2?(()=>{const [x,y]=centro(c2.u.c,c2.u.r);return {x0:x,y0:y-R*11};})():null; // vem de cima, de fora da tela
   if(c2)c2.u.anim={...fora2,t0:performance.now(),dur:1e9};
   const ok=()=>J===jogo&&!J.fim;
-  // 1º Cão
-  {const {u,focos}=caes[0];const [x,y]=centro(u.c,u.r);mira(x,y);await dorme(900);if(!ok())return;
-    flutua(u,'GRRR!','#ff8a50');atualiza();await dorme(800);if(!ok())return;
+  // 1º Cão: um GRRR no canto da tela anuncia; ele chega aos saltos, de fora da tela, e solta o fogo
+  {const {u,focos}=caes[0];const [x,y]=centro(u.c,u.r),lado=u.c<COLS/2?-1:1,fora1={x0:x+lado*W*7,y0:y};
+    u.anim={...fora1,t0:performance.now(),dur:1e9}; // esperando fora da tela
+    mira(x,y);await dorme(900);if(!ok())return;
+    grrCanto(lado);await dorme(1300);if(!ok())return;
+    u.dir=-lado;u.anim={...fora1,t0:performance.now(),dur:1500,arco:R*.9,pulos:3};await dorme(1550);if(!ok())return;
+    u.anim=null;atualiza();await dorme(400);if(!ok())return;
     for(const k of focos){await cospeFogo(u,k);if(!ok())return;}}
   await dorme(500);if(!ok())return;
   // 2º Cão: a câmera vai até a casa dele; ele entra correndo, rosna e cospe fogo
   if(c2){
     const [x,y]=centro(c2.u.c,c2.u.r);mira(x,y);await dorme(1000);if(!ok())return;
-    c2.u.dir=1;c2.u.anim={...fora2,t0:performance.now(),dur:1300};await dorme(1350);if(!ok())return;
+    c2.u.anim={...fora2,t0:performance.now(),dur:1500,arco:R*.9,pulos:3};await dorme(1550);if(!ok())return;
     c2.u.anim=null;flutua(c2.u,'GRRR!','#ff8a50');atualiza();await dorme(800);if(!ok())return;
     for(const k of c2.focos){await cospeFogo(c2.u,k);if(!ok())return;}
     await dorme(500);if(!ok())return;
@@ -2741,14 +2760,26 @@ async function aberturaF2(semAnim){
   for(const x of resto)for(const k of x.focos)criaChama(k);
   J.f1.chegando=false;J.ocupado=false;atualiza(); // vem a fala "Fogo!"; ao fechar, a câmera vai até o mestre
 }
+// um GRRR no canto da tela, do lado de onde o Cão vem (ele ainda não aparece)
+function grrCanto(lado){
+  const m=document.getElementById('mapa'),d=document.createElement('div');
+  d.className='grrCanto '+(lado<0?'esq':'dir');d.textContent='GRRRR!';m.appendChild(d);
+  setTimeout(()=>d.remove(),1700);
+}
 // o Cão cospe uma bola de fogo que cai na floresta e vira chama
 async function cospeFogo(cao,k){
-  const [x1,y1]=centro(...DK(k));viraPara(cao,x1);
-  const [cx,cy]=centro(cao.c,cao.r),x0=cx+cao.dir*R*.45,y0=cy-R*.35; // sai da boca
-  fx.push({bola:true,x0,y0,x:x1,y:y1,t0:performance.now(),dur:550});atualiza();
-  await dorme(560);if(J.fim)return;
-  const ch=criaChama(k);flutua(ch,'Fogo!','#ff8a50');piscaHex(k,'#ff7a30',800);atualiza();
+  if(J.fim)return;
+  const ch=await lancaFogo(cao,k);flutua(ch,'Fogo!','#ff8a50');piscaHex(k,'#ff7a30',800);atualiza();
   await dorme(450);
+}
+// a bola de fogo sai das costas do Cão e cai na casa k, onde vira chama
+async function lancaFogo(cao,k){
+  if(VEL&&!document.hidden){
+    const [x1,y1]=centro(...DK(k));viraPara(cao,x1);
+    const [cx,cy]=centro(cao.c,cao.r),x0=cx-cao.dir*R*.3,y0=cy-R*.6; // sai das costas
+    fx.push({bola:true,x0,y0,x:x1,y:y1,t0:performance.now(),dur:600});cao.hit=performance.now();atualiza();
+    await dorme(610);}
+  return criaChama(k);
 }
 const chamaEm=k=>ehF2()&&J.un.some(x=>x.chama&&K(x.c,x.r)===k);
 function criaChama(k,esp='focoLabareda'){
@@ -2763,13 +2794,13 @@ const avisosF=()=>ehF2()?AVISOS_F2:AVISOS_F1;
 const AVISOS_F2={
   intro1:{tit:'Fase 2 · A Mata em Chamas',falas:['Fogo! A mata está pegando fogo!'],bt:'Começar'},
   caiporaChega:{falas:[{quem:'caipora',txt:'Sou Caipora, guardião desta mata.'},{quem:'caipora',txt:'Me ajude a salvá-la!'}],bt:'Continuar',volta:true},
-  alimentou:{falas:['Eita, o fogo aumentou o fogo!','Acho melhor usar água pra apagar o fogo!']},
+  alimentou:{falas:['Eita, o fogo aumentou o fogo!','Acho melhor usar água!']},
   apagou:{falas:['Apagou! A Água acaba com o fogo!',{quem:'caipora',txt:'Essa parte da mata foi salva.'}]},
   cinza:{falas:['Essa parte da mata queimou toda...','Rápido, antes que o fogo chegue nas casas!']},
   vilaQueima:{falas:['A vila está pegando fogo!','Um camponês não conseguiu fugir...']},
   vila:{falas:['A vila virou cinzas!','Não sobrou ninguém...']},
   cao:{falas:[{quem:'grr',txt:'GRRRRR!'},{quem:'soldado',txt:'O Cão Infernal chegou! Não deixe ele pôr fogo nas vilas!'}],cao:true},
-  incendiou:{falas:['O Cão pôs fogo na vila!']},
+  incendiou:{falas:['Salve-se quem puder!']},
   caoCaiu1:{falas:['Um Cão Infernal caiu!',{quem:'soldado',txt:'Ainda falta o outro!'}]},
   caoCaiu:{falas:['O último Cão Infernal caiu!',{quem:'caipora',txt:'Agora apague o que sobrou do fogo!'}]},
   // o conselho, logo depois de ela se apresentar: ao fechar, a câmera vai até o mestre e o Evoluir pisca no menu dele
@@ -2795,13 +2826,17 @@ function checaCaiporaF2(){
   if(J.f1.caiporaK!=null&&J.turno>=F2_CONSELHO_TURNO&&!J.f1.vistos.caipora)avisoF1('caipora');
 }
 async function chegaCaiporaF2(k){
-  const jogo=J,[x,y]=centro(...DK(k)),lado=DK(k)[0]<COLS/2?-1:1; // vem do lado da borda mais perto
+  const jogo=J,[x,y]=centro(...DK(k));
+  // sai de dentro da mata: da floresta vizinha com mais floresta em volta
+  const fl=vizinhos(...DK(k)).filter(([c,r])=>J.ter[K(c,r)]==='flor'&&!chamaEm(K(c,r)))
+    .sort((a,b)=>vizinhos(...b).filter(([c,r])=>J.ter[K(c,r)]==='flor').length-vizinhos(...a).filter(([c,r])=>J.ter[K(c,r)]==='flor').length)[0];
+  const [ox,oy]=fl?centro(...fl):[x,y];
   J.ocupado=true;J.f1.chegando=true;
-  J.f1.caiporaAnim={x0:x+lado*W*7,y0:y,t0:performance.now(),dur:1e9}; // esperando fora da tela
+  J.f1.caiporaAnim={x0:ox,y0:oy,t0:performance.now(),dur:1e9,some:true}; // escondida na mata
   await dorme(50);if(J!==jogo)return;
   CAM.alvo={fixo:true,px:x,py:y};CAM.centrar=true;CAM.mao=false;
   await dorme(1000);if(J!==jogo)return;
-  J.f1.caiporaAnim={x0:x+lado*W*7,y0:y,t0:performance.now(),dur:1400};
+  J.f1.caiporaAnim={x0:ox,y0:oy,t0:performance.now(),dur:1300,some:true};
   await dorme(1450);if(J!==jogo)return;
   J.f1.caiporaAnim=null;piscaHex(k,'#6ee08a',900);atualiza();await dorme(500);if(J!==jogo)return;
   J.f1.chegando=false;
@@ -2820,9 +2855,10 @@ function casaCaipora(){
 function desenhaCaipora(){
   const k=J.f1.caiporaK,si=ORDEM_SPR.indexOf('caipora'),src=atlasCor||atlasTime[0];if(k==null||si<0||!src)return;
   let [x,y]=centro(...DK(k));const s=TAM_SPR[2];
-  const a=J.f1.caiporaAnim;if(a){const t=Math.min(1,(performance.now()-a.t0)/a.dur);x=a.x0+(x-a.x0)*t;y=a.y0+(y-a.y0)*t;} // entrando de fora da tela
+  const a=J.f1.caiporaAnim;let al=1;if(a){const t=Math.min(1,(performance.now()-a.t0)/a.dur);x=a.x0+(x-a.x0)*t;y=a.y0+(y-a.y0)*t;if(a.some)al=Math.min(1,t*2.5);} // saindo de dentro da mata
+  if(al<=0)return;
   const base=y+R*0.5;
-  ctx.save();ctx.fillStyle='#2f7a3a90';ctx.strokeStyle='#7fc36a';ctx.lineWidth=2;
+  ctx.save();ctx.globalAlpha=al;ctx.fillStyle='#2f7a3a90';ctx.strokeStyle='#7fc36a';ctx.lineWidth=2;
   ctx.beginPath();ctx.ellipse(x,base-2,BASE_RX[2],5.5,0,0,Math.PI*2);ctx.fill();ctx.stroke();
   ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';celSpr(ctx,src,si,x-s/2,base-s,s);ctx.restore();
 }
@@ -2845,12 +2881,18 @@ function presenteSapinhoF2(){
 }
 // Fogo atacando chama: em vez de dano, a chama cresce (cura e XP); a evolução vem no fim do ataque (checaEvo)
 async function alimentaChama(a,d){
-  const n=golpesDe(a);let xp=0;
-  for(let i=0;i<n;i++){d.xp+=F2_ALIMENTA_XP;xp+=F2_ALIMENTA_XP;d.hp=Math.min(ESP[d.esp].hp,d.hp+F2_ALIMENTA_HP);}
-  flutua(d,'O fogo cresce!','#ffb070');
-  if(CENA)await cenaAviso(d,'Fogo não apaga fogo: a chama cresce!');else await dorme(300);
+  const n=golpesDe(a);
+  for(let i=0;i<n;i++){
+    const antes=d.hp;d.xp+=F2_ALIMENTA_XP;d.hp=Math.min(ESP[d.esp].hp,d.hp+F2_ALIMENTA_HP);
+    d.hit=performance.now();flutua(d,'+'+(d.hp-antes),'#ffb070');
+    if(CENA)await cenaAlimenta(a,d,d.hp-antes);else await dorme(170);
+  }
   log(`${nome(a)} atacou ${nome(d)}, mas fogo não apaga fogo: a chama cresceu.`);
-  J.f1.alimK=K(d.c,d.r);avisoF1('alimentou');
+  J.f1.alimK=K(d.c,d.r);
+  if(CENA&&VEL&&!J.f1.vistos.alimentou){ // o camponês fala por cima da tela de luta
+    J.f1.vistos.alimentou=true;J.f1.sobreCena='alimentou';J.f1.fila.unshift('alimentou');atualiza();
+    await new Promise(r=>{J.f1.solta=r;});if(J&&J.f1)J.f1.sobreCena=null;
+  }else avisoF1('alimentou');
   if(ESP[d.esp].evo&&d.xp>=ESP[d.esp].xp)J.f1.evoNome=ESP[ESP[d.esp].evo].nome;
 }
 function caiuF2(u){
@@ -2891,7 +2933,7 @@ async function chegaCao(){
 async function caoIncendeia(u){
   if(!J.un.includes(u)||J.fim)return;
   const k=vilasVivas().find(k=>pertoVila(u,k)&&!unidadeEm(...DK(k)));if(k==null)return;
-  const ch=criaChama(k);J.f1.vilaK=k;
+  const ch=await lancaFogo(u,k);J.f1.vilaK=k;
   flutua(ch,'Fogo!','#ff8a50');piscaHex(k,'#ff5b52',900);log(`🔥 ${nome(u)} pôs fogo numa vila!`);
   atualiza();await dorme(500);await avisoJaF1('incendiou');
 }
@@ -2917,7 +2959,7 @@ async function turnoFogo(l){
     v.n--;J.f1.vilaK=k;
     const [x,y]=centro(...DK(k));fx.push({txt:'−1 camponês',x,y:y-6,t0:performance.now(),cor:'#ff8a80',dur:1400});piscaHex(k,'#ff5b52',900);
     log(`🔥 A vila está em chamas: um camponês morreu${v.n?` (restam ${v.n})`:''}.`);
-    await focar(...DK(k));atualiza();await dorme(500);await avisoJaF1('vilaQueima');
+    await focar(...DK(k));atualiza();await dorme(700);
     if(!v.n){
       apagaChama(u);log('🔥 Uma vila virou cinzas.');
       if(!vilasVivas().length){log('Todas as vilas viraram cinzas.');fimDeJogo(1,'vilas');return;}
@@ -2928,9 +2970,16 @@ async function turnoFogo(l){
   for(const u of J.un.filter(x=>x.chama)){
     u.idade=(u.idade||0)+1;const k=K(u.c,u.r);
     if(u.esp==='focoLabareda'&&!J.vilas[k]&&u.idade>=F2_QUEIMA){
+      const primeira=!J.f1.vistos.cinza&&VEL&&!document.hidden;
+      if(primeira){ // a primeira vez a câmera mostra: a chama treme, a fumaça sobe e a mata escurece
+        await focar(u.c,u.r);if(J.fim)return;
+        u.balanca=performance.now();piscaHex(k,'#ff7a30',900);atualiza();await dorme(600);
+        const [fx0,fy0]=centro(...DK(k));for(let i=0;i<6;i++)fx.push({fumaca:true,x:fx0+(i%3-1)*R*.45,y:fy0-R*.1,t0:performance.now()+i*110,dur:1300});
+        await dorme(300);}
       J.ter[k]='plan';J.f1.queim.push(k);J.terV=(J.terV||0)+1;J.f1.cinzas++;J.f1.cinzaK=k;apagaChama(u);
       const [x,y]=centro(...DK(k));fx.push({txt:'Queimou',x,y:y-6,t0:performance.now(),cor:'#b8b0a8',dur:1400});
-      log('A floresta queimou até o fim.');avisoF1('cinza');
+      log('A floresta queimou até o fim.');
+      if(primeira){piscaHex(k,'#b8b0a8',900);atualiza();await dorme(1100);if(J.fim)return;await avisoJaF1('cinza');}else avisoF1('cinza');
     }
   }
   atualiza();
@@ -4890,7 +4939,7 @@ const toqueCena=()=>{if(!CENA)return;if(CENA.fechar){if(performance.now()-CENA.e
 CV_CENA.addEventListener('click',toqueCena);
 // com a cena aberta, um clique em qualquer lugar da tela também continua (e não chega aos botões de baixo dela)
 // exceção: o ⏩ Pular vez dos rivais funciona mesmo com a cena aberta (e encerra a cena na hora)
-addEventListener('click',ev=>{if(!CENA||ev.target===CV_CENA)return;ev.stopPropagation();ev.preventDefault();
+addEventListener('click',ev=>{if(!CENA||ev.target===CV_CENA||ev.target.closest?.('#passar.sobreCena'))return;ev.stopPropagation(); // a fala por cima da luta tem botão próprioev.preventDefault();
   if(ev.target.closest&&ev.target.closest('#btFim')&&J&&J.vez!==0&&!J.fim){pularRival();return;}toqueCena();},true);
 const fatorCena=()=>CENA&&CENA.rapido?0.2:1;
 const esperaC=ms=>dorme(ms*fatorCena()/RITMO_IA); // as cenas de combate não ficam mais lentas no começo
@@ -4937,6 +4986,21 @@ async function cenaGolpe(a,d,acertou,dano){
     await tweenC(280,t=>pd.dx=lado*34*Math.sin(t*Math.PI));       // esquiva
   }
   await tweenC(170,t=>pa.dx=lado*80*(1-t));                     // volta
+  await esperaC(110);
+}
+// golpe de Fogo numa chama: a mesma investida, mas a barra de vida da chama sobe
+async function cenaAlimenta(a,d,ganho){
+  const pa=CENA.pose.get(a),pd=CENA.pose.get(d);if(!pa||!pd)return;
+  const lado=a===CENA.esq?1:-1;
+  await tweenC(150,t=>pa.dx=lado*80*t*t);
+  const [x,y]=posCena(d),agora=performance.now();
+  CENA.efe.push({x,y:y-90,t0:agora,cor:'#ffb070',lado,elem:false});
+  CENA.golpes.get(a)?.push(true);
+  CENA.txt.push({txt:'+'+ganho,x,y:y-170,cor:'#ffb070',t0:agora,tam:46});
+  const de=CENA.hp.get(d),para=d.hp;
+  tweenC(320,t=>CENA.hp.set(d,de+(para-de)*t)); // barra de vida sobe
+  await tweenC(280,t=>{pd.tre=1-t;pd.luz=1-t;});
+  await tweenC(170,t=>pa.dx=lado*80*(1-t));
   await esperaC(110);
 }
 async function cenaQueda(u){
@@ -6229,7 +6293,7 @@ function seloSemMana(u,x,y){
 }
 function desenhaUnidade(u,now){
   let [x,y]=centro(u.c,u.r);
-  if(u.anim){const t=Math.min(1,(now-u.anim.t0)/u.anim.dur);x=u.anim.x0+(x-u.anim.x0)*t;y=u.anim.y0+(y-u.anim.y0)*t;if(u.anim.arco)y-=Math.sin(t*Math.PI)*u.anim.arco;}
+  if(u.anim){const t=Math.min(1,(now-u.anim.t0)/u.anim.dur);x=u.anim.x0+(x-u.anim.x0)*t;y=u.anim.y0+(y-u.anim.y0)*t-pulo(u.anim,t);}
   if(u.hit&&now>=u.hit&&now-u.hit<260)x+=Math.sin((now-u.hit)/14)*3;
   if(u.balanca&&now-u.balanca<520)x+=Math.sin((now-u.balanca)/40)*3.5*(1-(now-u.balanca)/520); // a chama balança antes de soltar um foguinho
   const e=ESP[u.esp],rad=11+e.tier*2+(e.mestre?1:0);
@@ -6362,6 +6426,9 @@ function desenha(now){
     const f=fx[i],t=(now-f.t0)/f.dur;
     if(t>1){fx.splice(i,1);continue;}
     if(t<0)continue;
+    if(f.fumaca){ // fumaça em blocos subindo
+      const rr=R*(.12+t*.28);ctx.save();ctx.globalAlpha=.7*(1-t);ctx.fillStyle=t<.3?'#5a504a':'#8f8a84';
+      ctx.fillRect(Math.round(f.x-rr+Math.sin(t*6)*3),Math.round(f.y-t*R*1.6-rr),Math.round(rr*2),Math.round(rr*2));ctx.restore();continue;}
     if(f.bola){ // bola de fogo cuspida pelo Cão: arco até a floresta, com brasas ficando para trás
       const pt=q=>[f.x0+(f.x-f.x0)*q,f.y0+(f.y-f.y0)*q-Math.sin(q*Math.PI)*R*1.1];
       ctx.save();
@@ -6835,7 +6902,7 @@ function menus(){
       ${ehF2()?'':`<div class="vez" style="margin-top:4px">O que seu exército mais viveu na partida abriu estes dois caminhos. Custa ${EVO_CUSTO} MP e não dá para trocar depois.</div>`}<div class="invG" style="grid-template-columns:repeat(2,1fr)">`;
     for(const o of ops){
       const e=ESP[o.para];
-      h+=`<button onclick="escolheEvo('${o.para}')" ${ok?'':'disabled'}${ehF2()?' class="pisca"':''}><b class="custo">${e.custo}</b>${iconeSpr(o.para,56,'cor')}<span class="nm">${e.nome}</span><small>Vida ${e.hp} · Atq ${e.atk} · Def ${e.def} · Mov ${e.mov}</small><small style="color:#f2c14e;margin-top:3px">${o.motivo}</small></button>`;
+      h+=`<button onclick="escolheEvo('${o.para}')" ${ok?'':'disabled'}${ehF2()?' class="pisca"':''}><b class="custo">${e.custo}</b>${iconeSpr(o.para,56,'cor')}<span class="nm">${e.nome}</span><small>Vida ${e.hp} · Atq ${e.atk} · Def ${e.def} · Mov ${e.mov}</small>${o.motivo?`<small style="color:#f2c14e;margin-top:3px">${o.motivo}</small>`:''}</button>`;
     }
     h+=`</div><button onclick="J.evo={fase:'lista'};atualiza()">← Voltar</button>`;
     poeHTML(mm,h);mm.classList.add('grade');mm.style.display='block';posMenu(mm,m);
@@ -6928,7 +6995,7 @@ function menus(){
   // A caixa do meio do mapa serve ao aviso de evolução do começo do turno (espera a abertura e os combates)
   const evoAviso=minha&&J.avisoEvo&&!J.intro&&!CENA&&podeEvoluir(0)&&!J.evo&&!J.mg&&!J.fz&&J.invHex==null&&!J.invocando;
   const idF1=J.f1&&!J.intro?proxAvisoF1():null;
-  const f1Aviso=idF1&&(J.f1.sobreEvo&&idF1==='evoluiu'||!CENA&&(J.f1.forcar||minha&&!J.ocupado&&!J.fim)); // sobreEvo: por cima da tela de evolução // forcar: aviso na hora, na vez do Bando
+  const f1Aviso=idF1&&(J.f1.sobreEvo&&idF1==='evoluiu'||J.f1.sobreCena===idF1||!CENA&&(J.f1.forcar||minha&&!J.ocupado&&!J.fim)); // sobreEvo: por cima da tela de evolução // forcar: aviso na hora, na vez do Bando
   if(f1Aviso){
     const id=idF1,A=avisosF()[id];
     let corpo;
@@ -6937,14 +7004,25 @@ function menus(){
       const falas=(typeof A.falas==='function'?A.falas():A.falas).map(f=>typeof f==='string'?{quem:'campones',txt:f}:f);
       const rs=J.f1.rostos[id]||(J.f1.rostos[id]=(()=>{const usados={};return falas.map(f=>{if(!ROSTOS_F1[f.quem])return 0;const R=ROSTOS_F1[f.quem],u=usados[f.quem]||(usados[f.quem]=new Set());
         let i;do i=Math.random()*R.n|0;while(u.has(i)&&u.size<R.n);u.add(i);return i;});})());
-      corpo=`${A.tit?`<div class="evoTit">${A.tit}</div>`:''}${falas.map((f,i)=>{if(f.quem==='grr')return `<div class="grr seq s${i+1}">${f.txt}</div>`;if(f.quem==='img')return `<div class="presenteF2 seq s${i+1}">${iconeSpr(f.esp,84,'cor')}</div>`;const R=ROSTOS_F1[f.quem];
-        return `<div class="fala seq s${i+1}"><span class="rosto ${f.quem}" style="background-image:url(${R.img});background-position:${R.n>1?rs[i]/(R.n-1)*100:0}% 0"></span><div class="balao">${f.txt}</div></div>`;}).join('')}`;
+      let lado=1,antes=null;const lados=falas.map((f,i)=>{if(!ROSTOS_F1[f.quem])return 0;const mesmo=ROSTOS_F1[f.quem].n===1&&antes===f.quem;if(!mesmo)lado=-lado;antes=f.quem;return lado;}); // um de cada lado, como numa conversa
+      // a mesma pessoa (de rosto único, como a Caipora) falando de novo: o balão entra no mesmo bloco, junto do primeiro
+      let h='',aberto=false;const fecha=()=>{if(aberto){h+='</div></div>';aberto=false;}};
+      falas.forEach((f,i)=>{
+        if(f.quem==='grr'){fecha();h+=`<div class="grr seq s${i+1}">${f.txt}</div>`;return;}
+        if(f.quem==='img'){fecha();h+=`<div class="presenteF2 seq s${i+1}">${iconeSpr(f.esp,84,'cor')}</div>`;return;}
+        const R=ROSTOS_F1[f.quem],mesmo=aberto&&R.n===1&&falas[i-1].quem===f.quem;
+        if(mesmo){h+=`<div class="balao seq s${i+1}">${f.txt}</div>`;return;}
+        fecha();aberto=true;
+        h+=`<div class="fala${lados[i]>0?' dir':''} seq s${i+1}"><span class="rosto ${f.quem}" style="background-image:url(${R.img});background-position:${R.n>1?rs[i]/(R.n-1)*100:0}% 0"></span><div class="baloes"><div class="balao">${f.txt}</div>`;
+      });
+      fecha();
+      corpo=`${A.tit?`<div class="evoTit">${A.tit}</div>`:''}${h}`;
     }else corpo=`<div class="evoTit">${A[0]}</div><div class="evoTx">${A[1]}</div>`;
     if(A.cao)corpo+=`<div class="f1Cao" aria-hidden="true"><span class="cara"></span><b>GRRRR!</b></div>`;
     const sobre=J.f1.sobreEvo&&id==='evoluiu'; // em cima da cena de evolução: sem botão, o toque vai para a cena
     poeHTML(ps,`${corpo}${sobre?'':`<div class="linha"><button class="btEvo" onclick="fechaAvisoF1()">${(A.bt||A[2])||'Entendi'}</button></div>`}`);
-    ps.className='flut evo f1'+(id.startsWith('intro')?' intro':'')+''+(id==='vitoria'?' vitoria':'')+(J.f1.sobreEvo&&id==='evoluiu'?' sobreEvo':'');ps.style.display='block';
-    {const anc=ANCORA_F1[id]&&!(J.f1.sobreEvo&&id==='evoluiu');ps.classList.toggle('ancora',!!anc);
+    ps.className='flut evo f1'+(id.startsWith('intro')?' intro':'')+''+(id==='vitoria'?' vitoria':'')+(J.f1.sobreEvo&&id==='evoluiu'?' sobreEvo':'')+(J.f1.sobreCena===id?' sobreCena':'');ps.style.display='block';
+    {const anc=ANCORA_F1[id]&&!(J.f1.sobreEvo&&id==='evoluiu')&&J.f1.sobreCena!==id;ps.classList.toggle('ancora',!!anc);
      if(anc&&ps.dataset.ancora!==id){ps.dataset.ancora=id;mostraAncoraF1(id);requestAnimationFrame(posAvisoF1);}else if(!anc){ps.dataset.ancora='';ps.style.left=ps.style.top='';}} // a caixa perto do evento // o alarme fica embaixo, para não cobrir os Filhotes
   }else if(evoAviso){
     poeHTML(ps,`<div class="evoTit">▲ Evolução disponível</div><div class="evoTx">Sua reserva chegou a ${EVO_CUSTO} MP. Escolha uma criatura para evoluir permanentemente.</div><div class="linha"><button onclick="fechaAvisoEvo()">Agora não</button><button class="btEvo" onclick="avisoEvoluir()">▲ Evoluir</button></div>`);
