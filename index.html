@@ -2355,7 +2355,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.92'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.93'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2598,7 +2598,7 @@ function alvoSelvagem(u){
     for(const e of fogo){const d=d6c(u.c,u.r,e.c,e.r);if(d<bd){bd=d;b=e;}}
     return {k:K(b.c,b.r),vila:false};
   }
-  const vs=vilasVivas().filter(k=>!chamaEm(k)); // Fase 2: o Cão procura vila que ainda não pegou fogo
+  const vs=vilasVivas().filter(k=>!vilaAmeacada(k)); // Fase 2: o Cão procura vila que o fogo ainda não alcançou
   if(vs.length){
     const aqui=vs.find(k=>pertoVila(u,k));if(aqui!=null)return {k:aqui,vila:true};
     let b=vs[0],bd=Infinity;
@@ -2817,7 +2817,7 @@ const AVISOS_F2={
   vila:{falas:['A vila virou cinzas!','Não sobrou ninguém...']},
   cao:{falas:[{quem:'grr',txt:'GRRRRR!'},{quem:'soldado',txt:'O Cão Infernal chegou! Não deixe ele pôr fogo nas vilas!'}],cao:true},
   incendiou:{falas:['Salve-se quem puder!']},
-  caoCaiu1:{falas:['Um Cão Infernal caiu!',{quem:'soldado',txt:'Ainda falta o outro!'}]},
+  caoCaiu1:{falas:['Tchau, cãozinho!']},
   caoCaiu:{falas:['O último Cão Infernal caiu!',{quem:'caipora',txt:'Agora apague o que sobrou do fogo!'}]},
   // o conselho, logo depois de ela se apresentar: ao fechar, a câmera vai até o mestre e o Evoluir pisca no menu dele
   caipora:{falas:[{quem:'caipora',txt:'Seus Girinos nadam bem, mas na terra eles se arrastam...'},{quem:'caipora',txt:'Eles precisam evoluir.'}],bt:'Evoluir'},
@@ -3031,13 +3031,22 @@ async function chegaCao(){
   await avisoJaF1('cao');
 }
 // o Cão, sem atacar ninguém, põe fogo na vila ao lado (se ninguém estiver em cima dela)
+// o Cão, ao lado de uma vila, não queima a vila: põe fogo na mata em volta dela (o fogo chega nas casas depois, ao se espalhar)
 async function caoIncendeia(u){
   if(!J.un.includes(u)||J.fim)return;
-  const k=vilasVivas().find(k=>pertoVila(u,k)&&!unidadeEm(...DK(k)));if(k==null)return;
-  const ch=await lancaFogo(u,k);J.f1.vilaK=k;
-  flutua(ch,'Fogo!','#ff8a50');piscaHex(k,'#ff5b52',900);log(`🔥 ${nome(u)} pôs fogo numa vila!`);
-  atualiza();await dorme(500);await avisoJaF1('incendiou');
+  const v=vilasVivas().find(k=>pertoVila(u,k)&&!vilaAmeacada(k));if(v==null)return;
+  let b=null,bs=Infinity;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const k=K(c,r);
+    if(J.ter[k]!=='flor'||J.vilas[k]||unidadeEm(c,r)||k===J.f1.caiporaK||k===J.f1.caiporaFogo)continue;
+    const du=d6c(u.c,u.r,c,r),dv=d6c(c,r,...DK(v));if(du>2||dv>2)continue;
+    const sc=dv*2+du;if(sc<bs){bs=sc;b=k;}}
+  if(b==null)return;
+  const ch=await lancaFogo(u,b);J.f1.vilaK=v;
+  flutua(ch,'Fogo!','#ff8a50');piscaHex(b,'#ff7a30',900);log(`🔥 ${nome(u)} pôs fogo na mata perto de uma vila!`);
+  atualiza();await dorme(400);
 }
+// vila ameaçada: já pegou fogo ou tem fogo ao lado (o Cão vai procurar outra)
+const vilaAmeacada=k=>chamaEm(k)||vizinhos(...DK(k)).some(([c,r])=>chamaEm(K(c,r)));
 // de tempos em tempos o Cão cospe uma bola de fogo numa mata longe do fogo que já existe (até F2_CUSPE_ALC casas dele)
 async function caoCospe(u){
   if(!J.un.includes(u)||J.fim)return;
@@ -3082,8 +3091,19 @@ async function turnoFogo(l){
     log(`🔥 A vila está em chamas: uma casa queimou${v.n?` (restam ${v.n})`:''}.`);
     await focar(...DK(k));atualiza();await dorme(700);
     if(!v.n){
-      apagaChama(u);log('🔥 Uma vila virou cinzas.');
-      if(!vilasVivas().length){log('Todas as vilas viraram cinzas.');fimDeJogo(1,'vilas');return;}
+      log('🔥 Uma vila virou cinzas.');
+      if(!vilasVivas().length){apagaChama(u);log('Todas as vilas viraram cinzas.');fimDeJogo(1,'vilas');return;}
+      // a vila acabou de queimar: o fogo pula para uma floresta ao lado (se não houver, ele se apaga)
+      const fl=vizinhos(...DK(k)).map(([c,r])=>K(c,r)).filter(kk=>J.ter[kk]==='flor'&&!J.vilas[kk]&&!unidadeEm(...DK(kk))&&kk!==J.f1.caiporaK&&kk!==J.f1.caiporaFogo)
+        .sort((a,b)=>d6c(...DK(a),...J.f1.castelo)-d6c(...DK(b),...J.f1.castelo)||a-b)[0];
+      if(fl==null)apagaChama(u);
+      else{
+        const [x0,y0]=centro(u.c,u.r),anima=VEL&&!document.hidden;
+        if(anima){u.balanca=performance.now();atualiza();await dorme(450);} // a chama balança na vila...
+        [u.c,u.r]=DK(fl);u.idade=0;
+        if(anima){u.anim={x0,y0,t0:performance.now(),dur:520,arco:R*1.1};atualiza();await dorme(540);u.anim=null;} // ...e pula para a mata
+        flutua(u,'Fogo!','#ff8a50');piscaHex(fl,'#ff7a30',700);log('🔥 O fogo pulou da vila para a mata ao lado.');
+      }
       atualiza();await avisoJaF1('vila');
     }
   }
@@ -3116,14 +3136,15 @@ async function espalhaFogo(){
   let n=1+chamas.filter(u=>u.esp==='focoFogareu').length+2*chamas.filter(u=>u.esp==='focoQueimada').length;
   const cands=new Map(); // casa que pode pegar fogo → a chama de onde o foguinho sai
   for(const u of chamas)for(const [c,r] of vizinhos(u.c,u.r)){const k=K(c,r);if(inflamavel(k)&&!unidadeEm(c,r)&&k!==J.f1.caiporaK&&k!==J.f1.caiporaFogo&&!cands.has(k))cands.set(k,u);}
-  const ord=[...cands.keys()].sort((a,b)=>d6c(...DK(a),...cast)-d6c(...DK(b),...cast)||a-b);
+  const ord=[...cands.keys()].sort((a,b)=>(J.vilas[b]?1:0)-(J.vilas[a]?1:0)||d6c(...DK(a),...cast)-d6c(...DK(b),...cast)||a-b); // fogo ao lado de uma vila pega nela primeiro
   const anima=VEL&&!document.hidden;
   for(const k of ord){if(n<=0||total>=F2_MAX_CHAMAS||J.fim)break;if(unidadeEm(...DK(k)))continue;
     const de=cands.get(k);
     if(anima){await focar(de.c,de.r);de.balanca=performance.now();atualiza();await dorme(500);} // a chama balança...
     const u=criaChama(k);novas.push(u);n--;total++;
     if(anima){const [x0,y0]=centro(de.c,de.r);u.anim={x0,y0,t0:performance.now(),dur:520,arco:R*1.1};atualiza();await dorme(540);u.anim=null;} // ...e um foguinho pula dela
-    flutua(u,'Fogo!','#ff8a50');piscaHex(k,'#ff7a30',700);atualiza();if(anima)await dorme(250);}
+    flutua(u,'Fogo!','#ff8a50');piscaHex(k,'#ff7a30',700);atualiza();if(anima)await dorme(250);
+    if(J.vilas[k]){J.f1.vilaK=k;log('🔥 O fogo chegou numa vila!');if(!J.f1.vistos.incendiou)await avisoJaF1('incendiou');}} // a primeira vez: "Salve-se quem puder!"
   if(!novas.length)return;
   log(`🔥 O fogo se alastrou para ${novas.length} ${novas.length>1?'casas':'casa'}.`);
   atualiza();await dorme(350);
@@ -5095,7 +5116,7 @@ async function cenaGolpe(a,d,acertou,dano){
   const lado=a===CENA.esq?1:-1;
   await tweenC(150,t=>pa.dx=lado*80*t*t);                       // investida
   const [x,y]=posCena(d),agora=performance.now();
-  CENA.efe.push({x,y:y-90,t0:agora,cor:a.elemental?EL[ESP[a.esp].el]:'#ffffff',lado,elem:!!a.elemental});
+  CENA.efe.push({x,y:y-90,t0:agora,cor:a.elemental?EL[ESP[a.esp].el]:'#ffffff',lado,elem:!!a.elemental,fogo:golpeDeFogo(a)});
   CENA.golpes.get(a)?.push(acertou); // acende a bolinha do golpe no painel
   if(acertou){
     CENA.dano.set(a,CENA.dano.get(a)+dano);
@@ -5116,7 +5137,7 @@ async function cenaAlimenta(a,d,ganho){
   const lado=a===CENA.esq?1:-1;
   await tweenC(150,t=>pa.dx=lado*80*t*t);
   const [x,y]=posCena(d),agora=performance.now();
-  CENA.efe.push({x,y:y-90,t0:agora,cor:'#ffb070',lado,elem:false});
+  CENA.efe.push({x,y:y-90,t0:agora,cor:'#ffb070',lado,elem:false,fogo:golpeDeFogo(a)});
   CENA.golpes.get(a)?.push(true);
   CENA.txt.push({txt:'+'+ganho,x,y:y-170,cor:'#ffb070',t0:agora,tam:46});
   const de=CENA.hp.get(d),para=d.hp;
@@ -5124,6 +5145,19 @@ async function cenaAlimenta(a,d,ganho){
   await tweenC(280,t=>{pd.tre=1-t;pd.luz=1-t;});
   await tweenC(170,t=>pa.dx=lado*80*(1-t));
   await esperaC(110);
+}
+// a Brasa (e a linha da Labareda) golpeia com fogo: no lugar das garras, um foguinho em pixel art que cresce e sobe
+const golpeDeFogo=a=>['brasa','labareda','fogareu','queimada','focoLabareda','focoFogareu','focoQueimada'].includes(a.esp);
+const FOGO_PX=['.....1.....','.....1.....','....121....','....121..1.','...12221.1.','...12321.1.','..1223221..','..1233321..','.122333221.','.123333321.','.123333321.','..1233321..','...11111...'];
+const FOGO_COR=[null,'#e8481a','#ff9a30','#ffe070'];
+function desenhaGolpeFogo(g,f,t){
+  const p=7*(0.8+t*0.4),w=FOGO_PX[0].length,h=FOGO_PX.length,x0=f.x-w*p/2,y0=f.y-h*p/2-t*30,o=3;
+  for(const pass of [0,1])for(let r=0;r<h;r++)for(let c=0;c<w;c++){const v=+FOGO_PX[r][c]||0;if(!v)continue;
+    const tre=(r<4&&Math.sin(t*30+c)>.6)?-p*.4:0; // a ponta tremula
+    const x=Math.round(x0+c*p),y=Math.round(y0+r*p+tre),q=Math.ceil(p);
+    if(pass===0){g.fillStyle='#2a0c04';g.fillRect(x-o,y-o,q+2*o,q+2*o);} // contorno escuro: destaca o foguinho até sobre uma criatura de fogo
+    else{g.fillStyle=FOGO_COR[v];g.fillRect(x,y,q,q);}}
+  g.fillStyle='#ffd24a';for(let k=0;k<6;k++){const a=k/6*Math.PI*2+t*2,rr=30+t*50;g.fillRect(Math.round(f.x+Math.cos(a)*rr-3),Math.round(f.y+Math.sin(a)*rr-3-t*20),6,6);} // fagulhas
 }
 async function cenaQueda(u){
   if(!CENA)return;const p=CENA.pose.get(u);if(!p)return;
@@ -5390,9 +5424,10 @@ function desenhaCena(now){
   if(CENA.esq.figurante&&CENA.esq.estVila>0)fogoVilaCena(g,now,440,CENA.esq.estVila); // Fase 1: a vila em chamas atrás do camponês
   for(const u of [CENA.esq,CENA.dir])desenhaLutador(g,u,now);
   // golpes: três riscos (ataque comum) ou estouro de partículas (elemental)
-  for(let i=CENA.efe.length-1;i>=0;i--){const f=CENA.efe[i],t=(now-f.t0)/(300*fatorCena()||1);if(t>1){CENA.efe.splice(i,1);continue;}
+  for(let i=CENA.efe.length-1;i>=0;i--){const f=CENA.efe[i],t=(now-f.t0)/((f.fogo?450:300)*fatorCena()||1);if(t>1){CENA.efe.splice(i,1);continue;}
     g.save();g.globalAlpha=1-t;g.strokeStyle=f.cor;g.lineCap='round';
-    if(f.elem){g.fillStyle=f.cor;for(let k=0;k<14;k++){const a=k/14*Math.PI*2,r=20+t*70;g.beginPath();g.arc(f.x+Math.cos(a)*r,f.y+Math.sin(a)*r,6*(1-t)+2,0,Math.PI*2);g.fill();}}
+    if(f.fogo){g.globalAlpha=t<.6?1:1-(t-.6)/.4;desenhaGolpeFogo(g,f,t);} // opaco até o fim: sem a grade dos contornos sobrepostos
+    else if(f.elem){g.fillStyle=f.cor;for(let k=0;k<14;k++){const a=k/14*Math.PI*2,r=20+t*70;g.beginPath();g.arc(f.x+Math.cos(a)*r,f.y+Math.sin(a)*r,6*(1-t)+2,0,Math.PI*2);g.fill();}}
     else for(let k=-1;k<=1;k++){g.lineWidth=5-Math.abs(k)*2;g.beginPath();g.moveTo(f.x-50*f.lado,f.y-50+k*16);g.lineTo(f.x-50*f.lado+100*f.lado*Math.min(1,t*3),f.y-50+k*16+100*Math.min(1,t*3));g.stroke();}
     g.restore();}
   for(let i=CENA.txt.length-1;i>=0;i--){const f=CENA.txt[i],t=(now-f.t0)/900;if(t>1){CENA.txt.splice(i,1);continue;}
