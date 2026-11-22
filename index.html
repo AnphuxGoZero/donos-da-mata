@@ -2355,7 +2355,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.94'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.95'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2515,13 +2515,13 @@ async function chegadaF1(){
   for(const f of fs)f.anim={...fora(f),t0:performance.now(),dur:1e9}; // esperando fora do mapa
   atualiza();await dorme(600);if(J!==jogo)return;
   const [a,...outros]=fs;
-  a.anim={...fora(a),t0:performance.now(),dur:1300};
+  a.anim={...fora(a),t0:performance.now(),dur:1300,arco:R*.8,pulos:3}; // chega aos saltos, como os Cães da Fase 2
   await dorme(1350);if(J!==jogo)return;
   a.anim=null;flutua(a,'Grrrr!','#ff8a50');
   await dorme(700);if(J!==jogo)return;
   // uma passada só: a câmera vai para o meio dos dois enquanto o(s) outro(s) chega(m)
   const ps=fs.map(ponto);mira([ps.reduce((s,p)=>s+p[0],0)/ps.length,ps.reduce((s,p)=>s+p[1],0)/ps.length]);
-  for(const f of outros)f.anim={...fora(f),t0:performance.now(),dur:1500};
+  for(const f of outros)f.anim={...fora(f),t0:performance.now(),dur:1500,arco:R*.8,pulos:3};
   await dorme(1550);if(J!==jogo)return;
   for(const f of outros){f.anim=null;flutua(f,'Grrrr!','#ff8a50');}
   await dorme(1100);if(J!==jogo)return;
@@ -2839,8 +2839,6 @@ const AVISOS_F2={
   sapinho:{falas:[{quem:'caipora',txt:'Sapinhos são ótimos saltadores, conseguem chegar rápido nos focos de incêndio.'}]},
   evoluiu:{falas:()=>['O fogo só está aumentando!',`Virou ${J.f1.evoNome||'um Fogaréu'}!`]},
   vitoria:{falas:[{quem:'caipora',txt:'A última chama se apagou a tempo.'},{quem:'caipora',txt:'A mata vai renascer.'}],bt:'Continuar'},
-  semente:{falas:[{quem:'caipora',txt:'Leve esta semente.'},{quem:'img',esp:'semente'},
-    {quem:'caipora',txt:'De agora em diante, a Planta luta ao seu lado.'},{quem:'soldado',txt:'Uma nova aliada!'}],bt:'Continuar'},
 };
 // a Caipora aparece numa planície que faz fronteira com a maior área de floresta e fica no mapa (ninguém pisa na
 // casa dela) até o fim da fase.
@@ -2851,7 +2849,7 @@ function checaCaiporaF2(){
   if(J.f1.caiporaK==null&&J.turno>=F2_CAIPORA_TURNO){
     const k=casaCaipora();if(k==null)return;
     J.f1.caiporaK=k;log('🌿 A Caipora, guardiã da mata, apareceu.');
-    if(VEL&&!document.hidden)chegaCaiporaF2(k);else{avisoF1('caiporaChega');vaiAoPostoF2();}}
+    if(VEL&&!document.hidden)chegaCaiporaF2(k);else{avisoF1('caiporaChega');J.f1.caiporaSai=k;}}
   if(J.f1.caiporaK!=null&&J.turno>=F2_CONSELHO_TURNO&&!J.f1.vistos.caipora){
     if(VEL&&!document.hidden&&J.f1.caiporaFogo!=null){conselhoCaiporaF2();return;}else avisoF1('caipora');}
   golpeCaiporaF2();
@@ -2912,12 +2910,20 @@ async function chegaCaiporaF2(k){
   J.f1.caiporaAnim=null;piscaHex(k,'#6ee08a',900);atualiza();await dorme(500);if(J!==jogo)return;
   J.f1.chegando=false;
   await avisoJaF1('caiporaChega');if(J!==jogo)return;
-  // ela volta para dentro da mata (a câmera ainda vê) e reaparece, sem ninguém ver, no posto lá no alto à direita
-  J.f1.caiporaAnim={x0:x,y0:y,x1:ox,y1:oy,t0:performance.now(),dur:900,sai:true};
-  await dorme(950);if(J!==jogo)return;
-  vaiAoPostoF2();
+  // ela fica na casa dela neste turno; na próxima vez do fogo volta para a mata e vai para o posto (saiCaiporaF2)
+  J.f1.caiporaSai=fl?K(...fl):K(...DK(k));
   soltaEnquadra();seguir(mestreDe(0),true);await dorme(300);if(J!==jogo)return;
   J.ocupado=false;atualiza();
+}
+// na vez do fogo seguinte à chegada: ela entra na mata vizinha (some entre as árvores) e reaparece no posto
+async function saiCaiporaF2(){
+  const m=J.f1.caiporaSai;if(m==null||J.f1.caiporaK==null)return;J.f1.caiporaSai=null;
+  if(VEL&&!document.hidden){
+    const [x,y]=centro(...DK(J.f1.caiporaK)),[ox,oy]=centro(...DK(m));
+    await focar(...DK(J.f1.caiporaK));
+    J.f1.caiporaAnim={x0:x,y0:y,x1:ox,y1:oy,t0:performance.now(),dur:900,sai:true};
+    await dorme(950);}
+  vaiAoPostoF2();atualiza();
 }
 function vaiAoPostoF2(){
   J.f1.caiporaAnim=null;const p=postoCaipora();if(!p)return;
@@ -3022,15 +3028,32 @@ function caiuF2(u){
   if(u.chama){J.f1.apagouK=K(u.c,u.r);avisoF1('apagou');}
   else avisoF1(J.un.some(x=>x.selvagem&&!x.chama)?'caoCaiu1':'caoCaiu');
 }
-// a vitória da Fase 2: a chuva acalma a mata, a Caipora volta à beira da floresta e fala (e dá a semente)
+// a vitória da Fase 2: a chuva acalma a mata e a Caipora sai da mata perto do seu mestre para agradecer.
+// (A semente da Planta fica para a Fase 3: lá acontece um problema e a Caipora volta para ajudar com esse presente.)
 async function finalF2(){
-  const jogo=J;J.f1.fila=J.f1.fila.filter(x=>x==='vitoria'||x==='semente');atualiza(); // falas da partida que ficaram na fila não vêm depois da vitória
+  const jogo=J;J.f1.fila=J.f1.fila.filter(x=>x==='vitoria');atualiza(); // falas da partida que ficaram na fila não vêm depois da vitória
   await chuvaF2();if(J!==jogo)return;
-  J.f1.caiporaFogo=null;J.f1.fogoVivo=false;if(J.f1.caiporaK==null){const k=casaCaipora();if(k!=null)J.f1.caiporaK=k;} // a chuva apagou o foguinho do duelo
-  const ck=J.f1.caiporaK;
-  if(ck!=null){await focar(...DK(ck));piscaHex(ck,'#6ee08a',900);atualiza();await dorme(700);if(J!==jogo)return;}
-  await avisoJaF1('vitoria');if(J!==jogo)return;
-  await avisoJaF1('semente');
+  J.f1.caiporaFogo=null;J.f1.fogoVivo=false;J.f1.caiporaSai=null; // a chuva apagou o foguinho do duelo
+  const m=mestreDe(0),p=m&&pertoDoMestreF2(m);
+  if(p){
+    const [k,fl]=p,[x,y]=centro(...DK(k)),[ox,oy]=fl!=null?centro(...DK(fl)):[x,y];
+    J.f1.caiporaK=k;J.f1.caiporaAnim={x0:ox,y0:oy,t0:performance.now(),dur:1e9,some:true}; // escondida na mata
+    J.f1.chegando=true;CAM.alvo={fixo:true,px:x,py:y};CAM.centrar=true;CAM.mao=false;
+    await dorme(1000);if(J!==jogo)return;
+    J.f1.caiporaAnim={x0:ox,y0:oy,t0:performance.now(),dur:1300,some:true};
+    await dorme(1450);if(J!==jogo)return;
+    J.f1.caiporaAnim=null;J.f1.chegando=false;piscaHex(k,'#6ee08a',900);atualiza();await dorme(500);if(J!==jogo)return;
+  }
+  await avisoJaF1('vitoria');
+}
+// uma casa livre a até 2 passos do mestre, de preferência colada numa floresta (de onde ela sai)
+function pertoDoMestreF2(m){
+  let b=null,bs=Infinity;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const k=K(c,r),d=d6c(c,r,m.c,m.r);
+    if(d<1||d>2||!['plan','flor','fort'].includes(J.ter[k])||J.vilas[k]||unidadeEm(c,r))continue;
+    const fl=vizinhos(c,r).filter(([a,bb])=>J.ter[K(a,bb)]==='flor'&&!unidadeEm(a,bb)).sort((a,bb)=>centro(...a)[0]-centro(...bb)[0])[0];
+    const sc=d*2+(fl?0:3);if(sc<bs){bs=sc;b=[k,fl?K(...fl):null];}}
+  return b;
 }
 async function chuvaF2(){
   const m=document.getElementById('mapa'),d=document.createElement('div');
@@ -3088,6 +3111,7 @@ async function caoCospe(u){
 }
 async function turnoFogo(l){
   renasceFogoCaipora(); // o foguinho que a Caipora apagou volta
+  await saiCaiporaF2(); // a Caipora deixa a casa onde chegou e vai para o posto dela
   // 1. o Cão: anda até a vila mais perto que ainda não pegou fogo, ataca quem estiver no caminho, ou incendeia
   // (no 1º turno ele fica: já pôs fogo na mata na abertura, e o jogador ganha um turno para se preparar)
   for(const u of J.turno>1?J.un.filter(x=>x.lado===l&&!x.chama):[]){
@@ -3181,7 +3205,7 @@ function mostraFimF2(v,motivo){
     const est=1+(salvas===vs.length?1:0)+(pct>=F2_MATA_ESTRELA*100?1:0),info=fase2Info();
     try{localStorage.setItem(F2_CHAVE,JSON.stringify({venceu:true,estrelas:Math.max(info.estrelas||0,est)}));}catch(e){}
     salvaCampanha({camponeses:camp,fase:2,evoFixa:{...(J.evoFixa[0]||{})}});
-    document.getElementById('fimSub').textContent=`A mata foi salva no turno ${J.turno}. A Caipora deu uma semente: a Planta agora luta ao seu lado.`;
+    document.getElementById('fimSub').textContent=`A mata foi salva no turno ${J.turno}.`;
     document.getElementById('fimPorque').innerHTML=`<div class="estrelasF1">${[0,1,2].map(i=>`<span class="${i<est?'on':''}">★</span>`).join('')}</div>
       <p class="porque" style="text-align:center">${salvas} de ${vs.length} vilas de pé · ${camp} de ${vs.reduce((s,x)=>s+x.inicio,0)} casas de pé · ${pct}% da mata salva</p>
       <p class="dicaFim" style="text-align:center">★ vencer · ★ todas as vilas de pé · ★ ${Math.round(F2_MATA_ESTRELA*100)}% da mata salva</p>`;
