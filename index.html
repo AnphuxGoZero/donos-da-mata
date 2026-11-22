@@ -802,7 +802,7 @@ html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
       <p><b>Evoluir na criação:</b> quando sua reserva chega a 200 MP, o menu do mestre ganha <b>Evoluir</b>. Escolha uma criatura inicial e o jogo oferece duas formas de estágio 1, conforme o que seu exército mais viveu na partida (horário dos ataques, dano feito e sofrido, terrenos, turnos parados ou correndo, feridos, abates). A escolhida custa 200 MP e fica fixa: daí em diante, invocar aquela criatura já traz a forma evoluída, pelo custo dela.</p>
       <p>Criaturas ganham XP lutando e evoluem: nascem no estágio 0 (baratas e frágeis, evoluem com pouca XP) e passam pelos estágios 1, 2 e 3. A XP que passar da meta segue para o estágio seguinte, até metade da nova meta. Algumas linhas se dividem em ramos, conforme o que a criatura viveu no estágio (a ficha mostra a tendência; em empate, é sorteio):</p>
       <ul>
-        <li><b>Brasa:</b> evolui no Dia → Salamandra; à Noite → Diabrete; na Manhã ou no Entardecer → Filhote Infernal.</li>
+        <li><b>Brasa:</b> terminou 3 ou mais turnos em floresta → Labareda (ramo raro). Senão, evolui no Dia → Salamandra; à Noite → Diabrete; na Manhã ou no Entardecer → Filhote Infernal.</li>
         <li><b>Cão Infernal</b> (estágio 2 do Filhote Infernal): turno em que ataca sem sair do lugar (ou andando só 1 casa) conta para o Cerberus; turno em que galopa 3 ou mais casas conta para a Mula sem Cabeça.</li>
         <li><b>Girino:</b> terminou 3 ou mais turnos em terra firme (fora de construções), e mais em terra do que na água → Sapinho; senão, evolui com mais da metade da vida → Boto Rosa, ferido (metade ou menos) → Cavalo Marinho.</li>
         <li><b>Argila:</b> turno parada (sem andar) vale 1 ponto e turno em pedreira ou montanha vale 3: com 4 pontos ou mais → Gnomo. Terminou 2 ou mais turnos à beira d'água (ao lado de rio, mar ou pântano) → Barruco; se valer os dois, vence o que passou mais da meta. Senão, apanhou mais do que bateu no estágio → Troll; bateu mais do que apanhou → Homem Lagarto.</li>
@@ -983,7 +983,7 @@ const zMaxToque=()=>TELA_LIVRE()?zBase()*2:ZOOM_MAX_TOQUE;
 // inicial e as casas de invocação ficam fáceis de tocar; para ver mais do mapa, é só afastar com a pinça.
 const zInicio=()=>Math.min(zBase()*2,Math.max(zBase(),58*TW/(W*LARG_CSS)));
 // celular em pé, partida nova: abre no zoom máximo, com o mestre bem à vista
-function zoomInicio(novo){if(!TELA_LIVRE())return;CAM.z=CAM.zAlvo=CAM.zPref=novo&&RETRATO()?zMaxToque():zInicio();mostraZoom();}
+function zoomInicio(novo){if(!TELA_LIVRE())return;CAM.z=CAM.zAlvo=CAM.zPref=novo&&RETRATO()&&!(J&&J.f1)?zMaxToque():zInicio();mostraZoom();} // Fases 1 e 2: o vale é deitado; no celular em pé, o zoom de base já mostra a altura toda
 function mostraZoom(){document.getElementById('zoomN').textContent=Math.round(CAM.zPref/zBase()*100)+'%';}
 // Mede o espaço do mapa e acerta a tela (TW×TH) e o canvas. Também liga/desliga o modo "retrato" (celular em pé),
 // em que o mapa preenche a área que sobra da tela em vez de ter proporção fixa. Chamado ao iniciar e a cada mudança de tamanho.
@@ -1320,11 +1320,16 @@ const ESP={
   campones:{nome:'Camponês',cat:'terPeq',el:'humano',hp:10,atk:3,def:0,mov:0,alc:1,forma:'coroa',tier:0},
   filhoteInf:{nome:'Filhote Infernal',cat:'terFogo',el:'fogo',hp:26,atk:12,def:0,mov:6,alc:1,custo:40,xp:45,evo:'caoInfernal',forma:'chama',tier:1},
   caoInfernal:{nome:'Cão Infernal',cat:'terFogo',el:'fogo',hp:44,atk:19,def:2,mov:6,alc:1,xp:90,evo:'cerberus',forma:'chama',tier:2},
-  // linha do fogo que se alastra (Fase 2): Labareda → Fogaréu → Queimada. Na mata em chamas são os focos de incêndio;
-  // Fogo não apaga fogo (o atacante de Fogo só as alimenta) e a Água causa o dobro de dano nelas.
-  labareda:{nome:'Labareda',cat:'terFogo',el:'fogo',hp:16,atk:7,def:0,mov:4,alc:1,custo:40,xp:30,evo:'fogareu',forma:'chama',tier:1},
-  fogareu:{nome:'Fogaréu',cat:'terFogo',el:'fogo',hp:30,atk:12,def:2,mov:4,alc:1,xp:60,evo:'queimada',forma:'chama',tier:2},
-  queimada:{nome:'Queimada',cat:'terFogo',el:'fogo',hp:50,atk:18,def:4,mov:4,alc:1,forma:'chama',tier:3},
+  // quarto ramo da Brasa (raro): a chama que se alastra pela mata. Labareda → Fogaréu → Queimada, um pouco acima
+  // dos outros ramos do Fogo no mesmo estágio (ramo raro). Nasce da Brasa que passou 3 ou mais turnos em floresta.
+  labareda:{nome:'Labareda',cat:'terFogo',el:'fogo',hp:28,atk:13,def:1,mov:5,alc:1,custo:40,xp:45,evo:'fogareu',forma:'chama',tier:1},
+  fogareu:{nome:'Fogaréu',cat:'terFogo',el:'fogo',hp:47,atk:19,def:3,mov:5,alc:1,xp:90,evo:'queimada',forma:'chama',tier:2},
+  queimada:{nome:'Queimada',cat:'terFogo',el:'fogo',hp:72,atk:26,def:5,mov:5,alc:1,forma:'chama',tier:3},
+  // os focos do incêndio da Fase 2: a mesma arte e o mesmo nome, mas mais fracos (são muitos ao mesmo tempo) e
+  // presos no lugar. Fogo não apaga fogo (o atacante de Fogo só os alimenta) e a Água causa o dobro de dano neles.
+  focoLabareda:{nome:'Labareda',arte:'labareda',cat:'terFogo',el:'fogo',hp:16,atk:7,def:0,mov:4,alc:1,custo:40,xp:30,evo:'focoFogareu',forma:'chama',tier:1},
+  focoFogareu:{nome:'Fogaréu',arte:'fogareu',cat:'terFogo',el:'fogo',hp:30,atk:12,def:2,mov:4,alc:1,xp:60,evo:'focoQueimada',forma:'chama',tier:2},
+  focoQueimada:{nome:'Queimada',arte:'queimada',cat:'terFogo',el:'fogo',hp:50,atk:18,def:4,mov:4,alc:1,forma:'chama',tier:3},
   cerberus:{nome:'Cerberus',cat:'terFogo',el:'fogo',hp:74,atk:24,def:6,mov:5,alc:1,forma:'chama',tier:3},
   // terceiro ramo da Água: os anfíbios que trocaram o rio pela terra. É o ramo mais raro da Água, então é um pouco mais forte
   sapinho:{nome:'Sapinho',cat:'anfibio',el:'agua',hp:28,atk:9,def:1,mov:5,alc:1,custo:50,xp:45,evo:'bullywug',forma:'gota',tier:1},
@@ -1374,8 +1379,9 @@ function spr(esp){return (ESP[esp]&&ESP[esp].arte)||esp;}
 // Quem tiver mais pontos vence; empate (inclusive 0 a 0) é sorteado.
 const RAMOS={
   // pela hora da evolução: o ciclo tem 2 turnos de Dia, 2 de Noite e 2 de crepúsculo (Manhã + Entardecer), ⅓ para cada
-  brasa:{para:['faisca','diabrete','filhoteInf'],dica:'Evoluir no Dia → Salamandra; à Noite → Diabrete; na Manhã ou no Entardecer → Filhote Infernal.',
-    pontos:u=>{const f=faseAtual().nome;return f==='Dia'?[1,0,0]:f==='Noite'?[0,1,0]:[0,0,1];}},
+  // ramo raro: a Brasa que passou 3 ou mais turnos em floresta vira Labareda (vale mais que o horário)
+  brasa:{para:['faisca','diabrete','filhoteInf','labareda'],dica:'Terminou 3 ou mais turnos em floresta → Labareda. Senão: evoluir no Dia → Salamandra; à Noite → Diabrete; na Manhã ou no Entardecer → Filhote Infernal.',
+    pontos:u=>{if(turnosEm(u,'flor')>=3)return [0,0,0,1];const f=faseAtual().nome;return f==='Dia'?[1,0,0,0]:f==='Noite'?[0,1,0,0]:[0,0,1,0];}},
   // o guardião não sai do posto, a mula dispara: cada turno conta para um lado só
   caoInfernal:{para:['cerberus','mulaSemCabeca'],dica:'Turno em que ataca sem sair do lugar (ou andando só 1 casa) conta para o Cerberus; turno em que galopa 3 ou mais casas conta para a Mula sem Cabeça.',
     pontos:u=>[hist(u).firme||0,hist(u).galope||0]},
@@ -1477,7 +1483,7 @@ function anotaJogo(u){
 }
 // pontos de cada ramo pelo histórico da partida, na ordem de RAMOS[base].para: [pontos, motivo]
 const EVO_HJ={
-  brasa:h=>[[h.atkDia,`${h.atkDia} ataques de Dia`],[h.atkNoite,`${h.atkNoite} ataques à Noite`],[h.atkCresp,`${h.atkCresp} ataques na Manhã e no Entardecer`]],
+  brasa:h=>[[h.atkDia,`${h.atkDia} ataques de Dia`],[h.atkNoite,`${h.atkNoite} ataques à Noite`],[h.atkCresp,`${h.atkCresp} ataques na Manhã e no Entardecer`],[hjTer(h,'flor'),`${hjTer(h,'flor')} turnos em floresta`]],
   girino:h=>{const tot=Object.values(h.ter).reduce((a,b)=>a+b,0),terra=tot-hjTer(h,'rio','mar','pant','cast','fort','torre');
     return [[h.saudavel*.4,`${h.saudavel} turnos terminados com mais da metade da vida`],[h.ferido,`${h.ferido} turnos terminados feridos`],[terra*.3,`${terra} turnos em terra firme`]];},
   argila:h=>{const mina=hjTer(h,'pedr','mont');
@@ -1868,7 +1874,7 @@ function novoJogo(op=prefs(),semIntro=false){ // semIntro: a partida de fundo, a
   const f1=!!op.f1; // Fase 1 (introdução): mapa fixo, sem mestre rival, contra o Bando Infernal
   const fase=f1?op.fase||1:0; // as fases da campanha usam a mesma estrutura (J.f1); a 2 é a Mata em Chamas
   const np=f1?2:MODOS[op.modo]||2;
-  const mF1=f1?(fase===2?MAPAS_F2:MAPAS_F1)[RETRATO()?'empe':'deitado']:null; // celular em pé: corredor em pé; senão, deitado
+  const mF1=f1?MAPAS_F1.deitado:null; // um só vale para as Fases 1 e 2, em qualquer tela (no celular em pé, arrasta e amplia)
   defineLinhas(f1?mF1.linhas.length:np>2?17:13);
   const m=f1?(fase===2?mapaF2(mF1):mapaF1(mF1)):gerarMapa(seed,np,op.cristal!==false); // modo único: todo mapa tem a Torre do Cristal (false só para testes)
   // os rivais recebem mestres diferentes do seu e entre si, sorteados
@@ -2322,7 +2328,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.86'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.87'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
@@ -2359,7 +2365,7 @@ function jogarFaseFinal(){fecharSaves();novoJogo({...prefs(),modo:'1x1',campanha
 // Vitória: derrubar o Bando. Derrota: o mestre cair ou todas as vilas serem destruídas. Cada vila salva vale uma estrela.
 // Só Fogo e Água para invocar; sem magia, Força, Evoluir, cristal nem cabo de guerra; a fase não é salva.
 const F1_CHAVE='senhoresDoVeu.fase1';
-const F1_MOV={filhoteInf:3,caoInfernal:4,labareda:0,fogareu:0,queimada:0}; // as chamas da Fase 2 não andam: elas se alastram // o Bando anda devagar, para dar tempo de reagir
+const F1_MOV={filhoteInf:3,caoInfernal:4,focoLabareda:0,focoFogareu:0,focoQueimada:0}; // as chamas da Fase 2 não andam: elas se alastram // o Bando anda devagar, para dar tempo de reagir
 const F1_CAMP=3,F1_XP=15; // camponeses por vila; XP por camponês (3 camponeses = a meta do Filhote)
 const ehF1=()=>!!(J&&J.f1);
 const selvagem=l=>!!(J&&J.f1)&&l===1;
@@ -2371,36 +2377,20 @@ function fase1Info(){try{return JSON.parse(localStorage.getItem(F1_CHAVE))||{};}
 const estrelasTxt=n=>'★'.repeat(n||0)+'☆'.repeat(Math.max(0,3-(n||0)));
 // . planície  f floresta  m montanha  p pedreira  r rio  C castelo (as fortalezas vêm em volta)  T torre  a/b Filhotes
 // V vila (vale estrela)  v vila da entrada: o Bando chega antes de qualquer ajuda, então ela não conta estrela
-// corredor sinuoso fechado por montanhas (na Fase 1 ninguém atravessa montanha). Deitado no PC e no celular deitado
-// (os Filhotes entram pela direita); em pé no celular em pé (descem do topo). Os dois têm o mesmo ritmo.
+// corredor sinuoso fechado por montanhas (na Fase 1 ninguém atravessa montanha). O mesmo vale em qualquer tela
+// (no celular em pé ele aparece inteiro pequeno; o jogo abre ampliado e dá para arrastar). Os Filhotes entram pela direita.
 const MAPAS_F1={ // corredor em S, curto (~18 passos da entrada ao castelo) para os exércitos se encontrarem logo;
-  // bordas irregulares, pedreiras entre as montanhas, moitas de floresta e uma passagem estreita no mapa em pé
+  // bordas irregulares, pedreiras entre as montanhas e bastante floresta (para o incêndio da Fase 2). Desenho do jogador.
   deitado:{entra:'direita',linhas:[
-    'mmmmmmm.m........',
-    'mmpmp...V..f.v.a.',
-    'mmmp...T..ff...b.',
-    'mmmf.f..mm.mm..pm',
-    'mmmm...m..mm.mmmm',
-    'mmm..f.V....mmmmm',
-    'mmmmm.f...VT...mm',
-    'mmmm.ff.f....C.mp',
-    'mmmmmmmfmm..m..mm']},
-  empe:{entra:'cima',linhas:[
-    'mmmmmmmpmm.....mm',
-    'mmpmpmmppmma.bmmm',
-    'pmmmmmm.mmv....mm',
-    'mpmpm..........mp',
-    'mpmp...V........m',
-    'mmm.....mm..ppfmm',
-    'mp.m.T.mm.mppmmmp',
-    'mmm...m.fmmpmpmmp',
-    'mmff.V..f..mpmppm',
-    'mmmm....f..p.mmmm',
-    'mmpmmpp...V.fp.pm',
-    'mmmmmmpmm.T.f.pmp',
-    'mmmmmpmm.....fmmm',
-    'pmmppmm..C.fmmmmm',
-    'ppmmmmmmp..mppmmm']}};
+    'mmmmmmm.m..ff.f..',
+    'mmpmpf..V..f.v.a.',
+    'mmmpf..T.fff.f.b.',
+    'pmff.f.fmm.mmf.pm',
+    'pffVf..m.fmm.mmmm',
+    'mmff.f.V.ff.mmmmm',
+    'mmmmpff.f.VT.f.mm',
+    'pmmp.ff.f.ff.C.mp',
+    'ppmmmmmfmmf.m..mm']}};
 function mapaF1(M){
   const ter=new Array(COLS*ROWS).fill('plan'),dono=new Array(COLS*ROWS).fill(null),vilas={},filhotes=[];let f0=null;
   const T={'.':'plan',f:'flor',m:'mont',p:'pedr',r:'rio',T:'torre',V:'plan',v:'plan',a:'plan',b:'plan',C:'cast'};
@@ -2492,7 +2482,7 @@ async function chegadaF1(){
   const cima=J.f1.entra==='cima';
   const ponto=f=>{const [x,y]=centro(f.c,f.r);return [x-(cima?0:W*1.5),y+(cima?R*3:0)];}; // em pé: um pouco abaixo da borda
   const fora=f=>{const [x,y]=centro(f.c,f.r);return cima?{x0:x,y0:y-R*9}:{x0:x+R*9,y0:y};}; // entram de fora do mapa
-  const z=Math.min(zBase()*2.4,Math.max(CAM.zPref*1.5,zBase()*1.6));
+  const z=RETRATO()?zBase()*1.2:Math.min(zBase()*2.4,Math.max(CAM.zPref*1.5,zBase()*1.6)); // celular em pé: o vale deitado já aparece grande
   const mira=([x,y])=>{CAM.alvo={fixo:true,px:x,py:y};CAM.centrar=true;CAM.mao=false;};
   {const [mx,my]=ponto(fs[0]);CAM.z=CAM.zAlvo=z;CAM.enq=true;CAM.x=mx;CAM.y=my;limitaCam();mira([mx,my]);}
   for(const f of fs)f.anim={...fora(f),t0:performance.now(),dur:1e9}; // esperando fora do mapa
@@ -2657,46 +2647,23 @@ const F2_CHAVE='senhoresDoVeu.fase2';
 const F2_QUEIMA=3,F2_MAX_CHAMAS=10,F2_CAO_TURNO=2,F2_ALIMENTA_XP=8,F2_ALIMENTA_HP=3,F2_MATA_ESTRELA=0.6;
 const ehF2=()=>!!(J&&J.f1&&J.f1.n===2);
 function fase2Info(){try{return JSON.parse(localStorage.getItem(F2_CHAVE))||{};}catch(e){return {};}}
-// . planície  f floresta  F floresta já em chamas (foco)  m montanha  p pedreira  r rio  C castelo  T torre  V vila
-// c por onde o Cão Infernal entra. Castelo de um lado, rio cortando o vale (os Girinos nadam por ele), mata fechada.
-const MAPAS_F2={
-  deitado:{entra:'direita',linhas:[
-    'mmfffmmrffffmmffm',
-    'mffVff.r.fFfVff.m',
-    'mf..Tffrfffff.fFm',
-    'm.ff...rr.fff...m',
-    'mff..f..r..T.ff.c',
-    'm.f..ff.rff.ff.fm',
-    'm..C..f.rfFffVffm',
-    'mf...ff.r.fffffmm',
-    'mmffmmffrffmmffmm']},
-  empe:{entra:'cima',linhas:[
-    'mmmffmmm.c.ffmmmm',
-    'mmffFff..fffffmmm',
-    'mfffffV.fff.fffmm',
-    'mff..ff.rr.ff.ffm',
-    'm.ff...rr..fFff.m',
-    'mff.T..r.ffffV.fm',
-    'mfff..rr.ff..ff.m',
-    'm.ff..r..fF.fff.m',
-    'mff.Vfr.ffff.T.fm',
-    'mfff..r.ff...ff.m',
-    'm.ff.r..ff.ff.ffm',
-    'mff..r.ff..fff.mm',
-    'mmf.rr.C...ff.fmm',
-    'mmff.r.....fffmmm',
-    'mmmmmrmmffmmmmmmm']}};
+// A Fase 2 acontece no MESMO vale da Fase 1 (MAPAS_F1): o Cão entra por onde os Filhotes entraram, e as vilas
+// continuam como a Fase 1 as deixou (vila destruída fica em ruínas; cada uma com os camponeses que sobraram nela).
+// Aqui só ficam os focos iniciais do incêndio, em florestas do vale (coluna, linha).
+const F2_FOCOS={deitado:[[11,2],[5,3],[9,5]]};
+const oriF1=()=>'deitado'; // um só vale (antes havia uma versão em pé)
 function mapaF2(M){
-  const ter=new Array(COLS*ROWS).fill('plan'),dono=new Array(COLS*ROWS).fill(null),vilas={},focos=[];let f0=null,cao=null;
-  const T={'.':'plan',f:'flor',F:'flor',m:'mont',p:'pedr',r:'rio',T:'torre',V:'plan',c:'plan',C:'cast'};
-  M.linhas.forEach((lin,r)=>[...lin].forEach((ch,c)=>{const k=K(c,r);ter[k]=T[ch];
-    if(ch==='C')f0=[c,r];if(ch==='V')vilas[k]={n:F1_CAMP,max:F1_CAMP,estrela:true};if(ch==='F')focos.push([c,r]);if(ch==='c')cao=[c,r];}));
-  dono[K(...f0)]=0;for(const [a,b] of vizinhos(...f0)){ter[K(a,b)]='fort';dono[K(a,b)]=0;}
-  // camponeses: os que sobreviveram à Fase 1, repartidos entre as vilas (mais nas perto do castelo); ao menos 1 em cada
-  const ks=Object.keys(vilas).map(Number).sort((a,b)=>d6c(...DK(a),...f0)-d6c(...DK(b),...f0)||a-b);
-  const veio=campanhaInfo().f1Camp,tot=Math.max(ks.length,Math.min(ks.length*F1_CAMP,veio??ks.length*F1_CAMP));
-  ks.forEach((k,i)=>{vilas[k].n=Math.min(F1_CAMP,Math.floor(tot/ks.length)+(i<tot%ks.length?1:0));});
-  return {ter,dono,f0,f:[f0],tema:'Mata em Chamas',cristal:null,vilas,focos,cao,entra:M.entra,camponeses:tot};
+  const m=mapaF1(M),ori=oriF1(M),cp=campanhaInfo(),salvo=cp.f1Vilas&&cp.f1Vilas.ori===ori?cp.f1Vilas.n:null;
+  const ks=Object.keys(m.vilas).map(Number).sort((a,b)=>d6c(...DK(a),...m.f0)-d6c(...DK(b),...m.f0)||a-b);
+  if(salvo){for(const k of ks)m.vilas[k].n=Math.max(0,Math.min(F1_CAMP,salvo[k]??F1_CAMP));}
+  else{ // sem o resultado da Fase 1 nesta posição da tela: o total que sobrou, repartido (a vila da entrada ficou em ruínas)
+    const est=ks.filter(k=>m.vilas[k].estrela),veio=cp.f1Camp,tot=Math.max(est.length,Math.min(est.length*F1_CAMP,veio??est.length*F1_CAMP));
+    for(const k of ks)if(!m.vilas[k].estrela)m.vilas[k].n=0;
+    est.forEach((k,i)=>{m.vilas[k].n=Math.min(F1_CAMP,Math.floor(tot/est.length)+(i<tot%est.length?1:0));});
+  }
+  for(const k of ks)m.vilas[k].inicio=m.vilas[k].n; // as que começam de pé contam para a estrela das vilas
+  const focos=F2_FOCOS[ori].filter(([c,r])=>m.ter[K(c,r)]==='flor');
+  return {...m,tema:'Mata em Chamas',focos,cao:m.filhotes[0],camponeses:ks.reduce((s,k)=>s+m.vilas[k].n,0)};
 }
 function iniciaF2(m){
   J.f1={n:2,fila:['intro1'],vistos:{torre:true,torreMagica:true},rostos:{},entra:m.entra,entrada:[m.cao],caoPos:m.cao,castelo:m.f0,
@@ -2706,7 +2673,7 @@ function iniciaF2(m){
   for(const p of m.focos)criaChama(K(...p));
 }
 const chamaEm=k=>ehF2()&&J.un.some(x=>x.chama&&K(x.c,x.r)===k);
-function criaChama(k,esp='labareda'){
+function criaChama(k,esp='focoLabareda'){
   const [c,r]=DK(k),u=criaUnidade(esp,1,c,r);
   u.selvagem=true;u.chama=true;u.idade=0;u.movido=u.agiu=true;return u;
 }
@@ -2818,7 +2785,7 @@ async function turnoFogo(l){
   // 4. Labareda que queimou a floresta até o fim se apaga e deixa cinza (a floresta vira planície)
   for(const u of J.un.filter(x=>x.chama)){
     u.idade=(u.idade||0)+1;const k=K(u.c,u.r);
-    if(u.esp==='labareda'&&!J.vilas[k]&&u.idade>=F2_QUEIMA){
+    if(u.esp==='focoLabareda'&&!J.vilas[k]&&u.idade>=F2_QUEIMA){
       J.ter[k]='plan';J.f1.cinzas++;J.f1.cinzaK=k;apagaChama(u);
       const [x,y]=centro(...DK(k));fx.push({txt:'Cinzas',x,y:y-6,t0:performance.now(),cor:'#b8b0a8',dur:1400});
       log('A floresta queimou até o fim e virou cinza.');avisoF1('cinza');
@@ -2839,7 +2806,7 @@ async function espalhaFogo(){
     focos.push(g);}
   const cast=J.f1.castelo,novas=[];let total=chamas.length;
   for(const g of focos){
-    let n=1+g.filter(u=>u.esp==='fogareu').length+2*g.filter(u=>u.esp==='queimada').length;
+    let n=1+g.filter(u=>u.esp==='focoFogareu').length+2*g.filter(u=>u.esp==='focoQueimada').length;
     const cands=new Set();
     for(const u of g)for(const [c,r] of vizinhos(u.c,u.r)){const k=K(c,r);if(inflamavel(k)&&!unidadeEm(c,r))cands.add(k);}
     const ord=[...cands].sort((a,b)=>d6c(...DK(a),...cast)-d6c(...DK(b),...cast)||a-b);
@@ -2853,7 +2820,7 @@ async function espalhaFogo(){
 }
 // fim da Fase 2: estrelas (vencer, todas as vilas de pé, mata salva); vencer leva à fase final
 function mostraFimF2(v,motivo){
-  const vs=Object.values(J.vilas),salvas=vs.filter(x=>x.n>0).length,camp=vs.reduce((s,x)=>s+x.n,0);
+  const vs=Object.values(J.vilas).filter(x=>x.inicio>0),salvas=vs.filter(x=>x.n>0).length,camp=vs.reduce((s,x)=>s+x.n,0);
   const mata=J.ter.filter(t=>t==='flor').length,pct=J.f1.mata0?Math.round(100*mata/J.f1.mata0):100;
   const b=document.getElementById('fimBt'),b2=document.getElementById('fimBt2');
   document.getElementById('fimTxt').textContent=v===0?'Fase 2 concluída!':'Você perdeu';
@@ -2943,15 +2910,16 @@ function mostraFimFase(v,motivo){if(ehF2())mostraFimF2(v,motivo);else mostraFimF
 // fim da Fase 1: estrelas pelas vilas salvas; vencer leva à Fase 2
 function mostraFimF1(v,motivo){
   const vs=Object.values(J.vilas).filter(x=>x.estrela!==false),salvas=vs.filter(x=>x.n>0).length,camp=vs.reduce((s,x)=>s+x.n,0),tot=vs.reduce((s,x)=>s+x.max,0); // a vila da entrada não conta
+  const est=Math.max(0,3-(vs.length-salvas)); // 3 estrelas com todas as vilas salvas; cada vila perdida custa uma
   const b=document.getElementById('fimBt'),b2=document.getElementById('fimBt2');
   document.getElementById('fimTxt').textContent=v===0?'Fase 1 concluída!':'Você perdeu';
   b2.style.display='';
   if(v===0){
     const info=fase1Info();
-    try{localStorage.setItem(F1_CHAVE,JSON.stringify({venceu:true,estrelas:Math.max(info.estrelas||0,salvas)}));}catch(e){}
-    salvaCampanha({camponeses:camp,f1Camp:camp,fase:1}); // os sobreviventes seguem para a próxima fase (vale o resultado da última vitória)
+    try{localStorage.setItem(F1_CHAVE,JSON.stringify({venceu:true,estrelas:Math.max(info.estrelas||0,est)}));}catch(e){}
+    salvaCampanha({camponeses:camp,f1Camp:camp,fase:1,f1Vilas:{ori:J.f1.entra==='cima'?'empe':'deitado',n:Object.fromEntries(Object.entries(J.vilas).map(([k,x])=>[k,x.n]))}}); // os sobreviventes seguem para a próxima fase (vale o resultado da última vitória)
     document.getElementById('fimSub').textContent=`O Bando Infernal caiu no turno ${J.turno}.`;
-    document.getElementById('fimPorque').innerHTML=`<div class="estrelasF1">${[0,1,2].map(i=>`<span class="${i<salvas?'on':''}">★</span>`).join('')}</div>
+    document.getElementById('fimPorque').innerHTML=`<div class="estrelasF1">${[0,1,2].map(i=>`<span class="${i<est?'on':''}">★</span>`).join('')}</div>
       <p class="porque" style="text-align:center">${salvas} de ${vs.length} vilas salvas · ${camp} de ${tot} camponeses vivos</p>`;
     b.textContent='Continuar';b.onclick=()=>jogarFase2();
     b2.textContent='Tentar novamente';b2.onclick=()=>jogarFase1();
@@ -5809,9 +5777,9 @@ const ORDEM_SPR=['faisca','brasador','pirolorde','gotim','corrente','abissal','b
   'harpiaSol','esfingeSol','cocatrizLua','harpiaLua','esfingeLua','caveira', // 11ª linha: as linhagens Solar e Lunar do Ar e a Caveira
   'esqGuerreiro','draugr','esqMago','lich','esqArqueiro','flecheiro', // 12ª linha: os esqueletos da Essência
   'barruco','terracoto','golemArgila','mandrago','sentinela','trent', // 13ª linha: o barro da Argila e as raízes da Semente
-  'labareda','fogareu','queimada']; // 14ª linha: o fogo que se alastra (Fase 2)
+  'labareda','fogareu','queimada']; // 14ª linha: o fogo que se alastra (4º ramo da Brasa; também os focos da Fase 2)
 const ATL_LIN=14;
-const ATLAS=/*ATLAS*/"img/atlas.png?v=2a792fc8"/*FIM_ATLAS*/;
+const ATLAS=/*ATLAS*/"img/atlas.png?v=1cfcdeb6"/*FIM_ATLAS*/;
 const CEL=128;
 // estágio de evolução tem que ser legível só pelo tamanho: 0 mínimo, 1º pequeno, 2º médio, 3º grande (passa da borda do hexágono)
 const TAM_SPR=[21,28,40,56];
@@ -5969,7 +5937,7 @@ atlasCorImg.onload=()=>{
   FILA_ATLAS.push(()=>{atlasCor=contornar(atlasCorImg,4,'#07080c');if(J)atualiza();});
   if(FILA_ATLAS.length===1)rodaFilaAtlas();
 };
-atlasCorImg.src=/*ATLAS_COR*/"img/atlas-cor.png?v=e7cc4b6a";
+atlasCorImg.src=/*ATLAS_COR*/"img/atlas-cor.png?v=950884ba";
 const temCor=esp=>{const i=ORDEM_SPR.indexOf(spr(esp));return i>=0&&i<N_COR;};
 function iconeSpr(esp,t,lado=0){
   const i=ORDEM_SPR.indexOf(spr(esp));
