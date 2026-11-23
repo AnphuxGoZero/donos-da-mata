@@ -485,6 +485,10 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 #cercoCena .ccCeuTxt:empty{display:none}
 #cercoCena .ccCeuTxt .ccMana{font-size:1.45em;font-weight:800;letter-spacing:.3px} /* renda da torre: um pouco maior que os outros recados */
 #cercoCena .ccCeuTxt.vis{opacity:1}
+#cercoCena .ccRev{display:grid;justify-items:center} /* duas frases no mesmo lugar, revezando */
+#cercoCena .ccRev>span{grid-area:1/1;animation:ccRev 4.4s infinite}
+#cercoCena .ccRev>span+span{animation-delay:-2.2s}
+@keyframes ccRev{0%,42%{opacity:1}50%,92%{opacity:0}100%{opacity:1}}
 #cercoCena .avTit{font-family:"Pirata One",serif;font-size:min(clamp(28px,6vw,44px),8.5vh);}
 .paisagem #cercoCena .avTit{font-size:min(30px,7.5vh)}
 .paisagem #cercoCena .ccCeuTxt{font-size:11.5px;line-height:1.25;padding:3px 8px}
@@ -2459,7 +2463,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.08'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.09'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -4581,7 +4585,9 @@ function estendeCeu(ch,base,E,CEU,corEst){
 // Avisos da torre ficam FORA do quadro de pixel art (texto da página, maior e nítido), acima dele:
 // 1ª torre do jogador: o objetivo; 2ª: Magia liberada; 3ª: Força Elemental liberada. Os do jogador só saem com um toque.
 const AVISO_TORRE={
-  primeira:{tit:'Domine mais torres para vencer',sub:`<span class="ccMana">+${RENDA_TER.torre} Mana por turno</span>`,cls:'ouro'},
+  // renda e vaga no exército revezam no céu (a vaga só aparece se o limite ainda não bateu no teto)
+  primeira:{tit:'Domine mais torres para vencer',sub:l=>{const mana=`<span class="ccMana">+${RENDA_TER.torre} Mana por turno</span>`;
+    return torresDe(l)+2<=LIM_EXERCITO?`<span class="ccRev">${mana}<span class="ccMana">+1 vaga no exército</span></span>`:mana;},cls:'ouro'},
   'Magia liberada':{tit:'✦ Magia liberada',sub:l=>l===0?'Lance uma magia por turno':`${OM(l)} já pode lançar magias.`,cls:'roxo'},
   'Força Elemental liberada':{tit:'⚡ Força Elemental liberada',sub:l=>l===0?'Elementais atacam qualquer criatura adversária':`${OM(l)} já pode usar a Força Elemental.`,cls:'verm'}};
 // Toda cena de torre tem o mesmo tamanho: quadro alto (com a faixa de céu) e o espaço do título acima reservado,
