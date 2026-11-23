@@ -533,6 +533,25 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 #saves .emObras p{margin:0 0 10px}#saves .emObras p:last-child{margin:0}
 #saves .botaoDiscord{display:flex;align-items:center;justify-content:center;min-height:54px;border-radius:8px;background:#5865f2;border:1px solid #7983ff;color:#fff;text-decoration:none;font:400 24px "Pirata One",serif;letter-spacing:.04em}
 #saves .botaoDiscord:hover{background:#6a76ff}
+#saves .menuIni button .subBt{font:12px system-ui,sans-serif;letter-spacing:0;opacity:.8}
+#saves .fasesGrade{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px;margin:14px auto 18px;max-width:620px!important}
+#saves .cartaoFase{display:flex;align-items:center;gap:12px;padding:8px 12px 8px 8px;text-align:left;min-height:76px;background:#08140fd9;border:1px solid #2f5a48;border-radius:10px;color:#e6f0dc}
+#saves .cartaoFase:hover:not(:disabled){background:#10241ce6;border-color:#8ad8a0}
+#saves .cartaoFase .retrato{flex:none;position:relative;width:58px;height:58px;border-radius:50%;background:#1c2a24 center/cover no-repeat;border:2px solid #8ad8a0aa;display:grid;place-items:center}
+#saves .cartaoFase .retrato i{font-style:normal;font-size:24px}
+#saves .cartaoFase .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+#saves .cartaoFase .txt small{font-size:11px;color:#9fc8b0;letter-spacing:.06em;text-transform:uppercase}
+#saves .cartaoFase .txt b{font:400 22px "Pirata One",serif;letter-spacing:.03em;line-height:1.1;color:#ffe9b0}
+#saves .cartaoFase .desc{font-size:12px;color:#c8d8cc;line-height:1.25}
+#saves .cartaoFase .est{flex:none;align-self:flex-start;color:var(--acc);font-size:14px;letter-spacing:1px;padding-top:4px}
+#saves .cartaoFase .est em{font-style:normal;font-size:11px;background:#2f7a52;color:#fff;padding:2px 7px;border-radius:9px;letter-spacing:0}
+#saves .cartaoFase.fechada{opacity:.6;cursor:default}
+#saves .cartaoFase.fechada .retrato{background:#0c1412;border-color:#4a5a52}
+#saves .cartaoFase.emBreve{border-style:dashed}
+#saves .cartaoFase.emBreve .retrato{background:#1d2a5a;border-color:#7983ff}
+/* tela baixa (celular deitado): os botões da tela inicial em duas colunas; o principal (Jogar/Continuar) ocupa a linha toda */
+@media (max-height:560px){#saves.tela.ini .menuIni{display:grid;grid-template-columns:1fr 1fr;max-width:600px}#saves.tela.ini .menuIni button.pri{grid-column:1/-1}}
+@media (max-height:560px){#saves .cartaoFase{min-height:60px;padding:5px 10px 5px 6px}#saves .cartaoFase .retrato{width:44px;height:44px}#saves .fasesGrade{margin:8px auto 10px;gap:8px}}
 #instalar .passos{text-align:left;margin:10px 0 0;padding-left:22px;font-size:13.5px;line-height:1.5}
 #instalar .passos li{margin:6px 0}
 #instalar .icShare{display:inline-block;vertical-align:-4px;width:18px;height:20px}
@@ -2443,9 +2462,9 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.99'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.00'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
-// inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
+// inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
   if(J&&J.intro)fimIntro(); // a abertura nunca fica rodando atrás (ou por cima) da tela inicial
   fechaMenuJogo();document.getElementById('fim').style.display='none';
@@ -2455,13 +2474,10 @@ function desenhaInicio(){
   const el=document.getElementById('saves'),temSave=!!(lerSave('manual')||lerSave('auto'));
   el.innerHTML=`<div class="tituloJogo" aria-label="A Mata Tem Dono: Guerra dos Encantados"><span class="tl1">A Mata</span><span class="tl2">Tem Dono</span><span class="tlDa">Guerra dos Encantados</span></div>
     <div class="menuIni">
-      <button class="pri grande" onclick="jogarRapido()">Jogar</button>
+      <button class="pri grande" onclick="${cfgInicio?'jogarRapido()':'fecharSaves()'}">${botaoJogar()}</button>
+      ${fase1Info().venceu?'<button class="grande" onclick="telaFases()">Fases</button>':''}
       <button class="grande" onclick="desenhaConfig()">Preparar Batalha</button>
       <button class="grande" onclick="abrirCarregar(true)" ${temSave?'':'disabled'}>Carregar Jogo</button>
-      ${fase1Info().venceu?`<button onclick="jogarFase1()" title="Joga de novo a fase de introdução">Rever tutorial · Fase 1 <span style="color:var(--acc)">${estrelasTxt(fase1Info().estrelas)}</span></button>`:''}
-      ${fase2Info().venceu?`<button onclick="jogarFase2()" title="Joga de novo a Mata em Chamas">Rever Fase 2 <span style="color:var(--acc)">${estrelasTxt(fase2Info().estrelas)}</span></button>`:''}
-      ${fase3Info().venceu?`<button onclick="jogarFase3()" title="Joga de novo as Raízes do Vale">Rever Fase 3 <span style="color:var(--acc)">${estrelasTxt(fase3Info().estrelas)}</span></button>`:''}
-      ${cfgInicio?'':'<button onclick="fecharSaves()">Voltar ao jogo</button>'}
     </div>
     <div class="rodIni"><button onclick="abreCompart()" title="Mostra um QR code com o link do jogo">▦ Compartilhar</button>${podeInstalar()?'<button onclick="botaoInstalar()" title="Coloca o jogo na tela inicial do celular, em tela cheia e jogável sem internet">📲 Instalar app</button>':''}</div>
     <div class="versaoJogo" onclick="contaDiag()">v${VERSAO}</div>`;
@@ -2470,7 +2486,38 @@ function desenhaInicio(){
 }
 // Jogar: partida 1x1 clássica, com o último mestre escolhido (as opções salvas não mudam)
 // Jogar segue a campanha: Fase 1, 2, 3 e, vencidas as três, a tela de "em construção" (convite para o Discord)
-function jogarRapido(){if(!fase1Info().venceu)jogarFase1();else if(!fase2Info().venceu)jogarFase2();else if(!fase3Info().venceu)jogarFase3();else telaEmObras();}
+function jogarRapido(){const f=proxFase();if(f)f.jogar();else telaEmObras();}
+// as fases da campanha, em ordem; cada uma abre quando a anterior é vencida. Fase nova: acrescentar aqui.
+const CAMPANHA=[
+  {n:1,nome:'O Bando Infernal',desc:'O tutorial: a Água contra os Filhotes Infernais',img:'img/f1-cao-cara.png',info:()=>fase1Info(),jogar:()=>jogarFase1()},
+  {n:2,nome:'A Mata em Chamas',desc:'Apague o fogo e salve a mata com a Caipora',img:'img/f2-caipora.png',info:()=>fase2Info(),jogar:()=>jogarFase2()},
+  {n:3,nome:'Raízes do Vale',desc:'Replante o vale queimado, debaixo de chuva',img:'img/f3-sauva-luta.png',info:()=>fase3Info(),jogar:()=>jogarFase3()}];
+const proxFase=()=>CAMPANHA.find(f=>!f.info().venceu)||null;
+const faseAberta=f=>f.n===1||!!CAMPANHA[f.n-2].info().venceu;
+// o botão principal diz para onde vai: com uma partida aberta, Continuar volta para ela; senão, Jogar (primeira vez),
+// Continuar (a próxima fase da campanha) ou Em breve (campanha toda vencida)
+function botaoJogar(){
+  if(!cfgInicio)return `<span>Continuar</span><small class="subBt">Voltar à partida · ${J.f1?`Fase ${J.f1.n||1} · `:''}turno ${J.turno}</small>`;
+  const f=proxFase();
+  const [t,sub]=!f?['Jogar','Próximas fases em breve']:f.n===1?['Jogar',`Fase 1 · ${f.nome}`]:['Continuar',`Fase ${f.n} · ${f.nome}`];
+  return `<span>${t}</span><small class="subBt">${sub}</small>`;}
+// tela de escolha de fase: um cartão por fase (retrato, nome, estrelas); as fechadas aparecem com cadeado; no fim, "Em breve"
+function telaFases(){
+  const el=document.getElementById('saves');
+  const cartao=f=>{const i=f.info(),aberta=faseAberta(f);
+    return `<button class="cartaoFase${aberta?'':' fechada'}" ${aberta?`onclick="CAMPANHA[${f.n-1}].jogar()"`:'disabled'}>
+      <span class="retrato" ${aberta?`style="background-image:url(${f.img})"`:''}>${aberta?'':'<i>🔒</i>'}</span>
+      <span class="txt"><small>Fase ${f.n}</small><b>${aberta?f.nome:'???'}</b><span class="desc">${aberta?f.desc:`Vença a Fase ${f.n-1} para abrir`}</span></span>
+      <span class="est">${i.venceu?estrelasTxt(i.estrelas):aberta?'<em>Nova!</em>':''}</span></button>`;};
+  el.innerHTML=`<div class="tituloJogo" style="font-family:'Pirata One',serif;font-weight:400;font-size:min(46px,10vw);text-align:center">Fases</div>
+    <div class="fasesGrade">${CAMPANHA.map(cartao).join('')}
+      <button class="cartaoFase emBreve" onclick="telaEmObras()"><span class="retrato"><i>…</i></span>
+        <span class="txt"><small>Fase ${CAMPANHA.length+1}</small><b>Em breve</b><span class="desc">Dê sua opinião no Discord</span></span><span class="est"></span></button></div>
+    <div class="menuIni"><button onclick="desenhaInicio()">Voltar</button></div>
+    <div class="versaoJogo" onclick="contaDiag()">v${VERSAO}</div>`;
+  poeArte(el,'inicio');
+  el.classList.remove('cfg','ini');el.classList.add('tela');el.style.display='block';
+}
 function jogarFase1(){fecharSaves();novoJogo({...prefs(),modo:'1x1',f1:true});}
 function jogarFase2(){fecharSaves();novoJogo({...prefs(),modo:'1x1',f1:true,fase:2});}
 function jogarFase3(){fecharSaves();novoJogo({...prefs(),modo:'1x1',f1:true,fase:3});}
