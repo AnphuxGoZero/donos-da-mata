@@ -2523,7 +2523,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.27'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.28'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -5081,8 +5081,13 @@ function danoBase(a,d){
 // Golpe Místico: criaturas Arcanas (não os mestres) ignoram até 20% da evasão do terreno do alvo
 const GOLPE_MISTICO=0.20;
 const temGolpeMistico=esp=>ESP[esp].el==='arcano'&&!ESP[esp].mestre;
+// Fase 1: o fogo do Bando o denuncia no meio do mato: o terreno dá no máximo 30% de evasão aos Filhotes/Cão
+// (com 60% na floresta, a Água de dia acertava 5% e o último Cão podia ficar dez turnos intocável)
+const EV_MAX_F1=0.30;
+const capF1=d=>!!(d.selvagem&&J&&J.f1&&J.f1.n===1);
 function evasaoContra(a,d,tD){
-  const ev=d.chama?0:defTer(d.esp,tD)+(tD==='flor'&&meuEl(d,'planta')&&temNo('p2a')?0.1:0); // Fase 2: fogo não se esquiva (as chamas não ganham evasão do terreno); Raízes: +10% na floresta
+  let ev=d.chama?0:defTer(d.esp,tD)+(tD==='flor'&&meuEl(d,'planta')&&temNo('p2a')?0.1:0); // Fase 2: fogo não se esquiva (as chamas não ganham evasão do terreno); Raízes: +10% na floresta
+  if(capF1(d))ev=Math.min(ev,EV_MAX_F1);
   return temGolpeMistico(a.esp)&&ev>0?Math.max(0,ev-GOLPE_MISTICO):ev;
 }
 function chanceAcerto(a,d,tD){
@@ -8070,7 +8075,7 @@ function previsao(){
   const corCh=c=>c>=0.6?'#6ee08a':c>=0.35?'#e6c34a':'#ff8a80';
   // detalhe da conta: precisão base − evasão ± horário
   const evT=defTer(e.esp,terEv(e)),evE=evasaoContra(s,e,terEv(e));
-  const conta=`${Math.round(precisao(s.esp)*100)}% − ${Math.round(evE*100)}% evasão${evE!==evT?` (${Math.round(evT*100)}% − 20% Golpe Místico)`:''}${modHora(s.esp)?` ${motivoHora(s.esp)}`:''}`;
+  const conta=`${Math.round(precisao(s.esp)*100)}% − ${Math.round(evE*100)}% evasão${evE!==evT?(capF1(e)&&evT>EV_MAX_F1?' (o fogo o denuncia no mato)':` (${Math.round(evT*100)}% − 20% Golpe Místico)`):''}${modHora(s.esp)?` ${motivoHora(s.esp)}`:''}`;
   let txt=`Acerto: <strong style="color:${corCh(ch)}">${Math.round(ch*100)}%</strong> <span class="vez">(${conta})</span>`;
   txt+=`<br>${golpesDe(s)} golpe${golpesDe(s)>1?"s":""} de <strong>${a}–${b}</strong> de dano${m>1?' <span style="color:#6ee08a">(vantagem)</span>':m<1?' <span style="color:#ff8a80">(desvantagem)</span>':''}`;
   if(a*golpesDe(s)>=e.hp)txt+=' · <strong style="color:#f2c14e">pode derrotar o alvo</strong>';
