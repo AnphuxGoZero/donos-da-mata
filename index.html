@@ -1339,6 +1339,9 @@ const ESP={
   warlock:{nome:'Warlock',cat:'mago',el:'arcano',hp:110,atk:13,def:5,mov:3,alc:1,forma:'coroa',mestre:true,tier:3},
   wizard:{nome:'Wizard',cat:'mago',el:'arcano',hp:110,atk:13,def:5,mov:3,alc:1,forma:'coroa',mestre:true,tier:3},
   sorcerer:{nome:'Sorcerer',cat:'mago',el:'arcano',hp:110,atk:13,def:5,mov:3,alc:1,forma:'coroa',mestre:true,tier:3},
+  // campanha: no lugar do mestre, a Fogueira da clareira. Não anda (mov 0) nem ataca; só revida com fagulhas (atk baixo).
+  // Se ela apagar, a fase está perdida (a mesma regra de "o mestre cair").
+  fogueira:{nome:'Fogueira',cat:'mago',el:'arcano',hp:110,atk:9,def:5,mov:0,alc:1,forma:'coroa',mestre:true,tier:3},
   // estágio 0: formas recém-nascidas, baratas e frágeis, que evoluem rápido (pouca XP)
   brasa:{nome:'Brasa',cat:'terFogo',el:'fogo',hp:18,atk:8,def:0,mov:4,alc:1,custo:20,xp:12,evo:'faisca',forma:'chama',tier:0},
   girino:{nome:'Girino',cat:'marPeq',el:'agua',hp:17,atk:5,def:1,mov:4,alc:1,custo:25,xp:12,evo:'gotim',forma:'gota',tier:0},
@@ -1962,7 +1965,7 @@ function novoJogo(op=prefs(),semIntro=false){ // semIntro: a partida de fundo, a
      deficit:Array(np).fill(0),invocando:null,invocHex:null,invHex:null,menuInv:false,hover:null,ocupado:false,fim:false,logs:[],
      cristal:m.cristal!=null?{k:m.cristal,v:0,lado:null}:null,cabo:m.cristal!=null||f1?null:{v:0,lado:null},evoFixa:Array.from({length:np},()=>({})),hj:Array.from({length:np},novaHj),
      ...estadoMagiaNovo(ordens,0)}; // mana só pela renda (padrão do jogo)
-  m.f.forEach((f,l)=>criaUnidade(ORDENS[ordens[l]].esp,l,...f));
+  m.f.forEach((f,l)=>criaUnidade(f1&&l===0?'fogueira':ORDENS[ordens[l]].esp,l,...f)); // campanha: a Fogueira da clareira no lugar do mestre
   J.op=op; // para Reiniciar partida
   J.estLib=campanhaInfo().estagioLib??1; // estágio de evolução que a história já liberou (xpMeta)
   J.bencao=f1&&fase>1?{...(campanhaInfo().bencaos||{})}:{}; // Fogueira: as bênçãos compradas no fim das fases anteriores
@@ -2478,7 +2481,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.11'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.12'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -2930,7 +2933,7 @@ function quemSegue(lista){
   const vai=ord.slice(0,quantosSeguem(lista.length)),fica=ord.slice(vai.length);
   return {vai:lista.filter(x=>vai.includes(x)),fica};
 }
-const ficouTxt=(fica,n)=>fica.length?` (${n-fica.length} de ${n}: ${fica.map(x=>ESP[x.esp].nome).join(', ')} ${fica.length>1?'ficaram':'ficou'} guardando o castelo)`:` (${n} ${n>1?'criaturas':'criatura'})`;
+const ficouTxt=(fica,n)=>fica.length?` (${n-fica.length} de ${n}: ${fica.map(x=>ESP[x.esp].nome).join(', ')} ${fica.length>1?'ficaram':'ficou'} guardando a clareira)`:` (${n} ${n>1?'criaturas':'criatura'})`;
 // as criaturas que terminaram a Fase 1 voltam (com a forma e a XP de lá, vida cheia), só as mais fortes (quantosSeguem).
 // Cada uma volta para a casa onde estava; se ela estiver ocupada (ou for onde o fogo vai nascer), para a livre mais perto do castelo.
 function trazExercitoF1(proibidas){
@@ -3433,7 +3436,7 @@ function mostraFimF2(v,motivo){
     b2.textContent='Tentar novamente';b2.onclick=()=>jogarFase2();
   }else{
     document.getElementById('fimSub').textContent=motivo==='vilas'?`Todas as vilas viraram cinzas no turno ${J.turno}.`:`${OM(0)} caiu no turno ${J.turno}.`;
-    document.getElementById('fimPorque').innerHTML=`<p class="porque">${motivo==='vilas'?'O fogo e o Cão Infernal tomaram vila por vila.':'O fogo cercou o seu mestre.'}</p>
+    document.getElementById('fimPorque').innerHTML=`<p class="porque">${motivo==='vilas'?'O fogo e o Cão Infernal tomaram vila por vila.':'O Cão Infernal chegou à clareira e apagou a Fogueira.'}</p>
       <p class="dicaFim">💡 Fogo não apaga fogo: use criaturas de Água contra as chamas (elas causam o dobro de dano). E escute a Caipora: Sapinhos andam bem em terra firme.</p>`;
     b.textContent='Tentar de novo';b.onclick=()=>jogarFase2();
     b2.textContent='Menu';b2.onclick=()=>abreConfig();
@@ -3747,7 +3750,7 @@ async function presenteSementeF3(){
       for(let i=0;i<8;i++)fx.push({folha:true,x:x+(i%4-1.5)*R*.3,y:y+R*.3,dx:(Math.random()-.5)*R*1.2,t0:performance.now()+i*50,dur:1000,cor:i%2?'#7fe08a':'#4f9a3e'});
       await dorme(680);if(J!==jogo)return;u.anim=null;}
     seguir(u,true);flutua(u,'Presente da Caipora!','#6ee08a');piscaHex(k0,'#6ee08a',900);
-    J.f1.sementeK=alvo;log('🌱 A Semente que a Caipora deu brotou ao lado do mestre.');
+    J.f1.sementeK=alvo;log('🌱 A Semente que a Caipora deu brotou ao lado da Fogueira.');
     if(anima){await dorme(1100);if(J!==jogo)return;J.ocupado=false;}}
   for(const k of J.f1.queim)piscaHex(k,'#9dffb8',1200);
   avisoF1('plantar');atualiza();
@@ -4131,7 +4134,7 @@ function mostraFimF3(v,motivo){
     b2.textContent='Tentar novamente';b2.onclick=()=>jogarFase3();
   }else{
     document.getElementById('fimSub').textContent=`${OM(0)} caiu no turno ${J.turno}.`;
-    document.getElementById('fimPorque').innerHTML=`<p class="porque">As saúvas cercaram o seu mestre.</p>
+    document.getElementById('fimPorque').innerHTML=`<p class="porque">As saúvas invadiram a clareira e apagaram a Fogueira.</p>
       <p class="dicaFim">💡 A Planta vence a Terra das saúvas. Deixe o Brasa e o Sapinho de guarda perto das Sementes que estão plantando, e ataque os formigueiros: eles não revidam (mas um formigueiro derrubado pode renascer em outro lugar).</p>`;
     b.textContent='Tentar de novo';b.onclick=()=>jogarFase3();
     b2.textContent='Menu';b2.onclick=()=>abreConfig();
@@ -4216,7 +4219,7 @@ function mostraFimF1(v,motivo){
     b2.textContent='Tentar novamente';b2.onclick=()=>jogarFase1();
   }else{
     document.getElementById('fimSub').textContent=motivo==='vilas'?`O Bando Infernal destruiu todas as vilas no turno ${J.turno}.`:`${OM(0)} caiu no turno ${J.turno}.`;
-    document.getElementById('fimPorque').innerHTML=`<p class="porque">${motivo==='vilas'?'Os Filhotes saquearam vila por vila sem ninguém para pará-los.':'Os Filhotes chegaram até o seu mestre e o derrubaram.'}</p>
+    document.getElementById('fimPorque').innerHTML=`<p class="porque">${motivo==='vilas'?'Os Filhotes saquearam vila por vila sem ninguém para pará-los.':'Os Filhotes chegaram à clareira e apagaram a Fogueira.'}</p>
       <p class="dicaFim">💡 Invoque criaturas logo no primeiro turno e mande-as para as vilas. Girinos (Água) causam mais dano no Fogo, e duas criaturas atacando o mesmo Filhote o derrubam rápido.</p>`;
     b.textContent='Tentar de novo';b.onclick=()=>jogarFase1();
     b2.textContent='Menu';b2.onclick=()=>abreConfig();
@@ -4285,7 +4288,7 @@ let CRISTAL_META=50,CRISTAL_VALOR=3; // let: o simulador testa outros valores
 // senão só avança quem tem mais torres que todos os rivais somados
 const valorCristal=()=>CRISTAL_VALOR*(NP()-1);
 const ehCristal=k=>!!(J&&J.cristal)&&J.cristal.k===k;
-const nomeTer=k=>J.f1?.formig?.includes(k)?'Formigueiro':J.f1?.brotos?.includes(k)?'Mata de brotos':J.f1?.queim?.includes(k)?'Floresta queimada':ehCristal(k)?'Torre do Cristal':J.vilas?.[k]?(J.vilas[k].n>0?'Vila':'Vila destruída'):TER[J.ter[k]].nome;
+const nomeTer=k=>J.f1&&J.ter[k]==='cast'?'Clareira':J.f1&&J.ter[k]==='fort'?nomeEsteio(k):J.f1?.formig?.includes(k)?'Formigueiro':J.f1?.brotos?.includes(k)?'Mata de brotos':J.f1?.queim?.includes(k)?'Floresta queimada':ehCristal(k)?'Torre do Cristal':J.vilas?.[k]?(J.vilas[k].n>0?'Vila':'Vila destruída'):TER[J.ter[k]].nome;
 const forcaCristal=l=>torresDe(l)+(J.dono[J.cristal.k]===l?valorCristal()-1:0);
 function puxaCristal(l){
   const C=J.cristal;if(!C||J.fim)return;
@@ -5326,7 +5329,8 @@ const ORDENS={
   coro:   {nome:'Summoner',art:'a',esp:'arquimaga',forca:['fogo','agua','ar','terra'],magias:['tufao','santuario'],desc:'Comanda os quatro elementais e protege quem guarda as torres.'},
 };
 // nome do mestre de cada lado, com artigo: OM(1) = "O Warlock", doM(1) = "do Warlock", aoM / peloM idem
-const NM=l=>selvagem(l)?'Bando Infernal':ORDENS[J.ordem[l]].nome,ART=l=>selvagem(l)?'o':ORDENS[J.ordem[l]].art;
+const ehFogueira=l=>!!(J&&J.f1&&l===0); // campanha: o seu lado é a Fogueira da clareira
+const NM=l=>selvagem(l)?'Bando Infernal':ehFogueira(l)?'Fogueira':ORDENS[J.ordem[l]].nome,ART=l=>selvagem(l)?'o':ehFogueira(l)?'a':ORDENS[J.ordem[l]].art;
 const OM=l=>ART(l).toUpperCase()+' '+NM(l);
 const doM=l=>(ART(l)==='a'?'da ':'do ')+NM(l),aoM=l=>(ART(l)==='a'?'à ':'ao ')+NM(l),peloM=l=>(ART(l)==='a'?'pela ':'pelo ')+NM(l);
 const magiasDe=l=>[...Object.keys(MAGIAS).filter(id=>!MAGIAS[id].ordem),...ORDENS[J.ordem[l]].magias];
@@ -5464,7 +5468,7 @@ function seleciona(u){
   J.sel=u;J.alc=u.movido||mestreParado?null:alcancaveis(u);
   J.alvosSet=new Set();J.alvosMove=new Map();
   J.menuMestre=(u.lado===0&&ESP[u.esp].mestre)?'principal':null;
-  if(u.agiu){soltaEnquadra();seguir(u);return;}
+  if(u.agiu||u.esp==='fogueira'){soltaEnquadra();seguir(u);return;} // a Fogueira não anda nem ataca (só revida)
   // inimigos vizinhos: ataque direto
   alvosDesde(u,u.c,u.r).forEach(e=>J.alvosSet.add(e.id));
   // inimigos alcançáveis andando: atalho (anda até a melhor casa vizinha e ataca)
@@ -6151,7 +6155,7 @@ async function cenaAviso(u,txt){
 async function fechaCena(){
   if(!CENA)return;
   const {a,d}=CENA,caiu=[a,d].find(u=>!vivo(u));
-  CENA.resultado={txt:caiu?(caiu.elemental?`${ESP[caiu.esp].nome} se desfez!`:caiu.figurante?'Um camponês bateu as botas!':`${ESP[caiu.esp].nome} foi derrotado!`):'Fim do combate',
+  CENA.resultado={txt:caiu?(caiu.elemental?`${ESP[caiu.esp].nome} se desfez!`:caiu.figurante?'Um camponês bateu as botas!':caiu.esp==='fogueira'?'A Fogueira se apagou!':`${ESP[caiu.esp].nome} foi derrotado!`):'Fim do combate',
     sub:`${ESP[a.esp].nome} causou ${CENA.dano.get(a)} · ${ESP[d.esp].nome} causou ${CENA.dano.get(d)}`,t0:performance.now()};
   await esperaC(1100);
   await tweenC(260,t=>{if(CENA)CENA.fade=t;});
@@ -6182,8 +6186,8 @@ function fundoCena(esq,dir){
     g.lineTo(ax+aw,chaoY);g.fill();});
   // chão: metade de cada lutador, com a paleta do terreno onde ele está
   for(const [u,x0,x1] of [[esq,ax,ax+aw/2],[dir,ax+aw/2,ax+aw]]){
-    const t=J.ter[K(u.c,u.r)],pal=PAL_TER[t]||PAL_TER.plan;
-    if(ehConstrucao(t)){ // muralha ao fundo de quem está numa construção
+    const t=J.ter[K(u.c,u.r)],pal=PAL_TER[J.f1&&(t==='cast'||t==='fort')?'terr':t]||PAL_TER.plan;
+    if(ehConstrucao(t)&&!(J.f1&&t!=='torre')){ // muralha ao fundo de quem está numa construção
       g.fillStyle='#5c606a';g.fillRect(x0+30,chaoY-58,x1-x0-60,58);g.fillStyle='#34373e';
       for(let x=x0+30;x<x1-30;x+=22)g.fillRect(x,chaoY-70,13,12);
       g.fillStyle='#969aa4';g.fillRect(x0+30,chaoY-58,x1-x0-60,4);}
@@ -6297,6 +6301,7 @@ function desenhaLutador(g,u,now){
   if(p.luz>0)g.filter=`brightness(${1+p.luz*1.6})`;
   if(u.petra)g.filter='grayscale(1) brightness(.9)';
   if(u.elemental)desenhaElemental(g,ESP[u.esp].el,x,y,S,now,esq);
+  else if(u.esp==='fogueira')pintaFogueira(g,x,y-S*.08,S*.72,u.hp/e.hp,now); // a Fogueira na tela de luta
   else{
     const si=ORDEM_SPR.indexOf(spr(u.esp)),src=atlasCor&&temCor(u.esp)?atlasCor:atlasOk?atlasTime[u.lado]:null; // combate: monstros coloridos
     const aF=arteF1(u),iF=aF&&imgF1(aF.luta); // Fase 1: o Bando luta com o desenho próprio
@@ -6551,6 +6556,7 @@ const PAL_TER={
   vulc:['#1c050c','#4a0c1c','#8c1430','#b8203c','#b4886a','#f4eef0','#d8b4c0','#9a6a78','#d8b090'], // [fundo, vinho, carmim, carmim vivo, risco bege, fumaça branca, fumaça rosada, sombra da fumaça, risco claro]
   gelo:['#4a7fb8','#6fa6dc','#9ccbf2','#e2f2ff'],
   cast:['#4f4a42','#7f7869','#a8a08c','#d6cdb6'],
+  terr:['#4a3220','#7a5434','#94683f','#b48650'], // clareira (campanha): terra batida, varrida em volta da Fogueira
   fort:['#4f4a42','#7f7869','#a8a08c','#d6cdb6'],
 };
 const hsh=(x,y,s=0)=>{const v=Math.sin(x*127.1+y*311.7+s*74.7)*43758.5453;return v-Math.floor(v);};
@@ -6578,6 +6584,10 @@ const distHex=(lx,ly)=>Math.max(Math.abs(lx)/(W/2),(Math.abs(ly)+Math.abs(lx)/Ma
 function tomTer(t,x,y,hx,hy){
   const n=hsh(x,y,3),lx=x+.5-hx,ly=y+.5-hy; // lx,ly: posição dentro do hexágono
   switch(t){
+    case 'terr':{
+      const r=ruido(x/6,y/6,31),d=Math.hypot(lx,ly*1.15);
+      if(n<.05)return 0;if(d>9&&d<11.5&&n<.55)return 3; // a roda varrida em volta da Fogueira
+      return r>.62?3:r<.32?1:2;}
     case 'torre':{
       const r=ruido(x/5,y/5,21);return n<.08?0:r>.65?3:r<.3?1:2;}
     case 'plan':{
@@ -6694,7 +6704,7 @@ function texturaMapa(){
   const cv2=document.createElement('canvas');cv2.width=VW;cv2.height=VH;
   const g=cv2.getContext('2d'),img=g.createImageData(VW,VH),px=img.data,hw=W/2;
   for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
-    const k=K(c,r),[cx,cy]=centro(c,r),t=J.f1?.brotos?.includes(k)?'broto':J.f1?.queim?.includes(k)?'queim':J.ter[k],pal=PAL_RGB[t]||PAL_RGB.plan;
+    const k=K(c,r),[cx,cy]=centro(c,r),t=J.f1?.brotos?.includes(k)?'broto':J.f1?.queim?.includes(k)?'queim':J.f1&&(J.ter[k]==='cast'||J.ter[k]==='fort')?'terr':J.ter[k],pal=PAL_RGB[t]||PAL_RGB.plan;
     for(let y=Math.floor(cy-R);y<=Math.ceil(cy+R);y++)for(let x=Math.floor(cx-hw);x<=Math.ceil(cx+hw);x++){
       if(x<0||y<0||x>=VW||y>=VH)continue;
       const dx=Math.abs(x+.5-cx),dy=Math.abs(y+.5-cy);
@@ -6728,16 +6738,19 @@ function camadaTerreno(){
     ctx.restore();
     // torres e fortalezas conquistadas: o hexágono inteiro ganha a cor do time
     const dn=J.dono[k];
-    if(ehConstrucao(t)&&dn!=null){
+    if(J.f1&&(t==='cast'||t==='fort')){ // campanha: clareira de terra batida, só um véu da cor do dono
+      if(dn!=null){hexPath(x,y,R-1.2);ctx.fillStyle=COR[dn]+'30';ctx.fill();hexPath(x,y,R-2);ctx.strokeStyle=COR[dn]+'aa';ctx.lineWidth=1.6;ctx.stroke();}
+    }else if(ehConstrucao(t)&&dn!=null){
       hexPath(x,y,R-1.2);ctx.fillStyle=t==='torre'?COR_TORRE[dn]:COR_HEX[dn];ctx.fill();
       if(t!=='fort'){hexPath(x,y,R-2);ctx.strokeStyle=COR[dn];ctx.lineWidth=2.5;ctx.stroke();}
     }
     // ícones só nas construções e no vulcão; o resto a textura já mostra
-    if(t==='cast'&&CASTELO_PATIO)patioCastelo(x,y,dn);
+    if(t==='cast'&&J.f1){} // campanha: a clareira fica limpa; a Fogueira é desenhada como unidade
+    else if(t==='cast'&&CASTELO_PATIO)patioCastelo(x,y,dn);
     else if(t==='cast'||t==='torre')decor(t,x,y,k);
     if(t==='vulc')vulc.push(k);
   }
-  muralhas(); // depois de todos os hexágonos, para nada pintar por cima das torres de canto
+  if(!J.f1)muralhas(); // depois de todos os hexágonos, para nada pintar por cima das torres de canto
   bordaCristal();
   ctx=real;
   const g=cinza.getContext('2d');g.clearRect(0,0,w,h);pintaCinza(g,cor,.62);
@@ -7302,6 +7315,7 @@ atlasCorImg.onload=()=>{
 atlasCorImg.src=/*ATLAS_COR*/"img/atlas-cor.png?v=950884ba";
 const temCor=esp=>{const i=ORDEM_SPR.indexOf(spr(esp));return i>=0&&i<N_COR;};
 function iconeSpr(esp,t,lado=0){
+  if(esp==='fogueira')return `<span class="spr" style="width:${t}px;height:${t}px;background-image:url(${icoFogueira()});background-size:100% 100%"></span>`;
   const i=ORDEM_SPR.indexOf(spr(esp));
   if(i<0||!ATLAS)return `<span class="ponto" style="background:${COR[lado==='cor'?0:lado]}"></span>`;
   if(lado==='cor'&&!temCor(esp))lado=0; // lado 'cor' = versão colorida (sem cor de time)
@@ -7437,8 +7451,119 @@ function seloSemMana(u,x,y){
   ctx.fillStyle='#fff';ctx.font='bold 10px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillText('!',x-R*0.55,y-R*0.55+0.5);ctx.restore();
 }
+// ---------- A Fogueira da clareira (campanha) ----------
+// Desenhada em código: roda de pedras, lenha cruzada, brasas e a chama. A vida dela aparece na própria chama:
+// cheia, alta e soltando fagulhas; ferida, baixa e avermelhada; quase apagando, só brasa e fumaça.
+// (x,y) = o chão, no meio da fogueira; S = altura da chama cheia.
+function pintaFogueira(g,x,y,S,frac,now){
+  const t=now/1000,f=Math.max(0,Math.min(1,frac)),h=S*(.28+.72*f),w=S*.36;
+  g.save();
+  // brilho no chão
+  const gl=g.createRadialGradient(x,y,0,x,y,S*.75);
+  gl.addColorStop(0,`rgba(255,170,70,${.18+.3*f})`);gl.addColorStop(1,'rgba(255,120,40,0)');
+  g.fillStyle=gl;g.beginPath();g.ellipse(x,y,S*.75,S*.3,0,0,Math.PI*2);g.fill();
+  // pedras de trás
+  const pedra=(a)=>{const px=x+Math.cos(a)*w*1.05,py=y+Math.sin(a)*w*.42,r=S*.075;
+    g.fillStyle=Math.sin(a*3)>0?'#7d7568':'#8f877a';g.strokeStyle='#1d1a17';g.lineWidth=Math.max(1,S*.018);
+    g.beginPath();g.ellipse(px,py,r*1.25,r*.85,0,0,Math.PI*2);g.fill();g.stroke();
+    g.fillStyle='rgba(255,255,255,.18)';g.beginPath();g.ellipse(px-r*.3,py-r*.3,r*.5,r*.3,0,0,Math.PI*2);g.fill();};
+  for(let i=0;i<9;i++){const a=Math.PI+i/8*Math.PI;pedra(a);} // metade de trás (de 180° a 360°)
+  // lenha cruzada
+  g.lineCap='round';
+  for(const [a,b] of [[-.62,.28],[.62,.28],[-.2,.36]]){
+    g.strokeStyle='#2a170c';g.lineWidth=S*.11;g.beginPath();g.moveTo(x+a*w,y+b*w*.4);g.lineTo(x-a*w*.35,y-S*.08);g.stroke();
+    g.strokeStyle='#6a3e1e';g.lineWidth=S*.065;g.beginPath();g.moveTo(x+a*w,y+b*w*.4);g.lineTo(x-a*w*.35,y-S*.08);g.stroke();}
+  // brasas
+  for(let i=0;i<7;i++){const bx=x+(hsh(i,1)-.5)*w*1.3,by=y-S*.02+(hsh(i,2)-.5)*S*.06,p=.5+.5*Math.sin(t*3+i*1.7);
+    g.fillStyle=`rgba(255,${(90+90*p)|0},40,${.7+.3*p})`;g.beginPath();g.arc(bx,by,S*(.025+.015*p),0,Math.PI*2);g.fill();}
+  // chama: três línguas sobrepostas (vermelha, laranja, amarela), tremulando
+  if(f>0.04){
+    const lingua=(esc,cor,fase)=>{const hh=h*esc,ww=w*.8*esc,sw=Math.sin(t*6+fase)*ww*.25,ponta=Math.sin(t*4.3+fase)*ww*.35;
+      g.fillStyle=cor;g.beginPath();g.moveTo(x-ww,y-S*.04);
+      g.bezierCurveTo(x-ww*1.05,y-hh*.45,x-ww*.35+sw,y-hh*.6,x+ponta,y-hh);
+      g.bezierCurveTo(x+ww*.4+sw,y-hh*.55,x+ww*1.05,y-hh*.4,x+ww,y-S*.04);
+      g.quadraticCurveTo(x,y+S*.03,x-ww,y-S*.04);g.fill();};
+    g.globalCompositeOperation='lighter';
+    lingua(1,f>.35?'rgba(230,70,25,.85)':'rgba(170,45,20,.85)',0);
+    lingua(.72,f>.35?'rgba(255,140,30,.9)':'rgba(220,90,30,.85)',1.3);
+    if(f>.25)lingua(.42,'rgba(255,230,120,.95)',2.6);
+    g.globalCompositeOperation='source-over';
+    // fagulhas subindo (só com a chama forte)
+    if(f>.5)for(let i=0;i<6;i++){const c=(t*.55+i/6)%1,sx=x+Math.sin(i*2.1+t*2)*w*.5*(1+c),sy=y-h*.6-c*S*.7;
+      g.fillStyle=`rgba(255,${(200-100*c)|0},80,${1-c})`;g.fillRect(sx,sy,Math.max(1.5,S*.03),Math.max(1.5,S*.03));}
+  }
+  // fumaça quando está fraca
+  if(f<.45)for(let i=0;i<3;i++){const c=(t*.35+i/3)%1;
+    g.fillStyle=`rgba(150,150,150,${(.45-f*.6)*(1-c)})`;g.beginPath();g.arc(x+Math.sin(t+i*2)*w*.4,y-h*.6-c*S*.8,S*(.07+c*.12),0,Math.PI*2);g.fill();}
+  // pedras da frente (cobrem a base da lenha)
+  for(let i=1;i<8;i++){const a=i/8*Math.PI;pedra(a);}
+  g.restore();
+}
+// ícone da Fogueira para fichas e menus (fundo transparente), guardado como blob
+let icoFog=null;
+function icoFogueira(){if(icoFog)return icoFog;const c=document.createElement('canvas');c.width=c.height=128;
+  pintaFogueira(c.getContext('2d'),64,104,96,1,1300);
+  c.toBlob(b=>{icoFog=URL.createObjectURL(b);if(J)atualiza();});return c.toDataURL();}
+function desenhaFogueiraMapa(u,x,y,now){
+  const e=ESP[u.esp],base=y+R*0.42,frac=Math.max(0,u.hp/e.hp);
+  ctx.save();ctx.strokeStyle=COR[u.lado];ctx.lineWidth=2;ctx.fillStyle=COR[u.lado]+'40';
+  ctx.beginPath();ctx.ellipse(x,base,17,6.5,0,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.restore();
+  pintaFogueira(ctx,x,base-1,34,frac,now);
+  const bw=26;
+  ctx.fillStyle='#111';ctx.fillRect(x-bw/2,base+6,bw,4);
+  ctx.fillStyle=frac>.5?'#5fd27a':frac>.25?'#e6c34a':'#e85a4f';ctx.fillRect(x-bw/2,base+6,bw*frac,4);
+}
+// ---------- Esteios da clareira (campanha) ----------
+// As 6 casas em volta da Fogueira (as antigas fortalezas) são esteios: troncos entalhados com o rosto de um Encantado,
+// um por elemento. Cada elemento que a história apresenta acende o seu esteio (olhos e penas na cor do elemento);
+// os outros ficam adormecidos, sem revelar de quem são. A regra é a mesma das fortalezas.
+const ESTEIO_EL=['fogo','agua','planta','terra','ar','arcano'];
+const ESTEIO_NOME={fogo:'do Fogo',agua:'da Água',planta:'da Planta',terra:'da Terra',ar:'do Ar',arcano:'do Mistério'};
+let esteiosJ=null,esteiosMapa=null;
+function esteios(){ // {k: elemento} pela ordem dos vizinhos da clareira
+  if(esteiosJ===J)return esteiosMapa;
+  const c0=J.ter.findIndex((t,k)=>t==='cast'&&J.dono[k]===0);esteiosMapa={};
+  if(c0>=0)vizinhos(...DK(c0)).forEach(([c,r],i)=>{const k=K(c,r);if(J.ter[k]==='fort')esteiosMapa[k]={el:ESTEIO_EL[i%6],c0};});
+  esteiosJ=J;return esteiosMapa;}
+const esteioAceso=el=>bencaosAte(J.f1?.n||1).includes(el);
+function nomeEsteio(k){const s=esteios()[k];return s&&esteioAceso(s.el)?'Esteio '+ESTEIO_NOME[s.el]:'Esteio adormecido';}
+function dicaEsteio(k){const s=esteios()[k],a=s&&esteioAceso(s.el);
+  return (a?`Tronco entalhado com o rosto do Encantado ${ESTEIO_NOME[s.el]}, aceso desde que ele chegou ao vale. `:'Tronco entalhado com o rosto de um Encantado que ainda não chegou ao vale. ')+'Cura, rende mana e serve para invocar. Invasores não ganham a proteção da clareira (contam como planície).';}
+function desenhaEsteios(now){
+  const E=esteios(),t=now/1000;
+  for(const [kk,s] of Object.entries(E)){
+    const k=+kk,[cx,cy]=centro(...DK(k)),[ox,oy]=centro(...DK(s.c0)),d=Math.hypot(cx-ox,cy-oy)||1;
+    const x=cx+(cx-ox)/d*9,base=cy+(cy-oy)/d*6+4,aceso=esteioAceso(s.el),cor=EL[s.el],p=.6+.4*Math.sin(t*2.2+k);
+    ctx.save();
+    ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(x,base,8,3,0,0,Math.PI*2);ctx.fill();
+    if(aceso){const gl=ctx.createRadialGradient(x,base-20,0,x,base-20,16);gl.addColorStop(0,cor+Math.round(70*p).toString(16).padStart(2,'0'));gl.addColorStop(1,cor+'00');
+      ctx.fillStyle=gl;ctx.beginPath();ctx.arc(x,base-20,16,0,Math.PI*2);ctx.fill();}
+    // tronco
+    const top=base-28;
+    ctx.fillStyle='#24150a';ctx.fillRect(x-6,top-1,12,29);
+    ctx.fillStyle=aceso?'#7a4e28':'#5c4632';ctx.fillRect(x-5,top,10,27);
+    ctx.fillStyle='rgba(255,230,190,.18)';ctx.fillRect(x-5,top,2,27);
+    ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(x+3,top,2,27);
+    // faixa pintada no meio e frisos entalhados
+    ctx.fillStyle=aceso?cor:'#4a3a2c';ctx.fillRect(x-5,top+17,10,3);
+    ctx.fillStyle='#24150a';ctx.fillRect(x-5,top+21,10,1);ctx.fillRect(x-5,top+24,10,1);
+    // rosto: sobrancelhas, olhos e boca
+    ctx.fillStyle='#24150a';ctx.fillRect(x-4,top+5,3,1);ctx.fillRect(x+1,top+5,3,1);
+    ctx.fillStyle=aceso?`rgba(255,255,255,${.75+.25*p})`:'#1a100a';ctx.fillRect(x-4,top+7,3,2);ctx.fillRect(x+1,top+7,3,2);
+    if(aceso){ctx.fillStyle=cor;ctx.fillRect(x-3,top+7,1,2);ctx.fillRect(x+2,top+7,1,2);}
+    ctx.fillStyle='#24150a';ctx.fillRect(x-1,top+10,2,3);ctx.fillRect(x-3,top+14,6,1.5);
+    // penas no alto (cocar): coloridas quando aceso, apagadas quando adormecido
+    for(const [dx,h,a] of [[-4,7,-.35],[0,9,0],[4,7,.35]]){
+      ctx.save();ctx.translate(x+dx*.8,top);ctx.rotate(a);
+      ctx.fillStyle='#24150a';ctx.beginPath();ctx.ellipse(0,-h/2,2.6,h/2+1,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle=aceso?cor:'#6b5a48';ctx.beginPath();ctx.ellipse(0,-h/2,1.7,h/2,0,0,Math.PI*2);ctx.fill();
+      ctx.restore();}
+    ctx.restore();
+  }
+}
 function desenhaUnidade(u,now){
   let [x,y]=centro(u.c,u.r);
+  if(u.esp==='fogueira'){if(u.hit&&now>=u.hit&&now-u.hit<260)x+=Math.sin((now-u.hit)/14)*3;desenhaFogueiraMapa(u,x,y,now);return;}
   if(u.esp==='formigueiro'){const e=ESP[u.esp],fr=Math.max(0,u.hp/e.hp);if(u.hit&&now-u.hit<260)x+=Math.sin((now-u.hit)/14)*3;
     if(fr<1){ctx.fillStyle='#111';ctx.fillRect(x-14,y+R*.62,28,4);ctx.fillStyle=fr>.5?'#5fd27a':fr>.25?'#e6c34a':'#e85a4f';ctx.fillRect(x-14,y+R*.62,28*fr,4);}
     return;}
@@ -7529,6 +7654,7 @@ function desenha(now){
   }
   // a brasa dos vulcões pulsa: redesenha só eles por cima (quando coloridos)
   for(const k of cam.vulc)if(!(mostraAlc&&!J.alc.dest.has(k))){const [x,y]=centro(...DK(k));brilhoVulcao(x,y,k);}
+  if(J.f1)desenhaEsteios(now);
   if(J.vilas)desenhaVilas(now);
   if(ehF3())desenhaF3(now); // formigueiros, brotos pegando e os rios enchendo
   if(ehF3()&&J.f1.vilaSem&&J.vilas)desenhaSemVilas(now); // as vilas com Semente para chamar
@@ -7615,7 +7741,7 @@ function fichaUnidade(u,completa){
   const num=(rot,val,extra='',dica='')=>`<div class="num"${dica?` title="${dica}"`:''}><small>${rot}</small><b>${val}</b>${extra}</div>`;
   return `<div class="ficha">
     <div class="fichaTopo">${iconeSpr(u.esp,44,'cor')}<div style="flex:1;min-width:0">
-      <div class="fichaNome"><strong style="color:${COR[u.lado]}">${e.nome}</strong> <span class="tags" style="display:inline;flex:1" title="Vence ${VANT[e.el].map(x=>ELN[x]).join(', ')} · perde para ${perdePara(e.el).map(x=>ELN[x]).join(', ')}. ${e.mestre?'Mestres não são afetados pelo horário.':(e.hora?`Linhagem ${e.hora==='dia'?'Solar':'Lunar'}: `+HORA_DESC[e.hora].replace(/^Elemento \S+: /,''):HORA_DESC[HORA_EL[e.el]])}">${tagEl(e.el)}</span>${bencaoTag(u)}<span class="vez">${e.mestre?'Mestre':'Nível '+e.tier}</span></div>
+      <div class="fichaNome"><strong style="color:${COR[u.lado]}">${e.nome}</strong> <span class="tags" style="display:inline;flex:1" title="Vence ${VANT[e.el].map(x=>ELN[x]).join(', ')} · perde para ${perdePara(e.el).map(x=>ELN[x]).join(', ')}. ${e.mestre?'Mestres não são afetados pelo horário.':(e.hora?`Linhagem ${e.hora==='dia'?'Solar':'Lunar'}: `+HORA_DESC[e.hora].replace(/^Elemento \S+: /,''):HORA_DESC[HORA_EL[e.el]])}">${tagEl(e.el)}</span>${bencaoTag(u)}<span class="vez">${u.esp==='fogueira'?'Coração do vale':e.mestre?'Mestre':'Nível '+e.tier}</span></div>
       <div class="barraVida"><i style="width:${frac*100}%;background:${corV}"></i><span>${u.hp} / ${e.hp}</span></div>${e.evo?`<div class="barraXp" title="Experiência: ${u.xp} / ${xpMeta(u)} (evolui para ${evoTxt(u)}${RAMOS[u.esp]?". "+RAMOS[u.esp].dica:""})"><i style="width:${Math.min(100,u.xp/xpMeta(u)*100)}%"></i></div>`:''}
     </div></div>
     <div class="nums nums${e.mestre?4:e.evo?6:5}">${num('Atq',e.atk,'','Ataque')}${num('Def',e.def,'','Defesa')}${num('Mov',movDe(u),'','Movimento')}${num('Prec',Math.round(precisao(u.esp)*100)+'%',mh?`<em style="color:${mh>0?'#6ee08a':'#ff8a80'}">${mh>0?'▲':'▼'}</em>`:'',`Precisão${mh?' ('+motivoHora(u.esp)+')':''}`)}${e.evo?num('XP',`${u.xp}/${xpMeta(u)}`,'',`Experiência; evolui para ${evoTxt(u)}${RAMOS[u.esp]?". "+RAMOS[u.esp].dica:""}`):''}${e.mestre?'':num('Manut',manutEsp(u.esp),'','Manutenção em MP por turno')}</div>
@@ -7628,7 +7754,7 @@ function fichaUnidade(u,completa){
 // etiquetas (horário, categoria, habilidades) e a linha de vantagens: na ficha completa e na curta
 function tagsVant(u,antes=''){
   const e=ESP[u.esp],cat=catDe(u.esp);
-  const tags=[`<span class="tag" title="${cat.desc}">${cat.nome}</span>`];
+  const tags=[u.esp==='fogueira'?'<span class="tag" title="Fica na clareira. Invoca criaturas nos esteios ao lado.">Fixa</span>':`<span class="tag" title="${cat.desc}">${cat.nome}</span>`];
   if(temGolpeMistico(u.esp))tags.push('<span class="tag" title="Ignora 20% da evasão do terreno do alvo">✦ Golpe Místico</span>');
   if(e.alc>1)tags.push('<span class="tag">À distância</span>');
   return `<div class="tags">${antes}${tagHora(u.esp)}${tags.join('')}</div>
@@ -7643,7 +7769,7 @@ function fichaCurta(u){
   return `<div class="ficha"><div class="fichaTopo">
     <button class="fichaFoto" onclick="abreFicha(${u.id})" aria-label="Ver detalhes de ${e.nome}">${iconeSpr(u.esp,RETRATO()?64:44,'cor')}<span class="ic">ⓘ</span></button>
     <div style="flex:1;min-width:0">
-      <div class="fichaNome"><strong style="color:${COR[u.lado]}">${e.nome}</strong> <span class="tags" style="display:inline;flex:1">${tagEl(e.el)}</span>${bencaoTag(u)}<span class="vez">${e.mestre?'Mestre':'Nível '+e.tier}</span></div>
+      <div class="fichaNome"><strong style="color:${COR[u.lado]}">${e.nome}</strong> <span class="tags" style="display:inline;flex:1">${tagEl(e.el)}</span>${bencaoTag(u)}<span class="vez">${u.esp==='fogueira'?'Coração do vale':e.mestre?'Mestre':'Nível '+e.tier}</span></div>
       <div class="barraVida"><i style="width:${frac*100}%;background:${corV}"></i><span>${u.hp} / ${e.hp}</span></div>${e.evo?`<div class="barraXp"><i style="width:${Math.min(100,u.xp/xpMeta(u)*100)}%"></i></div>`:''}
       ${e.mestre&&u.lado!==0?mpRivalHtml(u.lado):''}
     </div></div>${tagsVant(u,est.join(''))}</div>`;
@@ -7698,7 +7824,7 @@ function abreTerreno(k,refId){
   let dono='';
   if(ehConstrucao(t))dono=`<div class="vez">${J.dono[k]==null?'Sem dono':J.dono[k]===0?'Sua':OM(J.dono[k])+' controla'} · +${RENDA_TER[t]} MP por turno para quem controla</div>`;
   const html=`<div class="terTopo"><span class="terHex" style="background:${TER[t].cor}"></span><div><strong style="font-size:15px">${nomeTer(k)}</strong>${dono}</div></div>
-    ${J.vilas?.[k]?'':`<p class="terDesc">${J.f1&&t==='mont'?'Paredão de montanha: fecha o corredor do vale. Ninguém atravessa.':TER_DICA[t]}</p>`}${ehCristal(k)?`<p class="terDesc" style="color:#bfe3ff">💎 No fim do turno, cada mestre puxa o cristal 1 ponto por torre que controla, e quem controla esta torre puxa ${valorCristal()} por ela. Puxar um cristal de um rival primeiro o desfaz. Vence quem montar ${CRISTAL_META}. Ao contrário das outras torres, não cura quem está nela. Agora: ${J.cristal.v?`${J.cristal.v}/${CRISTAL_META} para ${J.cristal.lado?OM(J.cristal.lado):'você'}`:'desmontado'}.</p>`:''}
+    ${J.vilas?.[k]?'':`<p class="terDesc">${J.f1&&t==='mont'?'Paredão de montanha: fecha o corredor do vale. Ninguém atravessa.':J.f1&&t==='cast'?'O coração do vale: aqui arde a Fogueira. Cura, rende mana e serve para invocar.':J.f1&&t==='fort'?dicaEsteio(k):TER_DICA[t]}</p>`}${ehCristal(k)?`<p class="terDesc" style="color:#bfe3ff">💎 No fim do turno, cada mestre puxa o cristal 1 ponto por torre que controla, e quem controla esta torre puxa ${valorCristal()} por ela. Puxar um cristal de um rival primeiro o desfaz. Vence quem montar ${CRISTAL_META}. Ao contrário das outras torres, não cura quem está nela. Agora: ${J.cristal.v?`${J.cristal.v}/${CRISTAL_META} para ${J.cristal.lado?OM(J.cristal.lado):'você'}`:'desmontado'}.</p>`:''}
     <table class="terTab"><thead><tr><th>Tipo de criatura</th><th title="Pontos de movimento gastos para entrar na casa">Mov.</th><th title="Chance de o golpe inimigo errar">Evasão</th>${gelo?'<th>Ataque</th>':''}</tr></thead><tbody>${linhas}</tbody></table>${verTodos}
     <p class="vez" style="margin:6px 0 0">Mov. = pontos gastos para entrar. Evasão = chance de o golpe inimigo errar.${resto.length?' Primeiro, os tipos do seu exército':''}${ref?`${resto.length?'; em':' Em'} destaque: ${ESP[ref.esp].nome}`:''}${resto.length||ref?'.':''}</p>`;
   abreDet('Terreno',html);
@@ -7724,7 +7850,7 @@ function mpRivalHtml(l){
 function mestreHtml(l){
   const o=ORDENS[J.ordem[l]];
   const els=o.forca.map(e=>`<span style="color:${EL[e]}">${ELN[e]} ${J.elem[l][e]}/100</span>`).join(' · ');
-  return `<div class="vez"><b style="color:#d6c2ff">${o.nome}</b> · ${o.magias.map(m=>MAGIAS[m].nome).join(' e ')}<br>
+  return `<div class="vez">${ehFogueira(l)?'Não anda nem ataca: só revida com fagulhas. Se ela se apagar, a fase está perdida.':`<b style="color:#d6c2ff">${o.nome}</b> · ${o.magias.map(m=>MAGIAS[m].nome).join(' e ')}`}<br>
     Magia ${!magiaLiberada(l)?'<b>na 2ª torre</b>':J.magiaUsada[l]?'<b>usada</b>':'<b style="color:#6ee08a">pronta</b>'} · Força Elemental ${!forcaLiberada(l)?'<b>na 3ª torre</b>':J.forcaUsada[l]?'<b>usada</b>':'<b style="color:#6ee08a">pronta</b>'} · Elementais: ${els}</div>`;
 }
 function painelCerco(){
@@ -8090,7 +8216,7 @@ function menus(){
     h+=acao('✚','#f2c14e','Invocar',invPq||(J.turno>1?`exército ${criaturas(0)}/${limite(0)}`:''),"invocarRapido()",invOk,J.f1?'':invPq?dicaInvocar():'Escolhe uma construção livre e abre a lista de criaturas.',J.invocou?.[0]?'':' pisca');
     // Mover só aparece quando o mestre consegue atacar alguém (parado ou andando até ele); antes disso só ocupava espaço
     if(!m.movido&&!m.agiu&&J.alc&&J.alc.dest.size>1&&temAlvos())h+=acao('➜','#7fc4ff','Mover',`até ${movDe(m)} casas`,"menuMestre('mover')",true);
-    if(!m.agiu&&temAlvos())h+=acao('⚔','#ff8a80','Atacar',`${J.alvosSet.size+J.alvosMove.size} ao alcance`,"menuMestre('atacar')",true);
+    if(!m.agiu&&m.esp!=='fogueira'&&temAlvos())h+=acao('⚔','#ff8a80','Atacar',`${J.alvosSet.size+J.alvosMove.size} ao alcance`,"menuMestre('atacar')",true);
     // Evoluir: aparece quando a reserva chega a EVO_CUSTO e ainda há criatura inicial sem forma fixada
     if(podeEvoluir(0))h+=acao('▲','#6ee08a','Evoluir',ehF2()?'presente':`${EVO_CUSTO} MP`,'abrirEvo()',true,'Fixa a forma de estágio 1 de uma criatura inicial: dali em diante ela já nasce evoluída. As opções vêm do que seu exército mais viveu na partida.',ehF2()?' pisca':'');
     // Magia e Força: aparecem depois da primeira invocação e somem no turno em que já foram usadas
