@@ -2481,7 +2481,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.12'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.13'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -3432,7 +3432,7 @@ function mostraFimF2(v,motivo){
     document.getElementById('fimPorque').innerHTML=`<div class="estrelasF1">${[0,1,2].map(i=>`<span class="${i<est?'on':''}">★</span>`).join('')}</div>
       <p class="porque" style="text-align:center">${salvas} de ${vs.length} vilas de pé · ${camp} de ${vs.reduce((s,x)=>s+x.inicio,0)} casas de pé · ${pct}% da mata salva</p>
       <p class="dicaFim" style="text-align:center">★ vencer · ★ todas as vilas de pé · ★ ${Math.round(F2_MATA_ESTRELA*100)}% da mata salva</p>`;
-    {const ex=exercitoCampanha();b.textContent='Continuar';b.onclick=()=>quemSegueTela(2,ex,jogarFase3);}
+    {const ex=exercitoCampanha();b.textContent='Continuar';b.onclick=()=>quemSegueTela(2,ex,jogarFase3,est);}
     b2.textContent='Tentar novamente';b2.onclick=()=>jogarFase2();
   }else{
     document.getElementById('fimSub').textContent=motivo==='vilas'?`Todas as vilas viraram cinzas no turno ${J.turno}.`:`${OM(0)} caiu no turno ${J.turno}.`;
@@ -4130,7 +4130,7 @@ function mostraFimF3(v,motivo){
     document.getElementById('fimPorque').innerHTML=`<div class="estrelasF1">${[0,1,2].map(i=>`<span class="${i<est?'on':''}">★</span>`).join('')}</div>
       <p class="porque" style="text-align:center">${J.f1.brotos.length} matas com brotos · ${J.f1.comidos?`${J.f1.comidos} ${J.f1.comidos>1?'brotos comidos':'broto comido'} pelas saúvas`:'nenhum broto comido'} · ${camp} camponeses</p>
       <p class="dicaFim" style="text-align:center">★ vencer · ★ nenhum broto comido · ★ até o turno ${J.f1.meta}</p>`;
-    {const ex=exercitoCampanha();b.textContent='Continuar';b.onclick=()=>quemSegueTela(3,ex,telaEmObras);}
+    {const ex=exercitoCampanha();b.textContent='Continuar';b.onclick=()=>quemSegueTela(3,ex,telaEmObras,est);}
     b2.textContent='Tentar novamente';b2.onclick=()=>jogarFase3();
   }else{
     document.getElementById('fimSub').textContent=`${OM(0)} caiu no turno ${J.turno}.`;
@@ -4142,10 +4142,10 @@ function mostraFimF3(v,motivo){
   document.getElementById('fim').style.display='flex';
 }
 // ---------- Fim de fase: quem segue com você, e a Fogueira ----------
-// Só 1 criatura segue para a fase seguinte (o jogador escolhe). As outras viram Essência (1 a 4, pelo estágio), que
-// fortalece as bênçãos da Fogueira: cada bênção vale para as SUAS criaturas daquele elemento, com níveis I, II e III
+// Só 1 criatura segue para a fase seguinte (o jogador escolhe); as outras ficam guardando o vale. Vencer a fase dá
+// Essência pelo desempenho (1 por vencer, 2 com as 3 estrelas), que fortalece as bênçãos da Fogueira: cada bênção vale para as SUAS criaturas daquele elemento, com níveis I, II e III
 // (o nível n custa n Essências). Os elementos aparecem conforme a história: Fogo e Água desde a Fase 1, Planta na 3.
-// A Essência de cada fase é guardada por fase: jogar a mesma fase de novo substitui, não soma.
+// A Essência de cada fase é guardada por fase: refazer a mesma fase só sobe até o teto (vale o melhor resultado), nunca soma.
 const BENCAOS={
   fogo:{nome:'Fogo',ic:'🔥',cor:'#ff9a5a',ef:['+5%','+10%','+15%'],un:'dano',txt:'Suas criaturas de Fogo causam mais dano.'},
   agua:{nome:'Água',ic:'💧',cor:'#6ec3ff',ef:['+2','+3','+4'],un:'cura',txt:'Suas criaturas de Água se curam no começo de cada turno.'},
@@ -4154,37 +4154,37 @@ const BENCAOS={
 const ROMANO=['','I','II','III'];
 const bencaosAte=n=>n>=3?['fogo','agua','planta']:['fogo','agua'];
 const listaE=a=>a.length>1?a.slice(0,-1).join(', ')+' e '+a[a.length-1]:a.join('');
-const essDe=x=>Math.min(4,1+(ESP[x.esp]?.tier||0));
+const ESS_MAX=2,essDaFase=est=>est>=3?2:1; // Essência por fase: 1 por vencer, 2 com as 3 estrelas
 const nivBencao=el=>(J&&J.bencao&&J.bencao[el])||0;
 function bencaoTag(u){ // na ficha: o símbolo da bênção que a criatura recebe da Fogueira
   const e=ESP[u.esp],B=BENCAOS[e.el],n=u.lado===0&&!e.mestre&&B?nivBencao(e.el):0;if(!n)return '';
   return ` <span class="bencTag" style="color:${B.cor};border-color:${B.cor}88" title="Bênção da Fogueira: ${B.nome} ${ROMANO[n]} · ${B.ef[n-1]} ${B.un}">${B.ic} ${ROMANO[n]}</span>`;}
-function essLivre(){const cp=campanhaInfo(),g=Object.values(cp.essGanho||{}).reduce((s,v)=>s+v,0),b=cp.bencaos||{};
+function essLivre(){const cp=campanhaInfo(),g=Object.values(cp.essGanho||{}).reduce((s,v)=>s+Math.min(ESS_MAX,v||0),0),b=cp.bencaos||{};
   return Math.max(0,g-Object.values(b).reduce((s,n)=>s+n*(n+1)/2,0));}
-function quemSegueTela(n,lista,prox){
+function quemSegueTela(n,lista,prox,est){
   lista=lista.filter(x=>ESP[x.esp]);
-  if(lista.length<=1){fogueiraTela(n,lista,[],prox);return;}
+  if(lista.length<=1){fogueiraTela(n,lista,[],prox,est);return;}
   let sel=null;
   const b=document.getElementById('fimBt'),b2=document.getElementById('fimBt2');
   const desenha=()=>{
     document.getElementById('fimTxt').textContent='Quem segue com você?';
-    document.getElementById('fimSub').textContent='Escolha uma criatura. As outras viram Essência para a Fogueira.';
-    document.getElementById('fimPorque').innerHTML=`<div class="segueG">${lista.map((x,i)=>`<button class="${i===sel?'sel':''}" onclick="quemSegueTela.pick(${i})">${iconeSpr(x.esp,48,'cor')}<span class="nm">${ESP[x.esp].nome}</span><small>${i===sel?'<span class="vai">Segue com você</span>':`Vira ${essDe(x)} ✨`}</small></button>`).join('')}</div>`;
+    document.getElementById('fimSub').textContent='Escolha uma criatura. As outras ficam guardando o vale.';
+    document.getElementById('fimPorque').innerHTML=`<div class="segueG">${lista.map((x,i)=>`<button class="${i===sel?'sel':''}" onclick="quemSegueTela.pick(${i})">${iconeSpr(x.esp,48,'cor')}<span class="nm">${ESP[x.esp].nome}</span><small>${i===sel?'<span class="vai">Segue com você</span>':'Fica no vale'}</small></button>`).join('')}</div>`;
     b.textContent='Confirmar';b.disabled=sel==null;b2.style.display='none';
   };
   quemSegueTela.pick=i=>{sel=i;desenha();};
-  b.onclick=()=>{if(sel==null)return;b.disabled=false;fogueiraTela(n,[lista[sel]],lista.filter((x,i)=>i!==sel),prox);};
+  b.onclick=()=>{if(sel==null)return;b.disabled=false;fogueiraTela(n,[lista[sel]],lista.filter((x,i)=>i!==sel),prox,est);};
   desenha();
 }
-function fogueiraTela(n,segue,ficam,prox){
-  const ganho=ficam.reduce((s,x)=>s+essDe(x),0),cp=campanhaInfo();
-  salvaCampanha({['f'+n+'Exercito']:segue,essGanho:{...(cp.essGanho||{}),[n]:ganho}});
+function fogueiraTela(n,segue,ficam,prox,est){
+  const cp=campanhaInfo(),antes=Math.min(ESS_MAX,(cp.essGanho||{})[n]||0),agora=essDaFase(est||1),ganho=Math.max(0,agora-antes); // refazer a fase só completa o que faltou
+  salvaCampanha({['f'+n+'Exercito']:segue,essGanho:{...(cp.essGanho||{}),[n]:Math.max(antes,agora)}});
   const els=bencaosAte(n);let sel=els[0],erro=false;
   const b=document.getElementById('fimBt'),b2=document.getElementById('fimBt2');b2.style.display='none';
   const desenha=()=>{
     const nv=campanhaInfo().bencaos||{},livre=essLivre(),B=BENCAOS[sel],k=nv[sel]||0,custo=k+1;
     document.getElementById('fimTxt').textContent='Fogueira';
-    document.getElementById('fimSub').textContent=ficam.length?`${listaE(ficam.map(x=>ESP[x.esp].nome))} ${ficam.length>1?'deixaram':'deixou'} sua força: ${ganho} ✨`:'Fortaleça as suas criaturas com a Essência guardada.';
+    document.getElementById('fimSub').textContent=ganho?`A Fogueira ganhou força: +${ganho} ✨${agora<ESS_MAX?' (3 estrelas dão +1)':''}`:antes>=ESS_MAX?'Esta fase já deu toda a sua Essência.':'Sem Essência nova: faça 3 estrelas para ganhar +1 ✨.';
     document.getElementById('fimPorque').innerHTML=`<div class="fogTopo"><span class="essP">✨ ${livre} Essência</span></div>
       <div class="fogG">${els.map(el=>{const x=BENCAOS[el],m=nv[el]||0;return `<button class="${el===sel?'sel':''}" onclick="fogueiraTela.pick('${el}')"><span class="rom" style="color:${x.cor}">${ROMANO[m]}</span><span class="ic">${x.ic}</span><span class="ef${m?'':' off'}" style="${m?'color:'+x.cor:''}">${x.ef[Math.max(0,m-1)]} ${x.un}</span></button>`;}).join('')}</div>
       <div class="fogDet"><b>${B.ic} ${B.nome}${k?' '+ROMANO[k]:''}</b><p>${B.txt}${k<3?` Próximo: ${B.ef[k]} ${B.un}.`:''}</p>
@@ -4215,7 +4215,7 @@ function mostraFimF1(v,motivo){
     document.getElementById('fimSub').textContent=`O Bando Infernal caiu no turno ${J.turno}.`;
     document.getElementById('fimPorque').innerHTML=`<div class="estrelasF1">${[0,1,2].map(i=>`<span class="${i<est?'on':''}">★</span>`).join('')}</div>
       <p class="porque" style="text-align:center">${salvas} de ${vs.length} vilas salvas · ${camp} de ${tot} camponeses vivos</p>`;
-    {const ex=J.un.filter(u=>u.lado===0&&!ESP[u.esp].mestre&&!u.figurante&&!u.elemental&&u.dominado==null).map(u=>({esp:u.esp,xp:u.xp||0,c:u.c,r:u.r}));b.textContent='Continuar';b.onclick=()=>quemSegueTela(1,ex,jogarFase2);}
+    {const ex=J.un.filter(u=>u.lado===0&&!ESP[u.esp].mestre&&!u.figurante&&!u.elemental&&u.dominado==null).map(u=>({esp:u.esp,xp:u.xp||0,c:u.c,r:u.r}));b.textContent='Continuar';b.onclick=()=>quemSegueTela(1,ex,jogarFase2,est);}
     b2.textContent='Tentar novamente';b2.onclick=()=>jogarFase1();
   }else{
     document.getElementById('fimSub').textContent=motivo==='vilas'?`O Bando Infernal destruiu todas as vilas no turno ${J.turno}.`:`${OM(0)} caiu no turno ${J.turno}.`;
