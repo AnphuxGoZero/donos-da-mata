@@ -196,7 +196,7 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 #relogio.eclipse .inv{display:block}
 .ponto{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:-1px;margin-right:4px}
 .spr{display:inline-block;vertical-align:middle;margin-right:6px;background-repeat:no-repeat;flex-shrink:0}
-#fim{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:5}
+#fim{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:5;overflow-y:auto;overscroll-behavior:contain}
 #fim .cx{text-align:center;padding:28px 36px}
 #fim h1{font-size:28px;margin-bottom:8px}
 #fim .cx{max-width:min(440px,calc(100vw - 20px))}
@@ -267,14 +267,15 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 .arvAbas{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;margin:0 0 8px}.arvAbas button{height:auto;min-height:0;padding:7px 4px;font-size:13px;font-weight:700;border-radius:8px;border:1px solid var(--line);color:var(--c);display:flex;flex-direction:column;align-items:center;gap:1px}
 .arvAbas button.sel{background:color-mix(in srgb,var(--c) 22%,transparent);border-color:var(--c)}.arvAbas small{color:var(--dim);font-weight:400;font-size:11px}
 .arvVert{display:flex;flex-direction:column;align-items:center;min-height:324px;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:12px 10px;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 10%,transparent),transparent 70%)}
-.arvVert>.arvNo{width:54%}.arvVert .arvGarfo{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}.arvRamo{width:100%;height:20px;display:block;color:var(--line)}
-#fim .cx.fogCx{width:min(420px,calc(100vw - 20px));box-sizing:border-box}.arvNo .cu{color:var(--dim);font-size:11px;font-weight:400;white-space:nowrap}
+.arvVert>.arvNo{width:54%}.arvVert .arvGarfo{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}.arvRamo{position:relative;width:100%;height:28px;color:var(--c)}.arvRamo svg{display:block;width:100%;height:100%}.arvRamo i{position:absolute;bottom:0;transform:translateX(-50%);border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid currentColor}
+#fim .cx.fogCx{width:min(420px,calc(100vw - 20px));box-sizing:border-box;margin:auto}.arvNo .cu{color:var(--dim);font-size:11px;font-weight:400;white-space:nowrap}
 .arvVert .arvNo{padding:8px 4px;font-size:12.5px;gap:2px;min-height:86px;justify-content:center}.arvCruzG .arvNo{min-height:70px}
-.fogDet{display:flex;flex-direction:column;min-height:150px;box-sizing:border-box}.fogDet p{flex:0 0 auto}.fogDet p:first-of-type{min-height:63px}.fogDet .dica{font-size:12px;line-height:1.4;color:#ffd77a;min-height:34px;margin:0 0 6px}.fogDet button{margin-top:auto}
+.fogDet{display:flex;flex-direction:column;min-height:120px;box-sizing:border-box}.fogDet p{flex:0 0 auto}.fogDet p:first-of-type{min-height:63px}.fogDet .dica{font-size:12px;line-height:1.4;color:#ffd77a;min-height:34px;margin:0 0 6px}.fogDet button{margin-top:auto}
 .arvVert .arvNo .ic{font-size:26px}.arvNo small{white-space:nowrap}.arvCruz{margin-top:8px;border:1px dashed var(--line);border-radius:8px;padding:6px}.arvCruzG{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:4px}
 .arvNo{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 2px;height:auto;min-height:0;border-radius:7px;border:1px solid var(--line);font-size:11px;line-height:1.15}
 .arvNo .ic{font-size:20px;line-height:1}.arvNo .nm{font-weight:700}.arvNo small{color:#ffd77a;font-size:10.5px}
-.arvNo.tem{background:color-mix(in srgb,var(--c) 28%,transparent);border-color:var(--c)}.arvNo.pode{border-color:var(--c)}
+.arvNo.tem{background:color-mix(in srgb,var(--c) 28%,transparent);border-color:var(--c)}.arvNo.pode{border-color:#4a5060}.arvNo:not(.tem) .ic{filter:grayscale(1);opacity:.7}
+.arvNo .desp{margin-top:2px;padding:2px 10px;border-radius:99px;background:#f2c14e;color:#2a2008;font-weight:700;font-size:11.5px;white-space:nowrap}.arvNo .desp.falta{background:#5a2a2a;color:#ffb0a8}
 .arvNo.oculto,.arvNo.trancado{opacity:.5}.arvNo.fechado{opacity:.35}.arvNo.fechado .nm{text-decoration:line-through}.arvNo.sel{outline:2px solid var(--acc);outline-offset:-1px}
 .arvReset{margin-left:8px;height:auto;min-height:0;padding:4px 10px;font-size:12px;border-radius:99px}
 .fogDet b{font-size:14px}.fogDet p{margin:2px 0 8px;color:var(--dim)}.fogDet button{width:100%}.fogDet .err{color:#ff8a80;margin:6px 0 0}
@@ -2526,7 +2527,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.29'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.30'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -4339,8 +4340,8 @@ function fogueiraTela(n,segue,ficam,prox,est,teste){
   const desenha=()=>{
     const tem=(campanhaInfo().arvore||[]).filter(id=>NO_ARV[id]),livre=essLivre(),st=id=>estadoNo(id,tem,els);
     const no=id=>{const x=NO_ARV[id],s=st(id),R=ARVORE[x.el]||ARVORE[x.els[0]],cor=R.cor,ve=s!=='oculto'&&(s!=='trancado'||x.p<4);
-      return `<button class="arvNo ${s}${id===sel?' sel':''}" style="--c:${cor}" onclick="fogueiraTela.pick('${id}')"><span class="ic">${ve?x.ic:'❔'}</span><span class="nm">${ve?x.nome:'???'}</span><span class="cu">${ve?x.curto:'&nbsp;'}</span><small>${s==='tem'?'✓ desperto':s==='fechado'?'fechado':ve?custoNo(id)+' ✨':'&nbsp;'}</small></button>`;};
-    const ramo=up=>`<svg class="arvRamo" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="${up?'M50 0V10M25 10H75M25 10V20M75 10V20':'M25 0V10M75 0V10M25 10H75M50 10V20'}" stroke="currentColor" stroke-width="2" fill="none" vector-effect="non-scaling-stroke"/></svg>`;
+      return `<button class="arvNo ${s}${id===sel?' sel':''}" style="--c:${cor}" onclick="fogueiraTela.pick('${id}')"><span class="ic">${ve?x.ic:'❔'}</span><span class="nm">${ve?x.nome:'???'}</span><span class="cu">${ve?x.curto:'&nbsp;'}</span>${s==='pode'&&id===sel?(livre>=custoNo(id)?`<span class="desp">Despertar · ${custoNo(id)} ✨</span>`:`<span class="desp falta">Falta ✨ · ${custoNo(id)}</span>`):`<small>${s==='tem'?'✓ desperto':s==='fechado'?'fechado':ve?custoNo(id)+' ✨':'&nbsp;'}</small>`}</button>`;};
+    const ramo=up=>`<div class="arvRamo"><svg viewBox="0 0 100 28" preserveAspectRatio="none"><path d="${up?'M50 0V12M25 12H75M25 12V21M75 12V21':'M25 0V12M75 0V12M25 12H75M50 12V21'}" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none" vector-effect="non-scaling-stroke"/></svg>${(up?[25,75]:[50]).map(x=>`<i style="left:${x}%"></i>`).join('')}</div>`; // setas na cor do ramo
     const vis=id=>{const s=st(id);return s!=='oculto'&&s!=='trancado';}; // nós ainda indisponíveis não aparecem
     const col=el=>{const R=ARVORE[el],[a,f1,f2,z]=R.nos.map(x=>x.id);
       const g=[f1,f2].filter(vis); // só aparece o que já pode ser usado (o lado fechado do garfo continua à vista)
@@ -4348,17 +4349,15 @@ function fogueiraTela(n,segue,ficam,prox,est,teste){
     const abas=els.length>1?`<div class="arvAbas">${els.map(el=>{const R=ARVORE[el],k=R.nos.filter(y=>tem.includes(y.id)).length;return `<button class="${el===aba?'sel':''}" style="--c:${R.cor}" onclick="fogueiraTela.aba('${el}')">${R.ic} ${R.nome}<small>${k} de 3</small></button>`;}).join('')}</div>`:'';
     const cruz=ARV_CRUZ.filter(x=>vis(x.id));
     const x=NO_ARV[sel],s=st(sel),ve=s!=='oculto'&&(s!=='trancado'||x.p<4),custo=custoNo(sel);
-    let acao,dica='';
-    if(s==='tem')acao=`<button disabled>✓ Desperto</button>`;
-    else if(s==='fechado'){const o=ARVORE[x.el].nos.find(y=>y.p===2&&tem.includes(y.id));acao=`<button disabled>Caminho fechado</button>`;dica=`Você escolheu ${o.nome}. ↺ Recomeçar desfaz.`;}
-    else if(s==='pode'){const falta=livre<custo;acao=`<button class="${falta?'':'pri'}" ${falta?'disabled':''} onclick="fogueiraTela.compra()">${falta?`Falta Essência · ${custo} ✨`:`Despertar · ${custo} ✨`}</button>`;
-      dica=x.p===2?`Fecha ${ARVORE[x.el].nos.find(y=>y.p===2&&y.id!==sel).nome}. `:'';if(!falta)dica+='Toque de novo no nó para despertar.';}
-    else{acao=`<button disabled>Bloqueado</button>`;dica=x.els?`Leve ${listaE(x.els.map(e=>ARVORE[e].nome))} até o garfo para revelar.`:'Desperte o nó de cima para revelar.';}
+    let dica='';
+    if(s==='tem')dica='✓ Já desperto.';
+    else if(s==='fechado'){const o=ARVORE[x.el].nos.find(y=>y.p===2&&tem.includes(y.id));dica=`Caminho fechado: você escolheu ${o.nome}. ↺ Recomeçar desfaz.`;}
+    else if(s==='pode'){dica=x.p===2?`Escolher este fecha ${ARVORE[x.el].nos.find(y=>y.p===2&&y.id!==sel).nome}. `:'';dica+=livre<custo?`Precisa de ${custo} ✨.`:'Toque em Despertar para confirmar.';}
     document.getElementById('fimTxt').textContent='Fogueira';
     document.getElementById('fimSub').textContent=teste?'Modo de teste: a Essência de teste não conta nas fases.':ganho?`A Fogueira ganhou força: +${ganho} ✨${agora<ESS_MAX?' (3 estrelas dão +1)':''}`:antes>=ESS_MAX?'Esta fase já deu toda a sua Essência.':'Sem Essência nova: faça 3 estrelas para ganhar +1 ✨.';
     document.getElementById('fimPorque').innerHTML=`<div class="fogTopo"><span class="essP">✨ ${livre} Essência</span>${teste?`<button class="arvReset" onclick="fogueiraTela.ess(1)">+1 ✨</button><button class="arvReset" onclick="fogueiraTela.ess(-1)">−1 ✨</button>`:''}${tem.length?`<button class="arvReset" onclick="fogueiraTela.reset()">↺ Recomeçar</button>`:''}</div>
       ${abas}${col(aba)}
-      <div class="fogDet"><b>${ve?x.ic+' '+x.nome:'❔ ???'}</b><p>${ve?x.txt:x.els?'Um segredo entre dois ramos.':'Um nó ainda escondido.'}</p><p class="dica">${dica||'&nbsp;'}</p>${acao}</div>
+      <div class="fogDet"><b>${ve?x.ic+' '+x.nome:'❔ ???'}</b><p>${ve?x.txt:x.els?'Um segredo entre dois ramos.':'Um nó ainda escondido.'}</p><p class="dica">${dica||'&nbsp;'}</p></div>
       ${cruz.length?`<div class="arvCruz"><div class="arvCab">✦ Segredos</div><div class="arvCruzG">${cruz.map(y=>no(y.id)).join('')}</div></div>`:''}`;
     document.querySelector('#fim .cx').classList.add('fogCx');
     b.textContent=teste?'Fechar':'Continuar';b.disabled=false;
