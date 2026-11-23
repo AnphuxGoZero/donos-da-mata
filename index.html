@@ -225,17 +225,11 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 #passar.f1 .fala{display:flex;align-items:center;gap:10px;margin:8px 0 2px}
 #passar.f1 .rosto{flex:none;width:52px;height:52px;border-radius:50%;background-color:#463c32;background-repeat:no-repeat;background-size:800% 100%;border:2px solid #c9a27a;box-shadow:0 2px 6px #0008}
 #passar.f1 .presenteF2{display:flex;justify-content:center;margin:6px 0;filter:drop-shadow(0 0 10px #6ee08a88)}
-/* Fase 2, vitória: a chuva que acalma a mata (duas camadas de gotas e um véu azulado) */
-.chuvaF2{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .8s;background:linear-gradient(#4a6fa066,#1e325a77);overflow:hidden}
+/* chuva (vitória da Fase 2 e a Fase 3 inteira): gotas desenhadas num canvas (animaChuva) e um véu azulado leve */
+.chuvaF2{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .8s;background:linear-gradient(#4a6fa040,#1e325a55);overflow:hidden}
 .chuvaF2.on{opacity:1}
-.chuvaF2 i{position:absolute;inset:-60px;background:repeating-linear-gradient(105deg,transparent 0 22px,#d6e8ffb0 22px 24px,transparent 24px 47px);animation:chuvaCai .45s linear infinite}
-.chuvaF2 i+i{background:repeating-linear-gradient(105deg,transparent 0 13px,#eef5ff80 13px 14px,transparent 14px 31px);animation-duration:.3s}
-#chuvaCampo{opacity:0}#chuvaCampo.on{opacity:.4}#chuvaCampo.forte{opacity:1} /* Fase 3: chove a fase inteira (mais leve, para não esconder o mapa) */
-/* a chuva de fundo da Fase 3 é fina: uma camada só de pingos, caindo mais devagar, e quase sem véu azul; a forte (cena final) segue cheia */
-#chuvaCampo:not(.forte){background:linear-gradient(#4a6fa022,#1e325a2e)}
-#chuvaCampo:not(.forte) i{animation-duration:.75s}
-#chuvaCampo:not(.forte) i+i{display:none}
-@keyframes chuvaCai{from{transform:translate(0,0)}to{transform:translate(-12px,60px)}}
+.chuvaF2 canvas{position:absolute;inset:0;width:100%;height:100%;background:none;border-radius:0;cursor:default;pointer-events:none}
+#chuvaCampo:not(.forte){background:linear-gradient(#4a6fa014,#1e325a22)} /* Fase 3: chuva mais fina, para não esconder o mapa */
 @media (hover:hover) and (pointer:fine){#passar.f1 .rosto{width:76px;height:76px}} /* PC: rostos maiores */
 #passar.f1 .rosto.oculto{visibility:hidden;height:0}
 #passar.f1 .fala:has(.rosto.oculto){margin-top:2px}
@@ -2465,7 +2459,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.05'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.06'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -2644,7 +2638,7 @@ function avisoF1(id){if(!id||!J.f1||J.f1.vistos[id])return;J.f1.vistos[id]=true;
 // da outra sem uma ação no meio (andar, atacar, invocar, um saque do Bando). Uma fala que não pôde sair espera a próxima
 // ação; se passarem 2 ações sem ela sair, perdeu o contexto e é descartada. As da abertura, do alerta do camponês, da
 // evolução do Cão e da vitória saem sempre. A da torre é conferida de novo na hora de aparecer.
-const PRIOR_F1=new Set(['ninhoCaiu','renasce','raiz','ninho','ninhos','plantar','caiporaBroto','comeu','vilaVerde','plantando','formig','intro1','intro2','vitoria','semente','campones','evoluiu','cao','caipora','caiporaChega','sapinho','vilaQueima','incendiou','cinza','alimentou','cacaCaes']);
+const PRIOR_F1=new Set(['inunda','ninhoCaiu','renasce','raiz','ninho','ninhos','plantar','caiporaBroto','comeu','vilaVerde','plantando','formig','intro1','intro2','vitoria','semente','campones','evoluiu','cao','caipora','caiporaChega','sapinho','vilaQueima','incendiou','cinza','alimentou','cacaCaes']);
 const acaoF1=()=>{if(J&&J.f1)J.f1.acao=(J.f1.acao||0)+1;};
 const podeFalarF1=id=>PRIOR_F1.has(id)||(J.f1.acao||0)>(J.f1.ultFala??-1);
 function proxAvisoF1(){
@@ -2690,7 +2684,7 @@ async function chegadaF1(){
 // a caixa da fala fica perto de onde a coisa acontece: a abertura junto da vila da entrada, as torres junto da torre,
 // o saque junto da vila atacada. Sem lugar definido, ela fica no meio do mapa (como antes).
 const ANCORA_F1={
-  plantar:()=>J.f1.sementeK,plantando:()=>J.f1.plantK,raiz:()=>J.f1.raizK,caiporaBroto:()=>J.f1.caiporaFala,comeu:()=>J.f1.comeuK,vilaVerde:()=>J.f1.vilaK,formig:()=>J.f1.formK,ninho:()=>J.f1.ninhoK,ninhos:()=>J.f1.ninhosK,ninhoCaiu:()=>J.f1.ninhoCaiuK,renasce:()=>J.f1.renasceK,
+  plantar:()=>J.f1.sementeK,plantando:()=>J.f1.plantK,raiz:()=>J.f1.raizK,caiporaBroto:()=>J.f1.caiporaFala,comeu:()=>J.f1.comeuK,vilaVerde:()=>J.f1.vilaK,formig:()=>J.f1.formK,ninho:()=>J.f1.ninhoK,ninhos:()=>J.f1.ninhosK,ninhoCaiu:()=>J.f1.ninhoCaiuK,renasce:()=>J.f1.renasceK,inunda:()=>J.f1.inundaK,
   intro1:()=>ehF3()?J.f1.intro1K:ehF2()?(J.f1.foco2??J.f1.foco0):+Object.keys(J.vilas).find(k=>J.vilas[k].estrela===false),
   incendiou:()=>J.f1.vilaK,cacaCaes:()=>J.f1.cacaK,caiporaChega:()=>J.f1.caiporaK,caipora:()=>J.f1.caiporaK,semente:()=>ehF2()?J.f1.caiporaK:null,vilaQueima:()=>J.f1.vilaK,cinza:()=>J.f1.cinzaK,apagou:()=>J.f1.apagouK,alimentou:()=>J.f1.alimK,cao:()=>J.f1.caoK,
   torreMagica:()=>J.f1.torreK,torre:()=>J.f1.torreFrenteK,
@@ -3235,11 +3229,34 @@ function pertoDoMestreF2(m){
     const sc=d*2+(fl?0:3);if(sc<bs){bs=sc;b=[k,fl?K(...fl):null];}}
   return b;
 }
-async function chuvaF2(){
+// a chuva da vitória começa aqui e não para mais: segue pela fala da Caipora e continua na Fase 3
+async function chuvaF2(){await raiosF2();chuvaCampo(true);await dorme(3400);}
+// antes da primeira chuva: um raio, outro raio (mais perto e mais forte) e aí desaba a chuva
+async function raiosF2(){
+  if(!VEL||document.hidden)return;
   const m=document.getElementById('mapa'),d=document.createElement('div');
-  d.className='chuvaF2';d.innerHTML='<i></i><i></i>';m.insertBefore(d,document.getElementById('menuM'));
-  void d.offsetWidth;d.classList.add('on');
-  await dorme(3400);d.classList.remove('on');await dorme(900);d.remove();
+  d.style.cssText='position:absolute;inset:0;pointer-events:none;overflow:hidden';
+  const cv=document.createElement('canvas');cv.style.cssText='position:absolute;inset:0;width:100%;height:100%;background:none;border-radius:0;pointer-events:none';
+  d.appendChild(cv);m.insertBefore(d,document.getElementById('menuM'));
+  const W=cv.width=d.clientWidth,H=cv.height=d.clientHeight,g=cv.getContext('2d');
+  const corisco=(x0,forca)=>{ // um raio em zigue-zague do alto até perto do chão, com galhos
+    const ramos=[];let x=x0,y=-5;const pts=[[x,y]];const fim=H*(.55+Math.random()*.3);
+    while(y<fim){y+=8+Math.random()*16;x+=(Math.random()-.5)*28*forca;pts.push([x,y]);
+      if(Math.random()<.22){const r=[[x,y]];let bx=x,by=y;const n=3+Math.random()*5|0;const lado=Math.random()<.5?-1:1;
+        for(let i=0;i<n;i++){by+=6+Math.random()*12;bx+=lado*(4+Math.random()*14);r.push([bx,by]);}ramos.push(r);}}
+    return {pts,ramos,forca};};
+  const desenha=(b,a)=>{g.clearRect(0,0,W,H);
+    g.globalAlpha=a*.35*b.forca;g.fillStyle='#e8f0ff';g.fillRect(0,0,W,H); // o clarão no céu todo
+    const linha=(ps,lw,cor,al)=>{g.globalAlpha=al;g.strokeStyle=cor;g.lineWidth=lw;g.lineJoin='round';g.beginPath();ps.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.stroke();};
+    linha(b.pts,9*b.forca,'#7fa8ff',a*.35);linha(b.pts,4*b.forca,'#cfe0ff',a*.8);linha(b.pts,1.6*b.forca,'#ffffff',a);
+    for(const r of b.ramos){linha(r,3*b.forca,'#9fc0ff',a*.45);linha(r,1,'#ffffff',a*.85);}
+    g.globalAlpha=1;};
+  const raio=async(x,forca)=>{const b=corisco(x,forca);
+    for(const [a,t] of [[1,70],[.25,60],[1,90],[.6,80],[.35,90],[.15,90]]){desenha(b,a);await dorme(t);} // pisca, pisca e apaga
+    g.clearRect(0,0,W,H);};
+  await raio(W*(.15+Math.random()*.25),.8);await dorme(800);
+  await raio(W*(.5+Math.random()*.3),1.25);await dorme(450);
+  d.remove();
 }
 function checaVitoriaF2(){if(!J.fim&&J.f1.caoVeio&&!J.un.some(x=>x.selvagem))fimDeJogo(0,'f1');}
 // o Cão chega pela borda do vale (se a entrada estiver ocupada, pela casa livre mais perto dela)
@@ -3531,7 +3548,17 @@ function guardaNinhoF3(f,anima){
   const ok=k=>{const [c,r]=DK(k);return dentro(c,r)&&J.ter[k]==='plan'&&!J.vilas[k]&&!unidadeEm(c,r)&&!J.f1.formig.includes(k)&&!J.f1.formigPlan.includes(k);};
   const g=vizinhos(...DK(f)).map(([c,r])=>K(c,r)).filter(ok).sort((a,b)=>d6c(...DK(b),...J.f1.castelo)-d6c(...DK(a),...J.f1.castelo)||a-b)[0];
   if(g==null)return;const s=criaSauva('sauvaSoldado',g);s.casa=f;s.movido=s.agiu=true;
-  if(anima){flutua(s,'Saúva!','#ffb070');piscaHex(g,'#ffb070',800);}
+  if(anima){saltaDoNinhoF3(s,f);piscaHex(g,'#ffb070',800);}
+}
+// a saúva pula de dentro do formigueiro: sai do buraco num salto em arco e cai na casa ao lado, levantando terra
+const SALTO_NINHO=700;
+function saltaDoNinhoF3(u,f){
+  const [x0,y0]=centro(...DK(f)),[x1,y1]=centro(u.c,u.r),t0=performance.now();
+  u.anim={x0,y0:y0-R*.15,t0,dur:SALTO_NINHO,arco:R*1.1,pulos:1};
+  for(let i=0;i<7;i++)fx.push({folha:true,x:x0+(i%4-1.5)*R*.2,y:y0,dx:(Math.random()-.5)*R*1.4,t0:t0+i*30,dur:700,cor:i%2?'#7c4a2a':'#b0452a'}); // terra voando do buraco
+  setTimeout(()=>{if(u.anim&&u.anim.t0===t0)u.anim=null;
+    const n=performance.now();for(let i=0;i<5;i++)fx.push({folha:true,x:x1+(i%5-2)*R*.2,y:y1+R*.3,dx:(i%5-2)*R*.3,t0:n+i*20,dur:500,cor:'#8a6a48'}); // poeira na queda
+    flutua(u,'Saúva!','#ffb070');},SALTO_NINHO);
 }
 // onde o ninho pode nascer: a casa marcada, ou a planície livre mais perto dela
 function casaNinhoF3(k0){
@@ -3614,15 +3641,42 @@ function trazExercitoF2(proibidas){
 // a chuva que começou na vitória da Fase 2 não para: fica por cima do mapa a fase inteira (forte = os rios enchendo)
 function chuvaCampo(forte){
   let d=document.getElementById('chuvaCampo');
-  if(!d){const m=document.getElementById('mapa');d=document.createElement('div');d.id='chuvaCampo';d.className='chuvaF2 chuvaF3';d.innerHTML='<i></i><i></i>';
-    m.insertBefore(d,document.getElementById('menuM'));void d.offsetWidth;}
+  if(!d){const m=document.getElementById('mapa');d=document.createElement('div');d.id='chuvaCampo';d.className='chuvaF2 chuvaF3';
+    m.insertBefore(d,document.getElementById('menuM'));animaChuva(d);void d.offsetWidth;}
   d.classList.add('on');d.classList.toggle('forte',!!forte);
+}
+// gotas de chuva de verdade: riscos curtos e inclinados em três profundidades (as de perto maiores, mais claras e mais rápidas),
+// cada uma cai até uma "altura de chão" sorteada e respinga ali. A forte tem bem mais gotas que a fina.
+function animaChuva(d){
+  const cv=document.createElement('canvas');d.appendChild(cv);const g=cv.getContext('2d');
+  let gotas=[],resp=[],w=0,h=0,dens=-1,ult=performance.now();
+  const nova=ini=>{const z=Math.random();return {x:Math.random()*(w+80)-20,y:ini?Math.random()*h:-10-Math.random()*80,
+    v:380+z*560,len:5+z*13,lw:z>.75?2:1,a:.18+z*.42,cor:z>.55?'#e6f0ff':'#9fbbe0',chao:h*(.15+Math.random()*.95)};};
+  function passo(now){
+    if(!d.isConnected)return;requestAnimationFrame(passo);
+    const dt=Math.min(.05,(now-ult)/1000);ult=now;
+    const W=d.clientWidth,H=d.clientHeight;if(!W||!H)return;
+    if(W!==w||H!==h){w=W;h=H;cv.width=W;cv.height=H;gotas=[];}
+    const alvo=Math.round(W*H/(d.classList.contains('forte')?2300:5200));dens=dens<0?alvo:dens+(alvo-dens)*Math.min(1,dt*2);d._n=gotas.length; // começa já chovendo; depois a intensidade muda devagar
+    const n=Math.round(dens);while(gotas.length<n)gotas.push(nova(!gotas.length&&!resp.length));if(gotas.length>n)gotas.length=n;
+    g.clearRect(0,0,W,H);g.lineCap='round';
+    for(const p of gotas){
+      p.y+=p.v*dt;p.x-=p.v*dt*.16;
+      if(p.y>=p.chao){if(Math.random()<.5)resp.push({x:p.x,y:p.chao,t:0,z:p.lw});Object.assign(p,nova(false));continue;}
+      g.globalAlpha=p.a*.7;g.strokeStyle='#14243c';g.lineWidth=p.lw+1;g.beginPath();g.moveTo(p.x+1,p.y);g.lineTo(p.x+1+p.len*.16,p.y-p.len);g.stroke(); // sombra: a gota aparece na grama clara também
+      g.globalAlpha=Math.min(1,p.a+.15);g.strokeStyle=p.cor;g.lineWidth=p.lw;g.beginPath();g.moveTo(p.x,p.y);g.lineTo(p.x+p.len*.16,p.y-p.len);g.stroke();}
+    g.strokeStyle='#dcebff';g.lineWidth=1;
+    for(let i=resp.length-1;i>=0;i--){const r=resp[i];r.t+=dt;const q=r.t/.3;if(q>=1){resp.splice(i,1);continue;}
+      g.globalAlpha=.45*(1-q);g.beginPath();g.ellipse(r.x,r.y,1+q*5*r.z,.5+q*1.6*r.z,0,0,Math.PI*2);g.stroke();} // respingo: um anelzinho que abre e some
+    g.globalAlpha=1;
+  }
+  requestAnimationFrame(passo);
 }
 function tiraChuva(){document.getElementById('chuvaCampo')?.remove();}
 const AVISOS_F3={
   intro1:{tit:'Fase 3 · Raízes do Vale',falas:['Tanta mata queimada...'],bt:'Continuar'},
   plantar:{falas:[{quem:'img',esp:'semente'},{quem:'soldado',cara:'feliz',txt:'Leve a Semente até uma mata queimada.'},'feliz|Deixe ela lá parada, que o broto pega!'],bt:'Começar'},
-  plantando:{falas:['feliz|O broto está pegando!','feliz|Mais um turno e a mata volta.']},
+  plantando:{falas:['feliz|O broto está pegando!','feliz|Depois de plantar, logo a mata renascerá.']},
   raiz:{falas:['feliz|A Semente criou raízes!',{quem:'soldado',cara:'feliz',txt:'Logo vai recuperar a mata.'}]},
   caiporaBroto:{falas:[{quem:'caipora',txt:'A mata precisa de ajuda.'},{quem:'caipora',txt:'Vou levar sementes para todas as vilas.'},{quem:'soldado',cara:'feliz',txt:'Toque numa vila para chamar uma Semente de lá.'}],bt:'Continuar',volta:true},
   comeu:{falas:['furia|As saúvas comeram o broto!',{quem:'soldado',txt:'Proteja as Sementes enquanto elas plantam!'}]},
@@ -3632,7 +3686,8 @@ const AVISOS_F3={
   renasce:{falas:['furia|Olha lá! Outro formigueiro!'],bt:'Continuar',volta:true},
   formig:{falas:['Saúvas! Elas saem daquele formigueiro.',{quem:'soldado',txt:'Ataque o formigueiro!<br>Ele não revida.'}]},
   vilaVerde:{falas:['feliz|A mata em volta da vila está brotando!','feliz|Mais uma família voltou pra vila!']},
-  vitoria:{falas:['Os rios estão enchendo!',{quem:'soldado',txt:'Os Cães Infernais...<br>essa chuva que não para...'},
+  inunda:{falas:['Os rios estão inundando!'],bt:'Continuar'},
+  vitoria:{falas:[{quem:'soldado',txt:'Primeiro os Cães Infernais...<br>Agora essa chuva que não para...'},
     {quem:'caipora',txt:'Nada disso é normal.'},{quem:'caipora',txt:'Quem será que está por trás disso?'}],bt:'Continuar'},
 };
 // abertura: chuva; a câmera passa por até três matas queimadas e o camponês lamenta
@@ -3827,7 +3882,7 @@ async function turnoSauvas(l){
       .sort((a,b)=>d6c(...DK(a),...J.f1.castelo)-d6c(...DK(b),...J.f1.castelo)||a-b)[0];
     if(sai==null)continue; // cercado: ninguém sai por enquanto
     const o=criaSauva('sauva',sai);o.casa=f;o.movido=o.agiu=true;
-    if(VEL&&!document.hidden){await focar(...DK(f));o.nasce=performance.now();flutua(o,'Saúva!','#ffb070');atualiza();await dorme(700);}
+    if(VEL&&!document.hidden){await focar(...DK(f));saltaDoNinhoF3(o,f);atualiza();await dorme(SALTO_NINHO+400);}
     J.f1.formK=f;avisoF1('formig');}
   // 2. cada saúva age; a que atacar uma Semente plantando come o broto daquela casa
   for(const u of J.un.filter(x=>x.lado===l&&x.esp!=='formigueiro')){
@@ -3845,18 +3900,33 @@ async function turnoSauvas(l){
 function checaVitoriaF3(){if(!J.fim&&J.f1.queim.length===0)fimDeJogo(0,'f1');}
 // a vitória: a chuva engrossa, a câmera passa pelos três rios enchendo, a Caipora sai da mata perto do mestre e todos falam
 async function finalF3(){
-  const jogo=J;J.f1.fila=J.f1.fila.filter(x=>x==='vitoria');atualiza();
+  const jogo=J;J.f1.fila=J.f1.fila.filter(x=>x==='vitoria');J.f1.vistos.inunda=false;atualiza();
   chuvaCampo(true);J.f1.chegando=true;zoomCena();
   const rios=[],vistos=new Set();
   for(let k=0;k<COLS*ROWS;k++){if(J.ter[k]!=='rio'||vistos.has(k))continue;const g=[k];vistos.add(k);
     for(let i=0;i<g.length;i++)for(const [c,r] of vizinhos(...DK(g[i]))){const kk=K(c,r);if(J.ter[kk]==='rio'&&!vistos.has(kk)){vistos.add(kk);g.push(kk);}}
     rios.push(g);}
-  J.f1.cheia={};
+  J.f1.cheia={};J.f1.inunda={};
+  // cada rio enche e transborda: uma casa ao lado vira água. Depois da primeira, o camponês dá o alarme
+  const livreAgua=k=>{const [c,r]=DK(k);return dentro(c,r)&&['plan','flor'].includes(J.ter[k])&&!J.vilas[k]&&!unidadeEm(c,r)&&!J.f1.formig.includes(k);};
+  let primeiro=true;
   for(const g of rios){
-    const ps=g.map(k=>centro(...DK(k))),x=ps.reduce((s,p)=>s+p[0],0)/ps.length,y=ps.reduce((s,p)=>s+p[1],0)/ps.length;
+    const viz=[...new Set(g.flatMap(k=>vizinhos(...DK(k)).map(([c,r])=>K(c,r))))].filter(livreAgua)
+      .sort((a,b)=>(J.ter[a]==='plan'?0:1)-(J.ter[b]==='plan'?0:1)||(J.f1.brotos.includes(a)?1:0)-(J.f1.brotos.includes(b)?1:0)||a-b);
+    const nk=viz[0];
+    const ps=[...g,...(nk!=null?[nk]:[])].map(k=>centro(...DK(k))),x=ps.reduce((s,p)=>s+p[0],0)/ps.length,y=ps.reduce((s,p)=>s+p[1],0)/ps.length;
     CAM.alvo={fixo:true,px:x,py:y};CAM.centrar=true;CAM.mao=false;await dorme(900);if(J!==jogo)return;
     for(const k of g){J.f1.cheia[k]=performance.now();piscaHex(k,'#9fd0ff',900);}
-    await dorme(1300);if(J!==jogo)return;}
+    await dorme(900);if(J!==jogo)return;
+    if(nk!=null){
+      const de=g.slice().sort((a,b)=>d6c(...DK(a),...DK(nk))-d6c(...DK(b),...DK(nk)))[0];
+      J.f1.inunda[nk]={t0:performance.now(),de:centro(...DK(de))};
+      await dorme(1500);if(J!==jogo)return;
+      delete J.f1.inunda[nk];J.ter[nk]='rio';J.f1.brotos=J.f1.brotos.filter(j=>j!==nk);J.terV=(J.terV||0)+1;J.f1.cheia[nk]=performance.now()-1600;
+      piscaHex(nk,'#9fd0ff',900);atualiza();await dorme(500);if(J!==jogo)return;
+    }
+    if(primeiro){primeiro=false;J.f1.inundaK=nk??g[0];J.f1.chegando=false;await avisoJaF1('inunda');if(J!==jogo)return;J.f1.chegando=true;}
+  }
   const m=mestreDe(0),p=m&&pertoDoMestreF2(m);
   if(p){
     const [k,fl]=p,[x,y]=centro(...DK(k)),[ox,oy]=fl!=null?centro(...DK(fl)):[x,y];
@@ -3874,6 +3944,13 @@ async function finalF3(){
 function desenhaCheiaF3(now){
   const ch=J.f1.cheia;if(!ch)return;
   ctx.save();
+  // a casa que está sendo inundada: a água entra pelo lado do rio e toma o hexágono
+  for(const [ks,o] of Object.entries(J.f1.inunda||{})){const [x,y]=centro(...DK(+ks)),t=Math.min(1,(now-o.t0)/1400),[dx,dy]=o.de;
+    ctx.save();hexPath(x,y);ctx.clip();
+    const rr=R*2.4*(1-Math.pow(1-t,2));
+    ctx.globalAlpha=.88;ctx.fillStyle='#3f7fc4';ctx.beginPath();ctx.arc(dx,dy,rr,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=.8*(1-t*.5);ctx.strokeStyle='#d8ecff';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(dx,dy,Math.max(1,rr-2),0,Math.PI*2);ctx.stroke(); // espuma na frente da água
+    ctx.restore();}
   for(const [ks,t0] of Object.entries(ch)){const [x,y]=centro(...DK(+ks)),t=Math.min(1,(now-t0)/1600);
     const onda=Math.sin(now/300+(+ks))*.04;
     ctx.globalAlpha=.5*t;ctx.fillStyle='#4f93d6';ctx.beginPath();ctx.ellipse(x,y,R*(1+.55*t+onda),R*(.85+.45*t+onda),0,0,Math.PI*2);ctx.fill();
@@ -4127,7 +4204,7 @@ function log(t){J.logs.unshift(t);if(J.logs.length>60)J.logs.pop();}
 
 function inicioTurno(l){
   checaCerco(l);if(J.fim)return;
-  seguir(mestreDe(l));
+  seguir(l===0&&J.un.find(u=>u.id===J.ultJogou&&u.lado===0)||mestreDe(l)); // sua vez: volta para a última criatura que você jogou (sem ela, o mestre)
   if(J.avisoCerco)J.avisoCerco[l]=false;
   // aviso de evolução: aparece quando a reserva CHEGA a EVO_CUSTO; depois de "Agora não", só volta
   // se a mana cair abaixo do custo e subir de novo
@@ -4183,7 +4260,10 @@ function alcancaveis(u){
   return {dist,prev,dest};
 }
 function caminho(prev,k){const p=[];while(k!==undefined){p.unshift(k);k=prev.get(k);}return p;}
+// a última criatura sua que andou ou atacou: é nela que a câmera volta quando chega a sua vez
+const marcaJogou=u=>{if(u&&u.lado===0&&!ESP[u.esp].mestre)J.ultJogou=u.id;};
 async function moverPara(u,k,prev){
+  marcaJogou(u);
   if(k!==K(u.c,u.r)){
     const p=caminho(prev,k).slice(1);
     hist(u).passos+=p.length;
@@ -4688,7 +4768,7 @@ const porGolpe=b=>b/GOLPES;
 const rolar=b=>Math.max(1,Math.round(b*(0.85+Math.random()*0.3)));
 const faixa=b=>[Math.max(1,Math.round(b*0.85)),Math.max(1,Math.round(b*1.15))];
 async function atacar(a,d){
-  if(J.fim)return;
+  if(J.fim)return;marcaJogou(a);
   seguir(d);
   // atacante vira para o alvo; o alvo vira para quem o atacou
   viraPara(a,centro(d.c,d.r)[0]);viraPara(d,centro(a.c,a.r)[0]);
