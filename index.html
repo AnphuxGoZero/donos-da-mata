@@ -2465,7 +2465,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.03'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.04'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -2586,7 +2586,7 @@ function mapaF1(M){
 }
 function iniciaF1(m){
   J.f1={n:1,fila:['intro1'],vistos:{},rostos:{},entra:m.entra,entrada:m.filhotes};J.vilas=m.vilas;
-  for(const a of Object.values(ARTE_F1)){imgF1(a.mapa);imgF1(a.luta);}imgF1(CAMPONESES.img);imgF1('img/f1-cao-cara.png');for(const r of Object.values(ROSTOS_F1))imgF1(r.img); // já começa a carregar a arte própria
+  for(const a of Object.values(ARTE_F1)){imgF1(a.mapa);imgF1(a.luta);}imgF1(CAMPONESES.img);imgF1('img/f1-cao-cara.png');for(const r of imgsRostos())imgF1(r); // já começa a carregar a arte própria
   for(const p of m.filhotes){const u=criaUnidade('filhoteInf',1,...p);u.selvagem=true;}
 }
 const vilasVivas=()=>Object.keys(J.vilas||{}).map(Number).filter(k=>J.vilas[k].n>0);
@@ -2601,16 +2601,16 @@ const AVISOS_F1={
   vila:{falas:['Uma vila caiu!','Não sobrou ninguém pra contar a história.']},
   campones:{falas:['Um camponês morreu, rápido! Precisamos de ajuda!']},
   resistiu:{falas:['Meu coração bate como um caroço de abacate!']},
-  caiuUm:{falas:['Um cão derrotado!','Uhulllll! Falta só mais um!']}, // o primeiro dos dois caiu
+  caiuUm:{falas:['feliz|Um cão derrotado!','feliz|Uhulllll! Falta só mais um!']}, // o primeiro dos dois caiu
   // o segundo caiu: comemoração, um rosnado vindo de longe e a dúvida do soldado (antes da tela de vitória)
-  vitoria:{falas:['Uhuuul! Pode voltar pro inferno, cachorrinho!','Acabou! O vale está a salvo!',{quem:'grr',txt:'GRRRRR...'},{quem:'soldado',txt:'Será mesmo?'}],bt:'Continuar'},
+  vitoria:{falas:['feliz|Uhuuul! Pode voltar pro inferno, cachorrinho!','feliz|Acabou! O vale está a salvo!',{quem:'grr',txt:'GRRRRR...'},{quem:'soldado',txt:'Será mesmo?'}],bt:'Continuar'},
   // uma criatura sua alcança uma torre que ainda não é sua: o soldado chama, o camponês explica
-  torre:{falas:[{quem:'soldado',txt:'Rápido, entre na torre para se fortalecer!'},'Lá dentro a criatura se cura e fica protegida!']},
+  torre:{falas:[{quem:'soldado',txt:'Rápido, entre na torre para se fortalecer!'},'feliz|Lá dentro a criatura se cura e fica protegida!']},
   // tomou uma torre perto de casa (longe da luta): o que ela rende
-  torreMagica:{falas:['Estas torres são mágicas!',{quem:'soldado',txt:'Elas geram energia para invocar mais criaturas.'}]},
+  torreMagica:{falas:['feliz|Estas torres são mágicas!',{quem:'soldado',cara:'feliz',txt:'Elas geram energia para invocar mais criaturas.'}]},
   evoluiu:{falas:['Oxi, filhotinho evoluiu!','Nossa, olha o tamanho desse bicho!'],cao:true}, // o Cão Infernal rosnando no canto
   // se um Filhote já evoluiu antes, a sua "também" evoluiu
-  evoMinha:{falas:()=>[J.f1.vistos.evoluiu?'Sua criatura também evoluiu!':'Sua criatura evoluiu!','Evoluir é a nossa esperança. Mantenha as veteranas vivas.']},
+  evoMinha:{falas:()=>[J.f1.vistos.evoluiu?'feliz|Sua criatura também evoluiu!':'feliz|Sua criatura evoluiu!','feliz|Evoluir é a nossa esperança. Mantenha as veteranas vivas.']},
 };
 // uma criatura sua pode chegar neste turno a uma torre que ainda não é sua E que está na frente de batalha: a até 4
 // casas de um Filhote e mais perto dele do que do seu castelo. Na torre do começo, perto de casa, o conselho prenderia
@@ -2811,7 +2811,12 @@ async function agirSelvagem(u){
 }
 // os 8 camponeses da tela de batalha (folha 4×2, figuras de pé na base; olha = para onde a figura está virada)
 // figurinhas de quem fala nos avisos: tiras de 8 rostos (camponeses e soldados)
-const ROSTOS_F1={campones:{img:'img/f1-rostos.png',n:8},soldado:{img:'img/f1-soldados.png',n:8},caipora:{img:'img/f2-caipora.png',n:1}};
+// expressões: o camponês fica com medo (padrão), feliz ou furioso; o guarda, furioso (padrão) ou feliz. Na fala: 'feliz|texto' ou {quem,cara,txt}
+const ROSTOS_F1={campones:{img:'img/f1-rostos.png',n:8,caras:{medo:'img/f1-rostos.png',feliz:'img/f1-rostos-feliz.png',furia:'img/f1-rostos-furia.png'}},
+  soldado:{img:'img/f1-soldados.png',n:8,caras:{furia:'img/f1-soldados.png',feliz:'img/f1-soldados-feliz.png'}},caipora:{img:'img/f2-caipora.png',n:1}};
+const imgsRostos=()=>Object.values(ROSTOS_F1).flatMap(r=>[r.img,...Object.values(r.caras||{})]);
+const imgCara=(R,cara)=>R.caras?.[cara]||R.img;
+const leFala=f=>{if(typeof f!=='string')return f;const m=f.match(/^(feliz|furia|medo)\|(.*)$/s);return m?{quem:'campones',cara:m[1],txt:m[2]}:{quem:'campones',txt:f};};
 const CAMPONESES={img:'img/f1-camponeses.png?v=2',olha:[1,1,1,1,1,1,1,1]}; // a folha nova tem todos virados para a direita
 // um camponês sai para defender a casa: uma troca de golpes de verdade (o Filhote leva uns arranhões). Com sorte
 // (o Filhote erra golpes), o camponês aguenta e a casa fica de pé por mais um turno: na média do dia e da noite,
@@ -2892,7 +2897,7 @@ function iniciaF2(m){
   J.f1={n:2,fila:['intro1'],vistos:{torre:true,torreMagica:true},rostos:{},entra:m.entra,entrada:[m.cao],caoPos:m.cao,castelo:m.f0,
     foco0:K(...m.cao),cinzas:0,queim:[],mata0:m.ter.filter(t=>t==='flor').length,camponeses:m.camponeses,caoVeio:true};
   J.vilas=m.vilas;
-  for(const r of Object.values(ROSTOS_F1))imgF1(r.img);imgF1('img/f1-cao-cara.png');
+  for(const r of imgsRostos())imgF1(r);imgF1('img/f1-cao-cara.png');
   // dois Cães; cada um põe fogo em duas florestas ao lado dele (as mais perto do castelo, para o fogo vir na sua direção)
   const focos=(pos,fora)=>vizinhos(...pos).map(([c,r])=>K(c,r)).filter(k=>J.ter[k]==='flor'&&!fora.includes(k))
     .sort((a,b)=>d6c(...DK(a),...m.f0)-d6c(...DK(b),...m.f0)||a-b).slice(0,2);
@@ -2993,16 +2998,16 @@ const avisosF=()=>ehF3()?AVISOS_F3:ehF2()?AVISOS_F2:AVISOS_F1;
 const AVISOS_F2={
   intro1:{tit:'Fase 2 · A Mata em Chamas',falas:['Fogo! A mata está pegando fogo!'],bt:'Começar'},
   caiporaChega:{falas:[{quem:'caipora',txt:'Sou Caipora, guardião desta mata.'},{quem:'caipora',txt:'Me ajude a salvá-la!'}],bt:'Continuar'},
-  alimentou:{falas:['Eita, o fogo aumentou o fogo!','Acho melhor usar água!']},
-  apagou:{falas:['Apagou! A Água acaba com o fogo!']},
-  cinza:{falas:['Essa parte da mata queimou toda...','Rápido, antes que o fogo se espalhe!']},
+  alimentou:{falas:['Eita, o fogo aumentou o fogo!','furia|Acho melhor usar água!']},
+  apagou:{falas:['feliz|Apagou! A Água acaba com o fogo!']},
+  cinza:{falas:['Essa parte da mata queimou toda...','furia|Rápido, antes que o fogo se espalhe!']},
   vilaQueima:{falas:['A vila está pegando fogo!','Um camponês não conseguiu fugir...']},
   vila:{falas:['A vila virou cinzas!','Não sobrou ninguém...']},
   cao:{falas:[{quem:'grr',txt:'GRRRRR!'},{quem:'soldado',txt:'O Cão Infernal chegou! Não deixe ele pôr fogo nas vilas!'}],cao:true},
   incendiou:{falas:['Salve-se quem puder!']},
-  caoCaiu1:{falas:['Tchau, cãozinho!']},
-  cacaCaes:{falas:()=>['Fogo não queima fogo.',{quem:'soldado',txt:`Mas ${['filhoteInf','caoInfernal','cerberus'].includes(J.f1.cacaEsp)?'seu Cão':'sua criatura de Fogo'} pode caçar os Cães inimigos!`}]},
-  caoCaiu:{falas:['O último Cão Infernal caiu!',{quem:'caipora',txt:'Agora apague o que sobrou do fogo!'}]},
+  caoCaiu1:{falas:['feliz|Tchau, cãozinho!']},
+  cacaCaes:{falas:()=>['furia|Fogo não queima fogo.',{quem:'soldado',cara:'feliz',txt:`Mas ${['filhoteInf','caoInfernal','cerberus'].includes(J.f1.cacaEsp)?'seu Cão':'sua criatura de Fogo'} pode caçar os Cães inimigos!`}]},
+  caoCaiu:{falas:['feliz|O último Cão Infernal caiu!',{quem:'caipora',txt:'Agora apague o que sobrou do fogo!'}]},
   // o conselho, logo depois de ela se apresentar: ao fechar, a câmera vai até o mestre e o Evoluir pisca no menu dele
   caipora:{falas:[{quem:'caipora',txt:'Seus Girinos nadam bem, mas na terra eles se arrastam...'},{quem:'caipora',txt:'Eles precisam evoluir.'}],bt:'Evoluir'},
   // depois da primeira evolução (o Sapinho de presente já está ao lado do mestre)
@@ -3510,7 +3515,7 @@ function iniciaF3(m){
     vilaMatas:Object.fromEntries(vs.map(v=>[v,m.queim.filter(k=>d6c(...DK(k),...DK(v))<=2)]).filter(x=>x[1].length)),vilaOk:{},
     meta:f3MetaTurnos(m.queim.length)};
   J.vilas=m.vilas;
-  for(const a of Object.values(ARTE_F1)){imgF1(a.mapa);imgF1(a.luta);}for(const r of Object.values(ROSTOS_F1))imgF1(r.img);
+  for(const a of Object.values(ARTE_F1)){imgF1(a.mapa);imgF1(a.luta);}for(const r of imgsRostos())imgF1(r);
   // os formigueiros só se formam depois que a 1ª Semente é plantada (a chuva acorda as tanajuras; o broto atrai as saúvas)
   trazExercitoF2(new Set(m.formig));
 }
@@ -3616,17 +3621,17 @@ function chuvaCampo(forte){
 function tiraChuva(){document.getElementById('chuvaCampo')?.remove();}
 const AVISOS_F3={
   intro1:{tit:'Fase 3 · Raízes do Vale',falas:['Tanta mata queimada...'],bt:'Continuar'},
-  plantar:{falas:[{quem:'img',esp:'semente'},{quem:'soldado',txt:'Leve a Semente até uma mata queimada.'},'Deixe ela lá parada, que o broto pega!'],bt:'Começar'},
-  plantando:{falas:['O broto está pegando!','Mais uns turnos e a mata volta.']},
-  raiz:{falas:['A Semente criou raízes!',{quem:'soldado',txt:'Fincou raiz!<br>Logo ela vai recuperar a mata.'}]},
-  caiporaBroto:{falas:[{quem:'caipora',txt:'A mata precisa de ajuda.'},{quem:'caipora',txt:'Vou levar sementes para todas as vilas.'},{quem:'soldado',txt:'Toque numa vila para chamar uma Semente de lá.'}],bt:'Continuar',volta:true},
-  comeu:{falas:['As saúvas comeram o broto!',{quem:'soldado',txt:'Proteja as Sementes enquanto elas plantam!'}]},
+  plantar:{falas:[{quem:'img',esp:'semente'},{quem:'soldado',cara:'feliz',txt:'Leve a Semente até uma mata queimada.'},'feliz|Deixe ela lá parada, que o broto pega!'],bt:'Começar'},
+  plantando:{falas:['feliz|O broto está pegando!','feliz|Mais uns turnos e a mata volta.']},
+  raiz:{falas:['feliz|A Semente criou raízes!',{quem:'soldado',cara:'feliz',txt:'Fincou raiz!<br>Logo ela vai recuperar a mata.'}]},
+  caiporaBroto:{falas:[{quem:'caipora',txt:'A mata precisa de ajuda.'},{quem:'caipora',txt:'Vou levar sementes para todas as vilas.'},{quem:'soldado',cara:'feliz',txt:'Toque numa vila para chamar uma Semente de lá.'}],bt:'Continuar',volta:true},
+  comeu:{falas:['furia|As saúvas comeram o broto!',{quem:'soldado',txt:'Proteja as Sementes enquanto elas plantam!'}]},
   ninho:{falas:['Tanajura! A chuva acordou elas...',{quem:'soldado',txt:'Saúva corta folha nova.<br>E a gente vai plantar justamente isso.'}],bt:'Continuar',volta:true},
   ninhos:{falas:['Tem mais... tem ninho por todo lado!'],bt:'Continuar',volta:true},
-  ninhoCaiu:{falas:['Derrubamos o formigueiro!',{quem:'soldado',txt:'Cuidado: as que fugiram podem cavar outro.'}]},
-  renasce:{falas:['Olha lá! Outro formigueiro!'],bt:'Continuar',volta:true},
+  ninhoCaiu:{falas:['feliz|Derrubamos o formigueiro!',{quem:'soldado',txt:'Cuidado: as que fugiram podem cavar outro.'}]},
+  renasce:{falas:['furia|Olha lá! Outro formigueiro!'],bt:'Continuar',volta:true},
   formig:{falas:['Saúvas! Elas saem daquele formigueiro.',{quem:'soldado',txt:'Ataque o formigueiro!<br>Ele não revida.'}]},
-  vilaVerde:{falas:['A mata em volta da vila está brotando!','Mais uma família voltou pra vila!']},
+  vilaVerde:{falas:['feliz|A mata em volta da vila está brotando!','feliz|Mais uma família voltou pra vila!']},
   vitoria:{falas:['Os rios estão enchendo!',{quem:'soldado',txt:'Os Cães Infernais...<br>essa chuva que não para...'},
     {quem:'caipora',txt:'Nada disso é normal.'},{quem:'caipora',txt:'Quem será que está por trás disso?'}],bt:'Continuar'},
 };
@@ -7890,7 +7895,7 @@ function menus(){
     let corpo,espera=0;
     if(A.falas){
       // um rosto diferente para cada fala, sorteado uma vez (o aviso não troca de rosto ao redesenhar)
-      const falas=(typeof A.falas==='function'?A.falas():A.falas).map(f=>typeof f==='string'?{quem:'campones',txt:f}:f);
+      const falas=(typeof A.falas==='function'?A.falas():A.falas).map(leFala);
       const rs=J.f1.rostos[id]||(J.f1.rostos[id]=(()=>{const usados={};return falas.map(f=>{if(!ROSTOS_F1[f.quem])return 0;const R=ROSTOS_F1[f.quem],u=usados[f.quem]||(usados[f.quem]=new Set());
         let i;do i=Math.random()*R.n|0;while(u.has(i)&&u.size<R.n);u.add(i);return i;});})());
       let lado=1,antes=null;const lados=falas.map((f,i)=>{if(!ROSTOS_F1[f.quem])return 0;const mesmo=ROSTOS_F1[f.quem].n===1&&antes===f.quem;if(!mesmo)lado=-lado;antes=f.quem;return lado;}); // um de cada lado, como numa conversa
@@ -7902,7 +7907,7 @@ function menus(){
         const R=ROSTOS_F1[f.quem],mesmo=aberto&&R.n===1&&falas[i-1].quem===f.quem;
         if(mesmo){h+=`<div class="balao seq s${i+1}">${f.txt}</div>`;return;}
         fecha();aberto=true;
-        h+=`<div class="fala${lados[i]>0?' dir':''} seq s${i+1}"><span class="rosto ${f.quem}" style="background-image:url(${R.img});background-position:${R.n>1?rs[i]/(R.n-1)*100:0}% 0"></span><div class="baloes"><div class="balao">${f.txt}</div>`;
+        h+=`<div class="fala${lados[i]>0?' dir':''} seq s${i+1}"><span class="rosto ${f.quem}" style="background-image:url(${imgCara(R,f.cara)});background-position:${R.n>1?rs[i]/(R.n-1)*100:0}% 0"></span><div class="baloes"><div class="balao">${f.txt}</div>`;
       });
       fecha();
       corpo=`${A.tit?`<div class="evoTit">${A.tit}</div>`:''}${h}`;
