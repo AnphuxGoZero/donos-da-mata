@@ -286,7 +286,7 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 .vantLinha{display:flex;flex-wrap:wrap;align-items:center;gap:3px;font-size:11.5px;color:var(--dim)}
 .vantLinha i{font-style:normal;color:#fff;font-size:10.5px;padding:0 6px;border-radius:8px;line-height:16px}
 .vantLinha span+span,.vantLinha i+span{margin-left:3px} /* altura reservada: o registro não pula quando a ficha muda */
-#btFim{flex:1;padding:12px;font-size:15px;font-weight:600;letter-spacing:.02em}
+#btFim{flex:1;padding:16px 12px;font-size:15px;font-weight:600;letter-spacing:.02em}
 #btFim.tutTrava{visibility:hidden} /* tutorial: o botão só aparece depois das duas invocações (o espaço fica reservado: nada pula) */
 #btFim.brilha,#btFim.brilha:hover:not(:disabled){background:#a87a22;border-color:#f2c14e;color:#fff;animation:brilhaFim 1.6s ease-in-out infinite}
 @keyframes brilhaFim{0%,100%{box-shadow:0 0 0 0 #f2c14e00}50%{box-shadow:0 0 14px 3px #f2c14ecc}}
@@ -313,9 +313,16 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 #btMagia{display:none;flex:none;color:#d9b8ff;border-color:#6a4a8a;font-size:15px}
 #btMagia.ativo{display:block}
 /* 👣 próxima criatura: só aparece enquanto há criatura sua que ainda não agiu; o número é quantas faltam */
-#btProx{display:none;flex:none;font-size:15px;white-space:nowrap}
+#btProx{display:none;flex:none;font-size:20px;line-height:1;white-space:nowrap;position:relative;min-width:56px}
 #btProx.ativo{display:block}
-#btProx b{margin-left:4px;font-size:13px;color:#f2c14e}
+/* o número vira um selo dourado no canto, como notificação */
+#btProx b{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border-radius:10px;background:#f2c14e;color:#3a2a06;
+  font-size:12px;font-weight:700;line-height:16px;text-align:center;border:2px solid #151821;pointer-events:none}
+#btProx b:empty{display:none}
+/* parado na sua vez com criatura (ou vila) por jogar: a patinha pulsa devagar */
+#btProx.chama{animation:chamaPata 1.6s ease-in-out infinite}
+@keyframes chamaPata{0%,100%{box-shadow:0 0 0 0 #f2c14e00;border-color:#3c4356}50%{box-shadow:0 0 12px 3px #f2c14eaa;border-color:#f2c14e}}
+@media (prefers-reduced-motion:reduce){#btProx.chama{animation:none;border-color:#f2c14e;box-shadow:0 0 10px 2px #f2c14e88}}
 .paisagem #btProx{background:#1d2029e6}
 #btMagia.brilha{animation:brilhaMagia 1.8s ease-in-out infinite}
 @keyframes brilhaMagia{0%,100%{box-shadow:0 0 0 0 #c58cff00}50%{box-shadow:0 0 12px 2px #c58cff99}}
@@ -371,7 +378,7 @@ button{touch-action:manipulation}
 .toque h1 .bt{min-height:34px;min-width:38px;padding:2px 9px;font-size:16px;vertical-align:middle}
 .toque #zoomUI button{width:38px;height:36px;min-height:0;padding:0}
 .toque #ajuda .topoAj button{min-width:40px}
-.toque #btFim{padding:14px}
+.toque #btFim{padding:18px 14px}
 
 /* ---------- Tela estreita (celular em pé, janela estreita): tudo numa coluna só ---------- */
 /* ordem: topo, mapa, ficha, Encerrar turno, placar, mini mapa, registro */
@@ -606,7 +613,7 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 .retrato #rodape .pTor b{font-size:15px}
 .retrato #rodape .pTorre{width:24px;height:24px}
 .retrato #linhaFim{order:5;flex:none}
-.retrato #btFim{padding:10px}
+.retrato #btFim{padding:15px 10px}
 .retrato #mini{display:none}
 .retrato #caixaLog{display:none}
 .retrato #caixaLog.aberto{display:flex;position:fixed;left:4px;right:4px;bottom:56px;max-height:60vh;max-height:60dvh;z-index:8;border-color:#4a5268;box-shadow:0 -6px 30px #000d}
@@ -5845,7 +5852,9 @@ function cliqueFim(){if(J.vez===0)fimTurno();else pularRival();}
 // o Encerrar turno vai chamando atenção em 3 níveis (só quando já não dá para invocar nem há criatura sua por agir). No 1º turno começa mais cedo (quem ainda não achou o botão);
 // com tudo já feito no turno, também. Telas por cima (ajuda, menus, cenas) pausam a contagem.
 const OCIO_SEG={primeiro:[10,20,35],normal:[30,60,90]};
-let ocio={seg:0,assin:'',nivel:0};
+let ocio={seg:0,assin:'',nivel:0,segP:0,assinP:''};
+const PATA_SEG={primeiro:8,normal:12}; // segundos parado (com criatura ou vila por jogar) até a 👣 pulsar
+function poePata(on){const b=document.getElementById('btProx');if(b&&b.classList.contains('chama')!==on)b.classList.toggle('chama',on);}
 const assinaturaJogo=()=>J.turno+'|'+J.mp[0]+'|'+J.un.map(u=>u.id+':'+u.c+','+u.r+','+u.hp+(u.agiu?'a':'')).join(';');
 const telaPorCima=()=>!!(CENA||cenaCerco||J.intro||['ajuda','compart','instalar','fichaDet'].some(id=>document.getElementById(id)?.classList.contains('aberto'))
   ||document.getElementById('saves')?.style.display==='block'||document.getElementById('menuJogo')?.classList.contains('aberto'));
@@ -5854,8 +5863,14 @@ function poeOcio(n){
   if(n!==ocio.nivel){ocio.nivel=n;for(let i=1;i<=3;i++)bt.classList.toggle('ocio'+i,n===i);}
 }
 setInterval(()=>{
-  if(!J||J.fim||J.vez!==0||J.ocupado){ocio.seg=0;ocio.assin='';poeOcio(0);return;}
+  if(!J||J.fim||J.vez!==0||J.ocupado){ocio.seg=0;ocio.assin='';poeOcio(0);ocio.segP=0;ocio.assinP='';poePata(false);return;}
   const a=assinaturaJogo();
+  // a 👣: qualquer toque (selecionar, abrir vila ou casa de invocação) zera; parado com algo por jogar, ela pulsa
+  {const aP=a+'|'+(J.sel?J.sel.id:'')+'|'+J.vilaInv+'|'+J.invHex+'|'+!!J.menuInv;
+   if(aP!==ocio.assinP){ocio.assinP=aP;ocio.segP=0;poePata(false);}
+   else if(!document.hidden&&!telaPorCima()){
+     if(criaturasPendentes().length||vilasSemProntas().length){if(++ocio.segP>=PATA_SEG[J.turno<=1?'primeiro':'normal'])poePata(true);}
+     else{ocio.segP=0;poePata(false);}}}
   if(a!==ocio.assin){ocio.assin=a;ocio.seg=0;poeOcio(0);return;}
   if(document.hidden||telaPorCima())return; // pausa, sem zerar
   if(mestreDe(0)&&podeInvocarAlgo()){ocio.seg=0;poeOcio(0);return;} // ainda dá para pôr monstros em jogo: o botão não chama atenção
