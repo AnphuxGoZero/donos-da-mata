@@ -495,6 +495,7 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 .retrato #info{position:fixed;left:calc(8px + var(--sl,0px));right:calc(8px + var(--sr,0px));bottom:var(--fimTopo,64px);z-index:5;flex:none;min-height:0;max-height:min(140px,28vh);max-height:min(140px,28dvh);
   background:rgba(22,25,33,.94);border-color:#3c4356;box-shadow:0 -4px 18px #000a}
 .retrato #info.vazio{display:none}
+#info.naAbertura{visibility:hidden}
 .retrato #btCancela{bottom:calc(8px + var(--infoH,0px))}
 .retrato #alertaCerco.on{bottom:calc(8px + var(--infoH,0px))}
 .retrato #info>*{flex:none}
@@ -2522,7 +2523,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.25'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.26'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -2738,7 +2739,12 @@ async function chegadaF1(){
   a.anim=null;flutua(a,'Grrrr!','#ff8a50');
   await dorme(700);if(J!==jogo)return;
   // uma passada só: a câmera vai para o meio dos dois enquanto o(s) outro(s) chega(m)
-  const ps=fs.map(ponto);mira([ps.reduce((s,p)=>s+p[0],0)/ps.length,ps.reduce((s,p)=>s+p[1],0)/ps.length]);
+  // enquadra os Filhotes e a vila da entrada juntos, um pouco abaixo do meio da tela (em cima fica o espaço da fala)
+  {const pts=fs.map(f=>centro(f.c,f.r)),vk=ANCORA_F1.intro1();if(vk!=null&&!isNaN(vk))pts.push(centro(...DK(vk)));
+    const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]),mg=R*1.5;
+    const x0=Math.min(...xs)-mg,x1=Math.max(...xs)+mg,y0=Math.min(...ys)-mg,y1=Math.max(...ys)+mg;
+    const z2=Math.max(zBase(),Math.min(CAM.zAlvo,TW/(x1-x0),TH*.5/(y1-y0)));CAM.zAlvo=z2;
+    mira([(x0+x1)/2,(y0+y1)/2-TH*.1/z2]);}
   for(const f of outros)f.anim={...fora(f),t0:performance.now(),dur:1500,arco:R*.8,pulos:3};
   await dorme(1550);if(J!==jogo)return;
   for(const f of outros){f.anim=null;flutua(f,'Grrrr!','#ff8a50');}
@@ -2771,14 +2777,25 @@ function posAvisoF1(){
     const hex=R*CAM.z*rc.height/TH,w=ps.offsetWidth,h=ps.offsetHeight,m=8;
     // embaixo da casa se ela estiver na metade de cima da tela; senão, em cima dela
     // e para o lado oposto ao dos Filhotes, para não cobri-los
-    const tela=u=>{const [ux]=centro(u.c,u.r);return rc.left-rm.left+(TW/2+(ux-CAM.x)*CAM.z)*rc.width/TW;};
-    const bando=J.un.filter(u=>u.selvagem).map(tela),lado=bando.length?(bando.reduce((a,b)=>a+b,0)/bando.length>sx?-1:1):0;
-    let top=sy<rm.height/2?sy+hex+6:sy-hex-6-h,left=lado<0?sx+hex*.6-w:lado>0?sx-hex*.6:sx-w/2;
-    left=Math.max(m,Math.min(rm.width-w-m,left));top=Math.max(m,Math.min(rm.height-h-m,top));
-    // a caixa nunca cobre a casa de que fala: se a borda da tela a empurrou para cima dela, vai para o outro lado
-    const cobre=t=>t<sy+hex&&t+h>sy-hex&&left<sx+hex&&left+w>sx-hex;
-    if(cobre(top)){const t2=Math.max(m,Math.min(rm.height-h-m,sy<rm.height/2?sy-hex-6-h:sy+hex+6));if(!cobre(t2))top=t2;}
-    ps.style.left=Math.round(left)+'px';ps.style.top=Math.round(top)+'px';
+    const tela=(ux,uy)=>[rc.left-rm.left+(TW/2+(ux-CAM.x)*CAM.z)*rc.width/TW,rc.top-rm.top+(TH/2+(uy-CAM.y)*CAM.z)*rc.height/TH];
+    // o que a caixa não pode cobrir: a casa de que fala e os Filhotes (área de uma casa em volta de cada um)
+    const evita=[[sx,sy],...J.un.filter(u=>u.selvagem).map(u=>tela(...centro(u.c,u.r)))];
+    const cobre=(l,t)=>evita.reduce((s,[ex,ey])=>s+Math.max(0,Math.min(l+w,ex+hex)-Math.max(l,ex-hex))*Math.max(0,Math.min(t+h,ey+hex)-Math.max(t,ey-hex)),0);
+    // a ficha do terreno (#info, celular) fica por cima do pé do mapa: a caixa não desce até ela
+    // (vale também quando ela ainda está escondida: aparece ao tocar numa casa, e a de terreno tem ~40px)
+    const inf=document.getElementById('info'),csI=getComputedStyle(inf);let baixo=rm.height;
+    if(csI.position==='fixed'){
+      const ri=inf.getBoundingClientRect(),topoI=ri.height?Math.min(ri.top,innerHeight-parseFloat(csI.bottom)-44):innerHeight-parseFloat(csI.bottom)-44;
+      baixo=Math.min(rm.height,topoI-rm.top-6);}
+    const cx=v=>Math.max(m,Math.min(rm.width-w-m,v)),cy=v=>Math.max(m,Math.min(baixo-h-m,v));
+    // várias posições possíveis (embaixo/em cima da casa, nas bordas da tela); fica a que cobre menos,
+    // e entre as que não cobrem nada, a mais perto da casa
+    let best=null;
+    for(const t of [sy<rm.height/2?sy+hex+6:sy-hex-6-h,sy<rm.height/2?sy-hex-6-h:sy+hex+6,m,baixo-h-m])
+      for(const l of [sx-w/2,sx+hex*.6-w,sx-hex*.6,m,rm.width-w-m]){
+        const L=cx(l),T=cy(t),c=cobre(L,T),d=Math.hypot(L+w/2-sx,T+h/2-sy);
+        if(!best||c<best.c-1||(Math.abs(c-best.c)<=1&&d<best.d))best={L,T,c,d};}
+    ps.style.left=Math.round(best.L)+'px';ps.style.top=Math.round(best.T)+'px';
   }
   requestAnimationFrame(posAvisoF1);
 }
@@ -8215,6 +8232,8 @@ function atualiza(){
    bm.classList.toggle('brilha',!!ok&&!J.mg&&magiasDe(0).some(id=>J.mp[0]>=MAGIAS[id].custo&&magiaDisponivel(0,id)));}
   // abertura da fase: sem os botões de baixo; o "Pular abertura" só para quem já viu esta abertura
   {const ab=!!(J.f1&&J.f1.abrindo);document.getElementById('linhaFim').classList.toggle('naAbertura',ab);
+   // nem a ficha do terreno/criatura: na abertura (e nas falas dela) não há o que inspecionar
+   document.getElementById('info').classList.toggle('naAbertura',ab||!!(J.f1&&/^intro/.test(J.f1.fila[0]||'')));
    document.getElementById('btPulaAb').classList.toggle('on',ab&&!!J.f1.podePular&&!PULA_AB);}
   // botão 👣: quantas criaturas suas ainda podem agir neste turno
   {const n=minha?criaturasPendentes().length+vilasSemProntas().length:0;
