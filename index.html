@@ -267,7 +267,7 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 .arvAbas{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;margin:0 0 8px}.arvAbas button{height:auto;min-height:0;padding:7px 4px;font-size:13px;font-weight:700;border-radius:8px;border:1px solid var(--line);color:var(--c);display:flex;flex-direction:column;align-items:center;gap:1px}
 .arvAbas button.sel{background:color-mix(in srgb,var(--c) 22%,transparent);border-color:var(--c)}.arvAbas small{color:var(--dim);font-weight:400;font-size:11px}
 .arvVert{display:flex;flex-direction:column;align-items:center;min-height:324px;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:12px 10px;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 10%,transparent),transparent 70%)}
-.arvVert>.arvNo{width:54%}.arvVert .arvGarfo{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}.arvRamo{position:relative;width:100%;height:28px;color:var(--c)}.arvRamo svg{display:block;width:100%;height:100%}.arvRamo i{position:absolute;bottom:0;transform:translateX(-50%);border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid currentColor}
+.arvVert>.arvNo{width:54%}.arvVert .arvGarfo{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}.arvRamo{position:relative;width:100%;height:28px;color:var(--c)}.arvRamo svg{display:block;width:100%;height:100%}.arvRamo i{position:absolute;bottom:0;transform:translateX(-50%);border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid currentColor}.arvRamo i.off{border-top-color:#3a3f4a}
 #fim .cx.fogCx{width:min(420px,calc(100vw - 20px));box-sizing:border-box;margin:auto}.arvNo .cu{color:var(--dim);font-size:11px;font-weight:400;white-space:nowrap}
 .arvVert .arvNo{padding:8px 4px;font-size:12.5px;gap:2px;min-height:86px;justify-content:center}.arvCruzG .arvNo{min-height:70px}
 .fogDet{display:flex;flex-direction:column;min-height:120px;box-sizing:border-box}.fogDet p{flex:0 0 auto}.fogDet p:first-of-type{min-height:63px}.fogDet .dica{font-size:12px;line-height:1.4;color:#ffd77a;min-height:34px;margin:0 0 6px}.fogDet button{margin-top:auto}
@@ -277,7 +277,7 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 .arvNo.tem{background:color-mix(in srgb,var(--c) 28%,transparent);border-color:var(--c)}.arvNo.pode{border-color:#4a5060}
 .arvNo{position:relative;overflow:hidden;justify-content:flex-end!important;padding:0 4px 6px!important}.arvNo .arte{position:absolute;inset:0;background-size:cover,100% 100%;background-position:center;background-repeat:no-repeat;image-rendering:pixelated;z-index:0}
 .arvNo::after{content:'';position:absolute;left:0;right:0;bottom:0;height:58%;background:linear-gradient(transparent,#000d 70%);z-index:0}.arvNo>*:not(.arte){position:relative;z-index:1}.arvNo .nm{text-shadow:0 1px 2px #000}
-.arvNo:not(.aceso) .arte{filter:grayscale(1) brightness(.75)}.arvNo.aceso{border-color:var(--c)}.arvVert .arvNo{min-height:104px}.arvCruzG .arvNo{min-height:90px}
+.arvNo:not(.aceso) .arte{filter:grayscale(1) brightness(.75)}.arvNo .arte.foto{background-size:cover;background-position:center 40%;image-rendering:auto}.arvNo.aceso{border-color:var(--c)}.arvVert .arvNo{min-height:104px}.arvCruzG .arvNo{min-height:90px}
 .arvNo .pips{position:absolute!important;top:6px;left:6px;display:flex;gap:3px}.arvNo .pips i{width:8px;height:8px;border-radius:50%;border:1.5px solid #fff9;background:#0008}.arvNo .pips i.on{background:var(--c);border-color:#fff}
 .arvNo small,.arvNo .desp{position:absolute!important;top:5px;right:5px;padding:1px 7px;border-radius:99px;background:#000b;font-size:10.5px}.arvNo .desp{background:#f2c14e;color:#2a2008;font-weight:700;font-size:11px;margin:0}
 .nivL{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 4px}.nivL span{font-size:11.5px;padding:1px 7px;border-radius:99px;border:1px solid var(--line);color:var(--dim)}.nivL span.on{border-color:#f2c14e;color:#ffd77a}.nivL span.prox{border-style:dashed;color:#e8e8e8}.nivB{font-size:12px;color:#ffd77a;font-weight:400;margin-left:4px}
@@ -2534,7 +2534,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.31'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.32'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -4282,12 +4282,12 @@ const ARVORE={
     {id:'p1',p:1,ic:'🌿',nome:'Casca Grossa',ef:['+1 defesa','+2 defesa','+3 defesa'],txt:'Suas criaturas de Planta ganham defesa.'},
     {id:'p2a',p:2,ic:'🌳',nome:'Raízes',ef:['+5% esquiva','+10% esquiva'],txt:'Na floresta, suas criaturas de Planta ficam mais difíceis de acertar.'},
     {id:'p2b',p:2,ic:'🌱',nome:'Rebrota',ef:['+2 cura na mata','+4 cura na mata'],txt:'Na floresta, suas criaturas de Planta recuperam vida no começo do turno.'},
-    {id:'p3',p:3,ic:'🪵',nome:'Mata Fechada',ef:['revide total'],txt:'Suas criaturas de Planta revidam com força total.'}]},
+    {id:'p3',p:3,ic:'🌲',nome:'Mata Fechada',ef:['revide total'],txt:'Suas criaturas de Planta revidam com força total.'}]},
 };
 const ARV_CRUZ=[
   {id:'xFA',els:['fogo','agua'],ic:'♨️',nome:'Vapor',ef:['sem desvantagem'],txt:'Suas criaturas de Fogo e de Água não sofrem desvantagem de elemento ao atacar.'},
   {id:'xFP',els:['fogo','planta'],ic:'🍂',nome:'Cinza Fértil',ef:['dano e defesa'],txt:'Suas criaturas de Planta causam +15% de dano e as de Fogo ganham +2 de defesa.'},
-  {id:'xAP',els:['agua','planta'],ic:'🪷',nome:'Igapó',ef:['Planta na água'],txt:'Planta paga só 1 de movimento em rio e pântano. Água e Planta curam 2 por turno nesses terrenos.'},
+  {id:'xAP',els:['agua','planta'],ic:'🌸',nome:'Igapó',ef:['Planta na água'],txt:'Planta paga só 1 de movimento em rio e pântano. Água e Planta curam 2 por turno nesses terrenos.'},
 ];
 const NO_ARV={};for(const [el,r] of Object.entries(ARVORE))for(const n of r.nos)NO_ARV[n.id]={...n,el};for(const n of ARV_CRUZ)NO_ARV[n.id]={...n,p:4};
 const custoNo=id=>NO_ARV[id].p>3?ARV_CUSTO_CRUZ:ARV_CUSTO[NO_ARV[id].p]; // custo de um nível
@@ -4373,7 +4373,14 @@ function arteURL(id){if(arteCache[id])return arteCache[id];const rows=ARTE[id];i
   const cv=document.createElement('canvas');cv.width=20;cv.height=14;const g=cv.getContext('2d');
   rows.forEach((r,y)=>{for(let x=0;x<20;x++){const c=ARTE_PAL[r[x]];if(c){g.fillStyle=c;g.fillRect(x,y,1,1);}}});
   return arteCache[id]=cv.toDataURL();}
-const arteNo=(id,cls='arte')=>`<span class="${cls}" style="background-image:url(${arteURL(id)}),radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--c) 40%,#14161b),#101216 80%)"></span>`;
+// cenas pintadas (8:5) feitas pelo usuário: quando existe, substitui a pixel art do nó
+const ARTE_IMG={f1:'img/arvore/f1.webp?v=44a95821',f2a:'img/arvore/f2a.webp?v=a844dd43',f2b:'img/arvore/f2b.webp?v=caea2c13',f3:'img/arvore/f3.webp?v=ee69e4d2',
+  a1:'img/arvore/a1.webp?v=59de23fa',a2a:'img/arvore/a2a.webp?v=baf1f9fd',a2b:'img/arvore/a2b.webp?v=af64b696',a3:'img/arvore/a3.webp?v=0d7035f9',
+  p1:'img/arvore/p1.webp?v=e585ef75',p2a:'img/arvore/p2a.webp?v=372cc75e',p2b:'img/arvore/p2b.webp?v=385357d3',p3:'img/arvore/p3.webp?v=176c7e84',
+  xFA:'img/arvore/xFA.webp?v=748824c2',xFP:'img/arvore/xFP.webp?v=8f28b4e0',xAP:'img/arvore/xAP.webp?v=262b1c24'};
+const ARTE_POS={xAP:'72% 40%'}; // onde centrar a cena quando o nó corta as laterais (Segredos são quase quadrados)
+const arteNo=(id,cls='arte')=>ARTE_IMG[id]?`<span class="${cls} foto" style="background-image:url(${ARTE_IMG[id]})${ARTE_POS[id]?`;background-position:${ARTE_POS[id]}`:''}"></span>`
+  :`<span class="${cls}" style="background-image:url(${arteURL(id)}),radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--c) 40%,#14161b),#101216 80%)"></span>`;
 function quemSegueTela(n,lista,prox,est){
   lista=lista.filter(x=>ESP[x.esp]);
   if(lista.length<=1){fogueiraTela(n,lista,[],prox,est);return;}
@@ -4402,11 +4409,15 @@ function fogueiraTela(n,segue,ficam,prox,est,teste){
       const rod=compravel(s)&&id===sel?(livre>=c?`<span class="desp">${k?'Fortalecer':'Despertar'} · ${c} ✨</span>`:`<span class="desp falta">Falta ✨ · ${c}</span>`)
         :`<small>${s==='tem'?(m>1?'✓ máximo':'✓ desperto'):s==='fechado'?'fechado':c+' ✨'}</small>`;
       return `<button class="arvNo ${s}${k?' aceso':''}${id===sel?' sel':''}" style="--c:${R.cor}" onclick="fogueiraTela.pick('${id}')">${arteNo(id)}<span class="nm">${x.nome}</span><span class="cu">${x.ef[Math.max(0,k-1)]}</span>${pips}${rod}</button>`;};
-    const ramo=up=>`<div class="arvRamo"><svg viewBox="0 0 100 28" preserveAspectRatio="none"><path d="${up?'M50 0V12M25 12H75M25 12V21M75 12V21':'M25 0V12M75 0V12M25 12H75M50 12V21'}" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none" vector-effect="non-scaling-stroke"/></svg>${(up?[25,75]:[50]).map(x=>`<i style="left:${x}%"></i>`).join('')}</div>`; // setas na cor do ramo
+    // setas na cor do ramo; num garfo já escolhido, o lado que não foi escolhido fica apagado
+    const ramo=(up,esq,dir)=>{const tr=(d,on)=>`<path d="${d}" stroke="${on?'currentColor':'#3a3f4a'}" stroke-width="3" stroke-linecap="round" fill="none" vector-effect="non-scaling-stroke"/>`;
+      const p=up?tr('M50 0V12',1)+tr('M50 12H25V21',esq)+tr('M50 12H75V21',dir):tr('M25 0V12H50',esq)+tr('M75 0V12H50',dir)+tr('M50 12V21',1);
+      return `<div class="arvRamo"><svg viewBox="0 0 100 28" preserveAspectRatio="none">${p}</svg>${(up?[[25,esq],[75,dir]]:[[50,1]]).map(([x,on])=>`<i class="${on?'':'off'}" style="left:${x}%"></i>`).join('')}</div>`;};
     const vis=id=>{const s=st(id);return s!=='oculto'&&s!=='trancado';}; // nós ainda indisponíveis não aparecem
     const col=el=>{const R=ARVORE[el],[a,f1,f2,z]=R.nos.map(x=>x.id);
       const g=[f1,f2].filter(vis); // só aparece o que já pode ser usado (o lado fechado do garfo continua à vista)
-      return `<div class="arvVert" style="--c:${R.cor}">${no(a)}${g.length?ramo(1)+`<div class="arvGarfo">${g.map(no).join('')}</div>`:''}${vis(z)?ramo(0)+no(z):''}</div>`;};
+      const e1=niv(f1)>0,e2=niv(f2)>0,algum=e1||e2; // antes de escolher, as duas setas ficam acesas
+      return `<div class="arvVert" style="--c:${R.cor}">${no(a)}${g.length?ramo(1,!algum||e1,!algum||e2)+`<div class="arvGarfo">${g.map(no).join('')}</div>`:''}${vis(z)?ramo(0,e1,e2)+no(z):''}</div>`;};
     const abas=els.length>1?`<div class="arvAbas">${els.map(el=>{const R=ARVORE[el],k=tem.filter(id=>NO_ARV[id].el===el).length;return `<button class="${el===aba?'sel':''}" style="--c:${R.cor}" onclick="fogueiraTela.aba('${el}')">${R.ic} ${R.nome}<small>${k?k+' '+(k>1?'pontos':'ponto'):'—'}</small></button>`;}).join('')}</div>`:'';
     const cruz=ARV_CRUZ.filter(x=>vis(x.id));
     const x=NO_ARV[sel],s=st(sel),k=niv(sel),m=maxNo(sel),custo=custoNo(sel);
@@ -4419,7 +4430,7 @@ function fogueiraTela(n,segue,ficam,prox,est,teste){
     document.getElementById('fimSub').textContent=teste?'Modo de teste: a Essência de teste não conta nas fases.':ganho?`A Fogueira ganhou força: +${ganho} ✨${agora<ESS_MAX?' (3 estrelas dão +1)':''}`:antes>=ESS_MAX?'Esta fase já deu toda a sua Essência.':'Sem Essência nova: faça 3 estrelas para ganhar +1 ✨.';
     document.getElementById('fimPorque').innerHTML=`<div class="fogTopo"><span class="essP">✨ ${livre} Essência</span>${teste?`<button class="arvReset" onclick="fogueiraTela.ess(1)">+1 ✨</button><button class="arvReset" onclick="fogueiraTela.ess(-1)">−1 ✨</button>`:''}${tem.length?`<button class="arvReset" onclick="fogueiraTela.reset()">↺ Recomeçar</button>`:''}</div>
       ${abas}${col(aba)}
-      <div class="fogDet"><b>${x.ic} ${x.nome}${m>1?` <span class="nivB">${k?ROM[k]:'—'} de ${ROM[m]}</span>`:''}</b><p>${x.txt}</p>${niveis}<p class="dica">${dica||'&nbsp;'}</p></div>
+      <div class="fogDet"><b>${x.ic} ${x.nome}${m>1?` <span class="nivB">${k?`nível ${ROM[k]} de ${ROM[m]}`:`${m} níveis`}</span>`:''}</b><p>${x.txt}</p>${niveis}<p class="dica">${dica||'&nbsp;'}</p></div>
       ${cruz.length?`<div class="arvCruz"><div class="arvCab">✦ Segredos</div><div class="arvCruzG">${cruz.map(y=>no(y.id)).join('')}</div></div>`:''}`;
     document.querySelector('#fim .cx').classList.add('fogCx');
     b.textContent=teste?'Fechar':'Continuar';b.disabled=false;
