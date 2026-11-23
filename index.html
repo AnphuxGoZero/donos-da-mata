@@ -1061,6 +1061,9 @@ function enquadraAlcance(u){
   if(cabe&&!CAM.enq){seguir(u);return;}
   CAM.alvo={fixo:true,px:(x0+x1)/2,py:(y0+y1)/2};CAM.centrar=true;CAM.mao=false;
 }
+// volta a câmera para o mestre só quando a vez é sua e livre; no fim do turno ou na vez dos outros, quem age a seguir
+// leva a câmera (e o começo da sua vez já a traz de volta): sem ida e volta desnecessária
+function voltaMestreSeLivre(){if(!J||J.vez!==0||J.fimTurno)return false;soltaEnquadra();seguir(mestreDe(0),true);return true;}
 function soltaEnquadra(){if(CAM.enq){CAM.zAlvo=CAM.zPref;CAM.enq=false;}}
 // leva a câmera até a casa e espera ela chegar (usado pela IA antes de agir)
 async function focar(c,r){
@@ -2504,7 +2507,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.22'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.23'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -2697,7 +2700,7 @@ function proxAvisoF1(){
 const marcaFalaF1=()=>{if(J&&J.f1)J.f1.ultFala=J.f1.acao||0;};
 // quando cada fala do aviso aparece (s1, s2...: os mesmos tempos das classes .seq.sN)
 const ATRASO_FALA=n=>[0,.2,1.4,2.8,4.4][n]??4.4+1.6*(n-4);
-function fechaAvisoF1(){if(J&&J.f1){const id=J.f1.fila.shift();marcaFalaF1();if(id==='intro1'&&!J.f1.tourF3)voltaMestreF1();if(id==='caipora')liberaEvoF2();if(avisosF()[id]?.volta){soltaEnquadra();seguir(mestreDe(0),true);}if(J.f1.solta){const s=J.f1.solta;J.f1.solta=null;s();}}atualiza();}
+function fechaAvisoF1(){if(J&&J.f1){const id=J.f1.fila.shift();marcaFalaF1();if(id==='intro1'&&!J.f1.tourF3)voltaMestreF1();if(id==='caipora')liberaEvoF2();if(avisosF()[id]?.volta)voltaMestreSeLivre();if(J.f1.solta){const s=J.f1.solta;J.f1.solta=null;s();}}atualiza();}
 // ----- vez do Bando Infernal -----
 // abertura da Fase 1: a câmera abre na borda leste e os dois Filhotes entram correndo de fora do mapa, um depois
 // do outro; rosnam, e a câmera volta para o seu mestre. Só então aparece o aviso de abertura (que espera J.ocupado)
@@ -2767,8 +2770,8 @@ function posAvisoF1(){
 // depois do alarme do camponês: a câmera viaja até o seu mestre e um soldado pede ajuda (intro2)
 async function voltaMestreF1(){
   const jogo=J;J.ocupado=true;soltaEnquadra();
-  const m=mestreDe(0);if(m)seguir(m,true);atualiza();
-  await dorme(1300);if(J!==jogo)return;
+  if(!ehF3()){const m=mestreDe(0);if(m)seguir(m,true);atualiza(); // Fase 3: a câmera vai direto para onde a Semente nasce (ao lado do mestre)
+    await dorme(1300);if(J!==jogo)return;}
   const pulou=PULA_AB;PULA_AB=false;fimAberturaF();
   J.ocupado=false;if(ehF3())presenteSementeF3();else if(!ehF2()&&!pulou)J.f1.fila.unshift('intro2');atualiza(); // a Fase 2 não tem segunda fala de abertura; na 3 nasce a Semente
 }
@@ -3150,7 +3153,7 @@ async function chegaCaiporaF2(k){
   await avisoJaF1('caiporaChega');if(J!==jogo)return;
   // ela fica na casa dela neste turno; na próxima vez do fogo volta para a mata e vai para o posto (saiCaiporaF2)
   J.f1.caiporaSai=fl?K(...fl):K(...DK(k));
-  soltaEnquadra();seguir(mestreDe(0),true);await dorme(300);if(J!==jogo)return;
+  if(voltaMestreSeLivre()){await dorme(300);if(J!==jogo)return;}else soltaEnquadra();
   J.ocupado=false;atualiza();
 }
 // na vez do fogo seguinte à chegada: ela entra na mata vizinha (some entre as árvores) e reaparece no posto
@@ -3925,7 +3928,7 @@ async function caiporaBrotoF3(kb){
     }
     J.f1.semTour=null;J.f1.vilasSemK=vs[0]??kb;
     await dorme(500);if(J!==jogo)return; // (sem fala aqui: o sinal na vila já mostra o que fazer)
-    soltaEnquadra();seguir(mestreDe(0),true);
+    if(!voltaMestreSeLivre())soltaEnquadra();
     J.ocupado=false;atualiza();
   }else{const todas=vilasVivas().sort((a,b)=>d6c(...DK(a),...DK(kb))-d6c(...DK(b),...DK(kb)));
     J.f1.vilaSemOk=todas.slice(0,1);J.f1.vilaSemFila=todas.slice(1);J.f1.vilaSemLote=0;
@@ -4496,7 +4499,7 @@ function log(t){J.logs.unshift(t);if(J.logs.length>60)J.logs.pop();}
 function inicioTurno(l){
   checaCerco(l);if(J.fim)return;
   // sua vez: volta para a PRIMEIRA criatura que você jogou no turno anterior (se caiu, a seguinte; sem nenhuma, o mestre): sensação de ciclo
-  if(l===0){const ids=J.jogaram||[];J.jogaram=[];seguir(ids.map(id=>J.un.find(u=>u.id===id&&u.lado===0)).find(Boolean)||mestreDe(0));}
+  if(l===0){const ids=J.jogaram||[];J.jogaram=[];if(!(ehF3()&&J.f1.caiporaPend!=null))seguir(ids.map(id=>J.un.find(u=>u.id===id&&u.lado===0)).find(Boolean)||mestreDe(0));}
   else seguir(mestreDe(l));
   if(J.avisoCerco)J.avisoCerco[l]=false;
   // aviso de evolução: aparece quando a reserva CHEGA a EVO_CUSTO; depois de "Agora não", só volta
@@ -5946,6 +5949,7 @@ async function fimTurnoJogo(){
   if(tutTrava())return; // tutorial: ainda faltam invocações
   if(J.tut&&J.turno===1){if(J.tut.n>=2)try{localStorage.setItem(TUT_CHAVE,String((+localStorage.getItem(TUT_CHAVE)||0)+1));}catch(e){}J.tut=null;}
   desseleciona();J.invocando=null;J.invocHex=null;J.menuInv=false;J.invHex=null;J.mg=null;J.fz=null;J.evo=null;J.prevArea=null;J.menuAlvo=null;
+  J.fimTurno=true; // do fim da sua vez até o começo da próxima: as cenas não puxam a câmera de volta ao mestre
   fimDeTurno(0);
   // terminou o turno com tropas no castelo inimigo: cena do CERCO (o jogo espera ela fechar)
   J.ocupado=true;atualiza();await mostraCerco(0);J.ocupado=false;
@@ -5964,7 +5968,7 @@ async function fimTurnoJogo(){
   }
   if(J.fim)return;
   const antes=faseIdx();
-  J.vez=0;J.turno++;avancaCiclo();anunciaFase(antes);inicioTurno(0);atualiza();
+  J.vez=0;J.fimTurno=false;J.turno++;avancaCiclo();anunciaFase(antes);inicioTurno(0);atualiza();
   if(ehF3()&&J.f1.caiporaPend!=null&&!J.fim){const k=J.f1.caiporaPend;J.f1.caiporaPend=null; // Fase 3: a Caipora que esperou as tanajuras chega agora
     if(!J.f1.vistos.caiporaBroto){J.ocupado=true;try{await caiporaBrotoF3(k);}finally{J.ocupado=false;atualiza();}}}
 }
