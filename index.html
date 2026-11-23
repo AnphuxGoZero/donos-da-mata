@@ -315,6 +315,7 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 /* 👣 próxima criatura: só aparece enquanto há criatura sua que ainda não agiu; o número é quantas faltam */
 #btProx{display:none;flex:none;font-size:20px;line-height:1;white-space:nowrap;position:relative;min-width:56px}
 #btProx.ativo{display:block}
+#btProx .pata{width:24px;height:24px;display:block;margin:0 auto;color:#f3efe4}
 /* o número vira um selo dourado no canto, como notificação */
 #btProx b{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border-radius:10px;background:#f2c14e;color:#3a2a06;
   font-size:12px;font-weight:700;line-height:16px;text-align:center;border:2px solid #151821;pointer-events:none}
@@ -862,7 +863,7 @@ html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
   <div id="lado"><div id="ladoIn">
     <canvas id="mini" title="Mini mapa: clique ou arraste para mover a câmera"></canvas>
     <div class="cx" id="info"></div>
-    <div id="linhaFim"><div id="linhaSup"><button id="figSel" class="fichaFoto" onclick="abreFichaSel()" aria-label="Ver detalhes da criatura selecionada"></button><button id="btProx" onclick="proximaCriatura()" aria-label="Próxima criatura" title="Próxima criatura que ainda não agiu (atalho: N)">👣<b id="btProxN"></b></button><button id="btMagia" onclick="magiaDoBotao()" aria-label="Magia" title="Magia (atalho: M)">✦<span class="rot"> Magia</span></button></div><button class="pri" id="btFim" onclick="cliqueFim()">Encerrar turno</button></div>
+    <div id="linhaFim"><div id="linhaSup"><button id="figSel" class="fichaFoto" onclick="abreFichaSel()" aria-label="Ver detalhes da criatura selecionada"></button><button id="btProx" onclick="proximaCriatura()" aria-label="Próxima criatura" title="Próxima criatura que ainda não agiu (atalho: N)"><svg class="pata" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 13.5c-1.1-2-1.44-2.5-2.7-2.5s-1.74.76-2.84 2.75c-.94 1.7-2.85 1.85-3.32 3.29-.1.27-.15.68-.14.96 0 1.18.79 2 1.8 2 1.26 0 3-1 4.5-1s3.24 1 4.5 1c1.01 0 1.8-.82 1.8-2 0-.28-.05-.7-.15-.96-.47-1.45-2.51-1.84-3.45-3.54z"/><path d="M20.19 8.08a1.04 1.04 0 0 0-.41-.08c-.75.01-1.57.75-2.01 1.87-.52 1.33-.28 2.7.54 3.05.13.06.27.08.41.08.74 0 1.57-.74 2.01-1.87.52-1.33.27-2.7-.54-3.05z"/><path d="M9.47 9c.06 0 .11 0 .17-.01.94-.13 1.53-1.35 1.32-2.72C10.75 4.97 9.91 4 9.02 4c-.05 0-.11 0-.16.01-.94.13-1.53 1.35-1.32 2.72.2 1.29 1.05 2.27 1.93 2.27z"/><path d="M16.46 6.73c.21-1.38-.38-2.59-1.32-2.72a1.16 1.16 0 0 0-.16-.01c-.89 0-1.73.97-1.93 2.27-.21 1.38.38 2.59 1.32 2.72.05.01.11.01.16.01.89 0 1.73-.97 1.93-2.27z"/><path d="M5.69 12.92c.82-.35 1.05-1.72.54-3.05C5.79 8.74 4.96 8 4.22 8c-.14 0-.28.03-.41.08-.82.35-1.05 1.72-.54 3.05.44 1.12 1.27 1.87 2.01 1.87.14 0 .28-.03.41-.08z"/></svg><b id="btProxN"></b></button><button id="btMagia" onclick="magiaDoBotao()" aria-label="Magia" title="Magia (atalho: M)">✦<span class="rot"> Magia</span></button></div><button class="pri" id="btFim" onclick="cliqueFim()">Encerrar turno</button></div>
     <div class="cx" id="caixaLog"><h2>Registro</h2><div id="log"></div></div>
   </div></div>
 </div>
@@ -2498,7 +2499,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.17'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.18'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
