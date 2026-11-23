@@ -2504,7 +2504,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.21'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.22'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -3750,6 +3750,7 @@ const AVISOS_F3={
   intro1:{tit:'Fase 3 · Raízes do Vale',falas:['Tanta mata queimada...'],bt:'Continuar'},
   plantar:{falas:[{quem:'img',esp:'semente'},{quem:'soldado',cara:'feliz',txt:'Leve a Semente até uma mata queimada.'},'feliz|Plante ela, que o broto pega!'],bt:'Começar'},
   plantando:{falas:['feliz|O broto está pegando!','feliz|Depois de plantar, logo a mata renascerá.']},
+  raiz:{falas:['feliz|A Semente criou raízes!',{quem:'soldado',cara:'feliz',txt:'Logo vai recuperar a mata.'}]},
   caiporaBroto:{falas:[{quem:'caipora',txt:'A mata precisa de ajuda.'},{quem:'caipora',txt:'Vou levar as sementes para as vilas.'}],bt:'Continuar'},
   comeu:{falas:['furia|As saúvas comeram o broto!',{quem:'soldado',txt:'Proteja as Sementes enquanto elas plantam!'}]},
   ninho:{falas:['Tanajura! O cheiro das sementes atraiu elas...',{quem:'soldado',txt:'Saúva corta folha nova.<br>E a gente vai plantar justamente isso.'}],bt:'Continuar',volta:true},
@@ -3823,6 +3824,7 @@ async function enraizaF3(u){
   J.f1.nPlant=(J.f1.nPlant||0)+1;J.f1.ultPlant=k; // as saúvas acordam depois da 2ª Semente plantada
   await raizesF3(u,k,anima);if(J.fim)return;
   J.f1.raizK=k;J.f1.plantK=k;
+  if(!J.f1.vistos.raiz)await avisoJaF1('raiz'); // só na primeira Semente plantada
 }
 // sua vez: uma Semente que já agiu e está parada numa mata queimada, ainda sem raízes, enraíza na hora
 function checaRaizF3(){
