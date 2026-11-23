@@ -260,9 +260,11 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 .fogG button{position:relative}.fogG .ic{font-size:26px;line-height:1}.fogG .ef{font-weight:700;font-size:15px}.fogG .ef.off{color:var(--dim);opacity:.7}
 .fogG .rom{position:absolute;top:5px;right:8px;font-family:Georgia,serif;font-size:13px;letter-spacing:1px}
 .fogDet{margin-top:10px;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
-.arvG{display:flex;flex-direction:column;gap:8px}.arvCol{border:1px solid var(--line);border-left:3px solid var(--c);border-radius:8px;padding:6px 8px 8px}
-.arvCab{font-weight:700;font-size:13px;color:var(--c,var(--acc));margin:0 0 6px}.arvLinha{display:grid;grid-template-columns:1fr 12px 1fr 12px 1fr;align-items:center}
-.arvLig{height:2px;background:var(--line)}.arvGarfo{display:flex;flex-direction:column;gap:4px}.arvGarfo .arvNo{flex-direction:row;justify-content:center;gap:5px;padding:5px 4px}.arvGarfo .arvNo .ic{font-size:16px}.arvGarfo .arvNo small{margin-left:auto;white-space:nowrap}.arvNo small{white-space:nowrap}.arvCruz{margin-top:8px;border:1px dashed var(--line);border-radius:8px;padding:6px}.arvCruzG{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:4px}
+.arvAbas{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;margin:0 0 8px}.arvAbas button{height:auto;min-height:0;padding:7px 4px;font-size:13px;font-weight:700;border-radius:8px;border:1px solid var(--line);color:var(--c);display:flex;flex-direction:column;align-items:center;gap:1px}
+.arvAbas button.sel{background:color-mix(in srgb,var(--c) 22%,transparent);border-color:var(--c)}.arvAbas small{color:var(--dim);font-weight:400;font-size:11px}
+.arvVert{display:flex;flex-direction:column;align-items:center;border:1px solid var(--line);border-radius:10px;padding:12px 10px;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 10%,transparent),transparent 70%)}
+.arvVert>.arvNo{width:54%}.arvVert .arvGarfo{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}.arvRamo{width:100%;height:20px;display:block;color:var(--line)}
+.arvVert .arvNo{padding:10px 4px;font-size:12.5px;gap:3px}.arvVert .arvNo .ic{font-size:26px}.arvNo small{white-space:nowrap}.arvCruz{margin-top:8px;border:1px dashed var(--line);border-radius:8px;padding:6px}.arvCruzG{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:4px}
 .arvNo{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 2px;height:auto;min-height:0;border-radius:7px;border:1px solid var(--line);font-size:11px;line-height:1.15}
 .arvNo .ic{font-size:20px;line-height:1}.arvNo .nm{font-weight:700}.arvNo small{color:#ffd77a;font-size:10.5px}
 .arvNo.tem{background:color-mix(in srgb,var(--c) 28%,transparent);border-color:var(--c)}.arvNo.pode{border-color:var(--c)}
@@ -2489,7 +2491,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.16'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.17'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -4234,14 +4236,16 @@ function quemSegueTela(n,lista,prox,est){
 function fogueiraTela(n,segue,ficam,prox,est){
   const cp=campanhaInfo(),antes=Math.min(ESS_MAX,(cp.essGanho||{})[n]||0),agora=essDaFase(est||1),ganho=Math.max(0,agora-antes); // refazer a fase só completa o que faltou
   salvaCampanha({['f'+n+'Exercito']:segue,essGanho:{...(cp.essGanho||{}),[n]:Math.max(antes,agora)},...(cp.bencaos?{bencaos:undefined}:{})}); // as bênçãos antigas viram Essência de volta
-  const els=bencaosAte(n);let sel=ARVORE[els[0]].nos[0].id,erro=false;
+  const els=bencaosAte(n);let aba=els[0],sel=ARVORE[aba].nos[0].id,erro=false;
   const b=document.getElementById('fimBt'),b2=document.getElementById('fimBt2');b2.style.display='none';
   const desenha=()=>{
     const tem=(campanhaInfo().arvore||[]).filter(id=>NO_ARV[id]),livre=essLivre(),st=id=>estadoNo(id,tem,els);
     const no=id=>{const x=NO_ARV[id],s=st(id),R=ARVORE[x.el]||ARVORE[x.els[0]],cor=R.cor,ve=s!=='oculto'&&(s!=='trancado'||x.p<4);
       return `<button class="arvNo ${s}${id===sel?' sel':''}" style="--c:${cor}" onclick="fogueiraTela.pick('${id}')"><span class="ic">${ve?x.ic:'❔'}</span><span class="nm">${ve?x.nome:'???'}</span>${s==='tem'||!ve?'':`<small>${custoNo(id)} ✨</small>`}</button>`;};
+    const ramo=up=>`<svg class="arvRamo" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="${up?'M50 0V10M25 10H75M25 10V20M75 10V20':'M25 0V10M75 0V10M25 10H75M50 10V20'}" stroke="currentColor" stroke-width="2" fill="none" vector-effect="non-scaling-stroke"/></svg>`;
     const col=el=>{const R=ARVORE[el],[a,f1,f2,z]=R.nos.map(x=>x.id);
-      return `<div class="arvCol" style="--c:${R.cor}"><div class="arvCab">${R.ic} ${R.nome}</div><div class="arvLinha">${no(a)}<div class="arvLig"></div><div class="arvGarfo">${no(f1)}${no(f2)}</div><div class="arvLig"></div>${no(z)}</div></div>`;};
+      return `<div class="arvVert" style="--c:${R.cor}">${no(a)}${ramo(1)}<div class="arvGarfo">${no(f1)}${no(f2)}</div>${ramo(0)}${no(z)}</div>`;};
+    const abas=els.length>1?`<div class="arvAbas">${els.map(el=>{const R=ARVORE[el],k=R.nos.filter(y=>tem.includes(y.id)).length;return `<button class="${el===aba?'sel':''}" style="--c:${R.cor}" onclick="fogueiraTela.aba('${el}')">${R.ic} ${R.nome}<small>${k} de 3</small></button>`;}).join('')}</div>`:'';
     const cruz=ARV_CRUZ.filter(x=>st(x.id)!=='oculto');
     const x=NO_ARV[sel],s=st(sel),ve=s!=='oculto'&&(s!=='trancado'||x.p<4),custo=custoNo(sel);
     let acao;
@@ -4252,13 +4256,14 @@ function fogueiraTela(n,segue,ficam,prox,est){
     document.getElementById('fimTxt').textContent='Fogueira';
     document.getElementById('fimSub').textContent=ganho?`A Fogueira ganhou força: +${ganho} ✨${agora<ESS_MAX?' (3 estrelas dão +1)':''}`:antes>=ESS_MAX?'Esta fase já deu toda a sua Essência.':'Sem Essência nova: faça 3 estrelas para ganhar +1 ✨.';
     document.getElementById('fimPorque').innerHTML=`<div class="fogTopo"><span class="essP">✨ ${livre} Essência</span>${tem.length?`<button class="arvReset" onclick="fogueiraTela.reset()">↺ Recomeçar</button>`:''}</div>
-      <div class="arvG">${els.map(col).join('')}</div>
+      ${abas}${col(aba)}
       ${cruz.length?`<div class="arvCruz"><div class="arvCab">✦ Segredos</div><div class="arvCruzG">${cruz.map(y=>no(y.id)).join('')}</div></div>`:''}
       <div class="fogDet"><b>${ve?x.ic+' '+x.nome:'❔ ???'}</b><p>${ve?x.txt:x.els?'Um segredo entre dois ramos.':'Desperte o nó de cima para revelar.'}${x.p===2&&s!=='tem'&&s!=='fechado'?' <em>Escolher um lado do garfo fecha o outro.</em>':''}</p>
       ${acao}${erro?'<p class="err">Essência insuficiente.</p>':''}</div>`;
     b.textContent='Continuar';b.disabled=false;
   };
-  fogueiraTela.pick=id=>{sel=id;erro=false;desenha();};
+  fogueiraTela.pick=id=>{sel=id;if(NO_ARV[id].el)aba=NO_ARV[id].el;erro=false;desenha();};
+  fogueiraTela.aba=el=>{aba=el;sel=ARVORE[el].nos[0].id;erro=false;desenha();};
   fogueiraTela.compra=()=>{const tem=(campanhaInfo().arvore||[]).filter(id=>NO_ARV[id]);if(estadoNo(sel,tem,els)!=='pode')return;
     if(essLivre()<custoNo(sel)){erro=true;desenha();return;}
     salvaCampanha({arvore:[...tem,sel]});erro=false;desenha();};
