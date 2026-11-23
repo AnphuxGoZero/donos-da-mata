@@ -259,20 +259,23 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 .segueG .nm{font-weight:700;font-size:13.5px}.segueG small{color:var(--dim);font-size:12px}.segueG .vai{color:var(--acc)}
 .bencTag{display:inline-block;padding:0 5px;border:1px solid;border-radius:4px;font-size:11px;font-family:Georgia,serif;line-height:15px;vertical-align:1px;white-space:nowrap}
 .essP{display:inline-block;padding:4px 12px;border-radius:99px;background:#3a3016;color:#ffd77a;font-weight:700;font-size:14px}
-.fogTopo{display:flex;justify-content:center;margin:0 0 10px}
+.fogTopo{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:6px;margin:0 0 10px}.fogTopo .essP,.fogTopo .arvReset{white-space:nowrap;margin:0}
 .fogG{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
 .fogG button{position:relative}.fogG .ic{font-size:26px;line-height:1}.fogG .ef{font-weight:700;font-size:15px}.fogG .ef.off{color:var(--dim);opacity:.7}
 .fogG .rom{position:absolute;top:5px;right:8px;font-family:Georgia,serif;font-size:13px;letter-spacing:1px}
 .fogDet{margin-top:10px;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
 .arvAbas{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;margin:0 0 8px}.arvAbas button{height:auto;min-height:0;padding:7px 4px;font-size:13px;font-weight:700;border-radius:8px;border:1px solid var(--line);color:var(--c);display:flex;flex-direction:column;align-items:center;gap:1px}
 .arvAbas button.sel{background:color-mix(in srgb,var(--c) 22%,transparent);border-color:var(--c)}.arvAbas small{color:var(--dim);font-weight:400;font-size:11px}
-.arvVert{display:flex;flex-direction:column;align-items:center;border:1px solid var(--line);border-radius:10px;padding:12px 10px;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 10%,transparent),transparent 70%)}
+.arvVert{display:flex;flex-direction:column;align-items:center;min-height:324px;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:12px 10px;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 10%,transparent),transparent 70%)}
 .arvVert>.arvNo{width:54%}.arvVert .arvGarfo{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}.arvRamo{width:100%;height:20px;display:block;color:var(--line)}
-.arvVert .arvNo{padding:10px 4px;font-size:12.5px;gap:3px}.arvVert .arvNo .ic{font-size:26px}.arvNo small{white-space:nowrap}.arvCruz{margin-top:8px;border:1px dashed var(--line);border-radius:8px;padding:6px}.arvCruzG{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:4px}
+#fim .cx.fogCx{width:min(420px,calc(100vw - 20px));box-sizing:border-box}.arvNo .cu{color:var(--dim);font-size:11px;font-weight:400;white-space:nowrap}
+.arvVert .arvNo{padding:8px 4px;font-size:12.5px;gap:2px;min-height:86px;justify-content:center}.arvCruzG .arvNo{min-height:70px}
+.fogDet{display:flex;flex-direction:column;min-height:150px;box-sizing:border-box}.fogDet p{flex:0 0 auto}.fogDet p:first-of-type{min-height:63px}.fogDet .dica{font-size:12px;line-height:1.4;color:#ffd77a;min-height:34px;margin:0 0 6px}.fogDet button{margin-top:auto}
+.arvVert .arvNo .ic{font-size:26px}.arvNo small{white-space:nowrap}.arvCruz{margin-top:8px;border:1px dashed var(--line);border-radius:8px;padding:6px}.arvCruzG{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:4px}
 .arvNo{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 2px;height:auto;min-height:0;border-radius:7px;border:1px solid var(--line);font-size:11px;line-height:1.15}
 .arvNo .ic{font-size:20px;line-height:1}.arvNo .nm{font-weight:700}.arvNo small{color:#ffd77a;font-size:10.5px}
 .arvNo.tem{background:color-mix(in srgb,var(--c) 28%,transparent);border-color:var(--c)}.arvNo.pode{border-color:var(--c)}
-.arvNo.oculto,.arvNo.trancado{opacity:.5}.arvNo.fechado{opacity:.35;text-decoration:line-through}.arvNo.sel{outline:2px solid var(--acc);outline-offset:-1px}
+.arvNo.oculto,.arvNo.trancado{opacity:.5}.arvNo.fechado{opacity:.35}.arvNo.fechado .nm{text-decoration:line-through}.arvNo.sel{outline:2px solid var(--acc);outline-offset:-1px}
 .arvReset{margin-left:8px;height:auto;min-height:0;padding:4px 10px;font-size:12px;border-radius:99px}
 .fogDet b{font-size:14px}.fogDet p{margin:2px 0 8px;color:var(--dim)}.fogDet button{width:100%}.fogDet .err{color:#ff8a80;margin:6px 0 0}
 #fimPorque .porque{margin:0 0 8px}
@@ -2523,7 +2526,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.28'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.29'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -2574,11 +2577,15 @@ function telaFases(){
     <div class="fasesGrade">${CAMPANHA.map(cartao).join('')}
       <button class="cartaoFase emBreve" onclick="telaEmObras()"><span class="retrato"><i>…</i></span>
         <span class="txt"><small>Fase ${CAMPANHA.length+1}</small><b>Em breve</b><span class="desc">Dê sua opinião no Discord</span></span><span class="est"></span></button></div>
-    <div class="menuIni"><button onclick="desenhaInicio()">Voltar</button></div>
+    <div class="menuIni"><button onclick="testeArvore()">🔥 Trilha de habilidades (teste)</button><button onclick="desenhaInicio()">Voltar</button></div>
     <div class="versaoJogo" onclick="contaDiag()">v${VERSAO}</div>`;
   poeArte(el,'inicio');
   el.classList.remove('cfg','ini');el.classList.add('tela');el.style.display='block';
 }
+// TESTE (tirar depois): abre a Árvore da Fogueira pela tela de fases, com os 3 ramos e botões de Essência de teste.
+// Não mexe no exército nem na Essência ganha nas fases; a Essência de teste fica em campanhaInfo().essTeste.
+function testeArvore(){const f=document.getElementById('fim');f.style.zIndex=50;f.style.display='flex';
+  fogueiraTela(3,[],[],()=>{f.style.zIndex='';telaFases();},3,true);}
 function jogarFase1(){fecharSaves();novoJogo({...prefs(),modo:'1x1',f1:true});}
 function jogarFase2(){fecharSaves();novoJogo({...prefs(),modo:'1x1',f1:true,fase:2});}
 function jogarFase3(){fecharSaves();novoJogo({...prefs(),modo:'1x1',f1:true,fase:3});}
@@ -4253,25 +4260,25 @@ function mostraFimF3(v,motivo){
 const ARV_CUSTO=[0,1,2,3],ARV_CUSTO_CRUZ=3; // ajuste fino: custo pela profundidade e dos nós secretos
 const ARVORE={
   fogo:{nome:'Fogo',ic:'🔥',cor:'#ff9a5a',nos:[
-    {id:'f1',p:1,ic:'🔥',nome:'Chama Forte',txt:'Suas criaturas de Fogo causam +10% de dano.'},
-    {id:'f2a',p:2,ic:'✴️',nome:'Faísca',txt:'Golpe de Fogo que acerta deixa o alvo em brasa: ele perde 3 de vida no começo do turno dele (a brasa não derruba ninguém).'},
-    {id:'f2b',p:2,ic:'💨',nome:'Fogo Ligeiro',txt:'Suas criaturas de Fogo andam +1.'},
-    {id:'f3',p:3,ic:'🌋',nome:'Coivara',txt:'Quando uma criatura de Fogo derruba um inimigo, recupera metade da vida que falta.'}]},
+    {id:'f1',p:1,ic:'🔥',curto:'+10% dano',nome:'Chama Forte',txt:'Suas criaturas de Fogo causam +10% de dano.'},
+    {id:'f2a',p:2,ic:'✴️',curto:'deixa em brasa',nome:'Faísca',txt:'Golpe de Fogo deixa o alvo em brasa: ele perde 3 de vida no começo do turno dele, sem cair por isso.'},
+    {id:'f2b',p:2,ic:'💨',curto:'+1 movimento',nome:'Fogo Ligeiro',txt:'Suas criaturas de Fogo andam +1.'},
+    {id:'f3',p:3,ic:'🌋',curto:'cura ao derrubar',nome:'Coivara',txt:'Quando uma criatura de Fogo derruba um inimigo, recupera metade da vida que falta.'}]},
   agua:{nome:'Água',ic:'💧',cor:'#6ec3ff',nos:[
-    {id:'a1',p:1,ic:'💧',nome:'Orvalho',txt:'Suas criaturas de Água recuperam 2 de vida no começo de cada turno.'},
-    {id:'a2a',p:2,ic:'⛲',nome:'Nascente',txt:'Toda criatura sua ao lado de uma de Água recupera 2 de vida no começo do turno.'},
-    {id:'a2b',p:2,ic:'🌊',nome:'Correnteza',txt:'Suas criaturas de Água pagam só 1 de movimento em rio e pântano.'},
-    {id:'a3',p:3,ic:'🧜',nome:'Iara',txt:'Uma vez por fase, a primeira criatura sua de Água que cairia fica de pé com 1 de vida.'}]},
+    {id:'a1',p:1,ic:'💧',curto:'+2 cura/turno',nome:'Orvalho',txt:'Suas criaturas de Água recuperam 2 de vida no começo de cada turno.'},
+    {id:'a2a',p:2,ic:'⛲',curto:'cura vizinhos',nome:'Nascente',txt:'Toda criatura sua ao lado de uma de Água recupera 2 de vida no começo do turno.'},
+    {id:'a2b',p:2,ic:'🌊',curto:'anda na água',nome:'Correnteza',txt:'Suas criaturas de Água pagam só 1 de movimento em rio e pântano.'},
+    {id:'a3',p:3,ic:'🧜',curto:'salva 1 vez',nome:'Iara',txt:'Uma vez por fase, a primeira criatura sua de Água que cairia fica de pé com 1 de vida.'}]},
   planta:{nome:'Planta',ic:'🌿',cor:'#6ee08a',nos:[
-    {id:'p1',p:1,ic:'🌿',nome:'Casca Grossa',txt:'Suas criaturas de Planta ganham +2 de defesa.'},
-    {id:'p2a',p:2,ic:'🌳',nome:'Raízes',txt:'Na floresta, suas criaturas de Planta ficam 10% mais difíceis de acertar.'},
-    {id:'p2b',p:2,ic:'🌱',nome:'Rebrota',txt:'Na floresta, suas criaturas de Planta recuperam 3 de vida no começo do turno.'},
-    {id:'p3',p:3,ic:'🪵',nome:'Mata Fechada',txt:'Suas criaturas de Planta revidam com força total.'}]},
+    {id:'p1',p:1,ic:'🌿',curto:'+2 defesa',nome:'Casca Grossa',txt:'Suas criaturas de Planta ganham +2 de defesa.'},
+    {id:'p2a',p:2,ic:'🌳',curto:'esquiva na mata',nome:'Raízes',txt:'Na floresta, suas criaturas de Planta ficam 10% mais difíceis de acertar.'},
+    {id:'p2b',p:2,ic:'🌱',curto:'cura na mata',nome:'Rebrota',txt:'Na floresta, suas criaturas de Planta recuperam 3 de vida no começo do turno.'},
+    {id:'p3',p:3,ic:'🪵',curto:'revide total',nome:'Mata Fechada',txt:'Suas criaturas de Planta revidam com força total.'}]},
 };
 const ARV_CRUZ=[
-  {id:'xFA',els:['fogo','agua'],ic:'♨️',nome:'Vapor',txt:'Suas criaturas de Fogo e de Água não sofrem desvantagem de elemento ao atacar.'},
-  {id:'xFP',els:['fogo','planta'],ic:'🍂',nome:'Cinza Fértil',txt:'Suas criaturas de Planta causam +15% de dano e as de Fogo ganham +2 de defesa.'},
-  {id:'xAP',els:['agua','planta'],ic:'🪷',nome:'Igapó',txt:'Suas criaturas de Planta pagam só 1 de movimento em rio e pântano, e as de Água e Planta recuperam 2 de vida por turno nesses terrenos.'},
+  {id:'xFA',els:['fogo','agua'],ic:'♨️',curto:'sem desvantagem',nome:'Vapor',txt:'Suas criaturas de Fogo e de Água não sofrem desvantagem de elemento ao atacar.'},
+  {id:'xFP',els:['fogo','planta'],ic:'🍂',curto:'dano e defesa',nome:'Cinza Fértil',txt:'Suas criaturas de Planta causam +15% de dano e as de Fogo ganham +2 de defesa.'},
+  {id:'xAP',els:['agua','planta'],ic:'🪷',curto:'Planta na água',nome:'Igapó',txt:'Planta paga só 1 de movimento em rio e pântano. Água e Planta curam 2 por turno nesses terrenos.'},
 ];
 const NO_ARV={};for(const [el,r] of Object.entries(ARVORE))for(const n of r.nos)NO_ARV[n.id]={...n,el};for(const n of ARV_CRUZ)NO_ARV[n.id]={...n,p:4};
 const custoNo=id=>NO_ARV[id].p>3?ARV_CUSTO_CRUZ:ARV_CUSTO[NO_ARV[id].p];
@@ -4299,7 +4306,7 @@ function bencaoTag(u){if(u.lado!==0)return '';const el=elU(u),R=ARVORE[el];if(!R
   const nos=(J.arvore||[]).map(id=>NO_ARV[id]).filter(n=>n&&(n.el===el||(n.els&&n.els.includes(el))));if(!nos.length)return '';
   return ` <span class="bencTag" style="color:${R.cor};border-color:${R.cor}88" title="Árvore da Fogueira: ${nos.map(n=>n.nome).join(', ')}">${R.ic} ${nos.length}</span>`;}
 function essLivre(){const cp=campanhaInfo(),g=Object.values(cp.essGanho||{}).reduce((s,v)=>s+Math.min(ESS_MAX,v||0),0);
-  return Math.max(0,g-(cp.arvore||[]).filter(id=>NO_ARV[id]).reduce((s,id)=>s+custoNo(id),0));}
+  return Math.max(0,g+(cp.essTeste||0)-(cp.arvore||[]).filter(id=>NO_ARV[id]).reduce((s,id)=>s+custoNo(id),0));}
 // estado de um nó: 'tem' | 'pode' | 'fechado' (o outro lado do garfo) | 'trancado' (falta o de cima, mas já se vê) | 'oculto'
 function estadoNo(id,tem,els){const n=NO_ARV[id];if(tem.includes(id))return 'tem';
   const temP=(el,p)=>ARVORE[el].nos.some(x=>x.p===p&&tem.includes(x.id));
@@ -4324,42 +4331,46 @@ function quemSegueTela(n,lista,prox,est){
   b.onclick=()=>{if(sel==null)return;b.disabled=false;fogueiraTela(n,[lista[sel]],lista.filter((x,i)=>i!==sel),prox,est);};
   desenha();
 }
-function fogueiraTela(n,segue,ficam,prox,est){
-  const cp=campanhaInfo(),antes=Math.min(ESS_MAX,(cp.essGanho||{})[n]||0),agora=essDaFase(est||1),ganho=Math.max(0,agora-antes); // refazer a fase só completa o que faltou
-  salvaCampanha({['f'+n+'Exercito']:segue,essGanho:{...(cp.essGanho||{}),[n]:Math.max(antes,agora)},...(cp.bencaos?{bencaos:undefined}:{})}); // as bênçãos antigas viram Essência de volta
+function fogueiraTela(n,segue,ficam,prox,est,teste){
+  const cp=campanhaInfo(),antes=Math.min(ESS_MAX,(cp.essGanho||{})[n]||0),agora=essDaFase(est||1),ganho=teste?0:Math.max(0,agora-antes); // refazer a fase só completa o que faltou
+  if(!teste)salvaCampanha({['f'+n+'Exercito']:segue,essGanho:{...(cp.essGanho||{}),[n]:Math.max(antes,agora)},...(cp.bencaos?{bencaos:undefined}:{})}); // as bênçãos antigas viram Essência de volta
   const els=bencaosAte(n);let aba=els[0],sel=ARVORE[aba].nos[0].id,erro=false;
   const b=document.getElementById('fimBt'),b2=document.getElementById('fimBt2');b2.style.display='none';
   const desenha=()=>{
     const tem=(campanhaInfo().arvore||[]).filter(id=>NO_ARV[id]),livre=essLivre(),st=id=>estadoNo(id,tem,els);
     const no=id=>{const x=NO_ARV[id],s=st(id),R=ARVORE[x.el]||ARVORE[x.els[0]],cor=R.cor,ve=s!=='oculto'&&(s!=='trancado'||x.p<4);
-      return `<button class="arvNo ${s}${id===sel?' sel':''}" style="--c:${cor}" onclick="fogueiraTela.pick('${id}')"><span class="ic">${ve?x.ic:'❔'}</span><span class="nm">${ve?x.nome:'???'}</span>${s==='tem'||!ve?'':`<small>${custoNo(id)} ✨</small>`}</button>`;};
+      return `<button class="arvNo ${s}${id===sel?' sel':''}" style="--c:${cor}" onclick="fogueiraTela.pick('${id}')"><span class="ic">${ve?x.ic:'❔'}</span><span class="nm">${ve?x.nome:'???'}</span><span class="cu">${ve?x.curto:'&nbsp;'}</span><small>${s==='tem'?'✓ desperto':s==='fechado'?'fechado':ve?custoNo(id)+' ✨':'&nbsp;'}</small></button>`;};
     const ramo=up=>`<svg class="arvRamo" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="${up?'M50 0V10M25 10H75M25 10V20M75 10V20':'M25 0V10M75 0V10M25 10H75M50 10V20'}" stroke="currentColor" stroke-width="2" fill="none" vector-effect="non-scaling-stroke"/></svg>`;
+    const vis=id=>{const s=st(id);return s!=='oculto'&&s!=='trancado';}; // nós ainda indisponíveis não aparecem
     const col=el=>{const R=ARVORE[el],[a,f1,f2,z]=R.nos.map(x=>x.id);
-      return `<div class="arvVert" style="--c:${R.cor}">${no(a)}${ramo(1)}<div class="arvGarfo">${no(f1)}${no(f2)}</div>${ramo(0)}${no(z)}</div>`;};
+      const g=[f1,f2].filter(vis); // só aparece o que já pode ser usado (o lado fechado do garfo continua à vista)
+      return `<div class="arvVert" style="--c:${R.cor}">${no(a)}${g.length?ramo(1)+`<div class="arvGarfo">${g.map(no).join('')}</div>`:''}${vis(z)?ramo(0)+no(z):''}</div>`;};
     const abas=els.length>1?`<div class="arvAbas">${els.map(el=>{const R=ARVORE[el],k=R.nos.filter(y=>tem.includes(y.id)).length;return `<button class="${el===aba?'sel':''}" style="--c:${R.cor}" onclick="fogueiraTela.aba('${el}')">${R.ic} ${R.nome}<small>${k} de 3</small></button>`;}).join('')}</div>`:'';
-    const cruz=ARV_CRUZ.filter(x=>st(x.id)!=='oculto');
+    const cruz=ARV_CRUZ.filter(x=>vis(x.id));
     const x=NO_ARV[sel],s=st(sel),ve=s!=='oculto'&&(s!=='trancado'||x.p<4),custo=custoNo(sel);
-    let acao;
-    if(s==='tem')acao=`<button disabled>Desperto</button>`;
-    else if(s==='fechado'){const o=ARVORE[x.el].nos.find(y=>y.p===2&&tem.includes(y.id));acao=`<button disabled>Caminho fechado: você escolheu ${o.nome}</button>`;}
-    else if(s==='pode')acao=`<button onclick="fogueiraTela.compra()">Despertar · ${custo} ✨</button>`;
-    else acao=`<button disabled>${x.els?`Desperte o garfo de ${listaE(x.els.map(e=>ARVORE[e].nome))}`:`Desperte o nó de cima primeiro`}</button>`;
+    let acao,dica='';
+    if(s==='tem')acao=`<button disabled>✓ Desperto</button>`;
+    else if(s==='fechado'){const o=ARVORE[x.el].nos.find(y=>y.p===2&&tem.includes(y.id));acao=`<button disabled>Caminho fechado</button>`;dica=`Você escolheu ${o.nome}. ↺ Recomeçar desfaz.`;}
+    else if(s==='pode'){const falta=livre<custo;acao=`<button class="${falta?'':'pri'}" ${falta?'disabled':''} onclick="fogueiraTela.compra()">${falta?`Falta Essência · ${custo} ✨`:`Despertar · ${custo} ✨`}</button>`;
+      dica=x.p===2?`Fecha ${ARVORE[x.el].nos.find(y=>y.p===2&&y.id!==sel).nome}. `:'';if(!falta)dica+='Toque de novo no nó para despertar.';}
+    else{acao=`<button disabled>Bloqueado</button>`;dica=x.els?`Leve ${listaE(x.els.map(e=>ARVORE[e].nome))} até o garfo para revelar.`:'Desperte o nó de cima para revelar.';}
     document.getElementById('fimTxt').textContent='Fogueira';
-    document.getElementById('fimSub').textContent=ganho?`A Fogueira ganhou força: +${ganho} ✨${agora<ESS_MAX?' (3 estrelas dão +1)':''}`:antes>=ESS_MAX?'Esta fase já deu toda a sua Essência.':'Sem Essência nova: faça 3 estrelas para ganhar +1 ✨.';
-    document.getElementById('fimPorque').innerHTML=`<div class="fogTopo"><span class="essP">✨ ${livre} Essência</span>${tem.length?`<button class="arvReset" onclick="fogueiraTela.reset()">↺ Recomeçar</button>`:''}</div>
+    document.getElementById('fimSub').textContent=teste?'Modo de teste: a Essência de teste não conta nas fases.':ganho?`A Fogueira ganhou força: +${ganho} ✨${agora<ESS_MAX?' (3 estrelas dão +1)':''}`:antes>=ESS_MAX?'Esta fase já deu toda a sua Essência.':'Sem Essência nova: faça 3 estrelas para ganhar +1 ✨.';
+    document.getElementById('fimPorque').innerHTML=`<div class="fogTopo"><span class="essP">✨ ${livre} Essência</span>${teste?`<button class="arvReset" onclick="fogueiraTela.ess(1)">+1 ✨</button><button class="arvReset" onclick="fogueiraTela.ess(-1)">−1 ✨</button>`:''}${tem.length?`<button class="arvReset" onclick="fogueiraTela.reset()">↺ Recomeçar</button>`:''}</div>
       ${abas}${col(aba)}
-      ${cruz.length?`<div class="arvCruz"><div class="arvCab">✦ Segredos</div><div class="arvCruzG">${cruz.map(y=>no(y.id)).join('')}</div></div>`:''}
-      <div class="fogDet"><b>${ve?x.ic+' '+x.nome:'❔ ???'}</b><p>${ve?x.txt:x.els?'Um segredo entre dois ramos.':'Desperte o nó de cima para revelar.'}${x.p===2&&s!=='tem'&&s!=='fechado'?' <em>Escolher um lado do garfo fecha o outro.</em>':''}</p>
-      ${acao}${erro?'<p class="err">Essência insuficiente.</p>':''}</div>`;
-    b.textContent='Continuar';b.disabled=false;
+      <div class="fogDet"><b>${ve?x.ic+' '+x.nome:'❔ ???'}</b><p>${ve?x.txt:x.els?'Um segredo entre dois ramos.':'Um nó ainda escondido.'}</p><p class="dica">${dica||'&nbsp;'}</p>${acao}</div>
+      ${cruz.length?`<div class="arvCruz"><div class="arvCab">✦ Segredos</div><div class="arvCruzG">${cruz.map(y=>no(y.id)).join('')}</div></div>`:''}`;
+    document.querySelector('#fim .cx').classList.add('fogCx');
+    b.textContent=teste?'Fechar':'Continuar';b.disabled=false;
   };
-  fogueiraTela.pick=id=>{sel=id;if(NO_ARV[id].el)aba=NO_ARV[id].el;erro=false;desenha();};
+  fogueiraTela.pick=id=>{if(id===sel){fogueiraTela.compra();return;}sel=id;if(NO_ARV[id].el)aba=NO_ARV[id].el;erro=false;desenha();}; // tocar de novo no mesmo nó desperta
   fogueiraTela.aba=el=>{aba=el;sel=ARVORE[el].nos[0].id;erro=false;desenha();};
   fogueiraTela.compra=()=>{const tem=(campanhaInfo().arvore||[]).filter(id=>NO_ARV[id]);if(estadoNo(sel,tem,els)!=='pode')return;
-    if(essLivre()<custoNo(sel)){erro=true;desenha();return;}
+    if(essLivre()<custoNo(sel))return;
     salvaCampanha({arvore:[...tem,sel]});erro=false;desenha();};
   fogueiraTela.reset=()=>{salvaCampanha({arvore:[]});erro=false;desenha();};
-  b.onclick=()=>{document.getElementById('fim').style.display='none';prox();};
+  fogueiraTela.ess=d=>{const t=campanhaInfo().essTeste||0;salvaCampanha({essTeste:Math.max(0,t+d)});desenha();}; // TESTE
+  b.onclick=()=>{document.querySelector('#fim .cx').classList.remove('fogCx');document.getElementById('fim').style.display='none';prox();};
   desenha();
 }
 // o exército que segue para a próxima fase (sem mestre, figurantes, elementais e dominados)
