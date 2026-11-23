@@ -212,6 +212,10 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 /* o botão do aviso só aparece (e só aceita o toque) depois da última fala: o atraso vem em style, calculado pelo número de falas */
 #passar.f1 .linha.seqBt{animation:f1Bt .4s ease-out both}
 @keyframes f1Bt{from{opacity:0;visibility:hidden;transform:translateY(4px)}to{opacity:1;visibility:visible;transform:none}}
+/* abertura das fases da campanha: os botões de baixo somem (o espaço fica: nada pula) e, para quem já viu, dá para pular */
+#linhaFim.naAbertura{visibility:hidden}
+#btPulaAb{display:none;position:absolute;top:calc(10px + var(--st,0px));right:calc(10px + var(--sr,0px));z-index:7;background:#1d2029e6;border-color:#f2c14e88;color:#f2c14e;font-size:14px;padding:8px 14px;box-shadow:0 4px 14px #000a}
+#btPulaAb.on{display:block}
 .grrCanto{position:absolute;top:12%;z-index:4;pointer-events:none;font:400 46px "Pirata One",serif;color:#ff8a40;letter-spacing:2px;text-shadow:0 3px 0 #000,0 0 18px #ff5020;animation:grrCanto 1.7s ease-out forwards}
 .grrCanto.dir{right:4%}.grrCanto.esq{left:4%}
 @keyframes grrCanto{0%{opacity:0;transform:scale(.6) rotate(-8deg)}15%{opacity:1;transform:scale(1.1) rotate(-6deg)}25%,35%,45%,55%{transform:scale(1) translate(-3px,1px) rotate(-6deg)}30%,40%,50%,60%{transform:scale(1) translate(3px,-1px) rotate(-6deg)}80%{opacity:1}100%{opacity:0;transform:scale(1) rotate(-6deg)}}
@@ -858,7 +862,7 @@ html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
     <div id="zoomUI"><button onclick="mudaZoom(-1)" title="Afastar (−)">−</button><span id="zoomN">160%</span><button onclick="mudaZoom(1)" title="Aproximar (+)">+</button><button onclick="seguir(mestreDe(0),true)" title="Centralizar no seu mestre">⌖</button></div>
     <div id="menuJogo"></div>
   </div>
-  <div id="mapa"><canvas id="cv"></canvas><canvas id="cena" title="Clique para acelerar"></canvas><div id="menuM" class="flut"></div><div id="passar" class="flut"></div><div id="saves" class="flut"></div><div id="dicaMapa"></div><div id="alertaCerco"></div><button id="btCancela" onclick="cancelar()">✕ Cancelar</button></div>
+  <div id="mapa"><canvas id="cv"></canvas><button id="btPulaAb" onclick="event.stopPropagation();pulaAbertura()">Pular abertura ⏭</button><canvas id="cena" title="Clique para acelerar"></canvas><div id="menuM" class="flut"></div><div id="passar" class="flut"></div><div id="saves" class="flut"></div><div id="dicaMapa"></div><div id="alertaCerco"></div><button id="btCancela" onclick="cancelar()">✕ Cancelar</button></div>
   </div>
   <div id="lado"><div id="ladoIn">
     <canvas id="mini" title="Mini mapa: clique ou arraste para mover a câmera"></canvas>
@@ -1135,7 +1139,8 @@ function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a
 let VEL=1; // 0 = sem animações (útil para testes automáticos)
 let VEL_PULO=null; // velocidade guardada enquanto a vez dos rivais é pulada
 const dormindo=new Set(); // esperas em andamento: o ⏩ Pular vez acorda todas de uma vez
-const dorme=ms=>VEL?new Promise(r=>{const f=()=>{clearTimeout(id);dormindo.delete(f);r();},id=setTimeout(f,ms*VEL*RITMO_IA);dormindo.add(f);}):Promise.resolve();
+let PULA_AB=false; // "Pular abertura": as esperas da abertura passam na hora
+const dorme=ms=>VEL&&!PULA_AB?new Promise(r=>{const f=()=>{clearTimeout(id);dormindo.delete(f);r();},id=setTimeout(f,ms*VEL*RITMO_IA);dormindo.add(f);}):Promise.resolve();
 // iniciantes: nos turnos 1 e 2 a vez dos rivais anda mais devagar (pausas e passos), para dar para ver o que eles fazem
 const RITMO_INICIO=1.8;let RITMO_IA=1;
 
@@ -2499,7 +2504,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.18'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.19'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -2668,6 +2673,7 @@ function checaTorreF1(){if(J.f1&&!J.f1.vistos.torre&&torreNaFrente())avisoF1('to
 // aviso na hora, mesmo na vez do Bando: a vez dele fica parada até o jogador fechar (sem animação, entra na fila)
 async function avisoJaF1(id){
   if(!J.f1||J.f1.vistos[id])return;
+  if(PULA_AB&&id.startsWith('intro')){J.f1.vistos[id]=true;return;} // pulando a abertura: sem as falas dela
   if(!VEL||document.hidden||!podeFalarF1(id)){avisoF1(id);return;} // sem ação desde a última fala: vai para a fila (e pode caducar)
   J.f1.vistos[id]=true;J.f1.fila.unshift(id);(J.f1.nasceu||(J.f1.nasceu={}))[id]=J.f1.acao||0;J.f1.forcar=true;atualiza();
   await new Promise(r=>{J.f1.solta=r;});
@@ -2697,7 +2703,7 @@ function fechaAvisoF1(){if(J&&J.f1){const id=J.f1.fila.shift();marcaFalaF1();if(
 // do outro; rosnam, e a câmera volta para o seu mestre. Só então aparece o aviso de abertura (que espera J.ocupado)
 async function chegadaF1(){
   const jogo=J,fs=J.un.filter(u=>u.selvagem);if(!fs.length||!VEL||document.hidden)return;
-  J.ocupado=true;J.f1.chegando=true;
+  J.ocupado=true;J.f1.chegando=true;comecaAberturaF();
   // câmera bem de perto: abre na entrada do primeiro Filhote; quando ele chega e rosna, desliza numa passada só
   // até enquadrar os dois, enquanto o segundo já vem correndo (o zoom volta ao normal quando ela viaja até o mestre)
   const cima=J.f1.entra==='cima';
@@ -2763,7 +2769,28 @@ async function voltaMestreF1(){
   const jogo=J;J.ocupado=true;soltaEnquadra();
   const m=mestreDe(0);if(m)seguir(m,true);atualiza();
   await dorme(1300);if(J!==jogo)return;
-  J.ocupado=false;if(ehF3())presenteSementeF3();else if(!ehF2())J.f1.fila.unshift('intro2');atualiza(); // a Fase 2 não tem segunda fala de abertura; na 3 nasce a Semente
+  const pulou=PULA_AB;PULA_AB=false;fimAberturaF();
+  J.ocupado=false;if(ehF3())presenteSementeF3();else if(!ehF2()&&!pulou)J.f1.fila.unshift('intro2');atualiza(); // a Fase 2 não tem segunda fala de abertura; na 3 nasce a Semente
+}
+// ----- abertura das fases: some com os botões de baixo; quem já viu a abertura daquela fase pode pular -----
+const AB_CHAVE='senhoresDoVeu.abVista';
+const abVistas=()=>{try{return JSON.parse(localStorage.getItem(AB_CHAVE))||{};}catch(e){return {};}};
+function comecaAberturaF(){if(J&&J.f1){J.f1.abrindo=true;J.f1.podePular=!!abVistas()[J.f1.n];atualiza();}}
+function fimAberturaF(){
+  if(!J||!J.f1||!J.f1.abrindo)return;J.f1.abrindo=false;
+  try{const v=abVistas();v[J.f1.n]=true;localStorage.setItem(AB_CHAVE,JSON.stringify(v));}catch(e){}
+  atualiza();
+}
+async function pulaAbertura(){
+  if(!J||!J.f1||!J.f1.abrindo||PULA_AB)return;
+  const jogo=J;PULA_AB=true;document.getElementById('btPulaAb').classList.remove('on');
+  [...dormindo].forEach(f=>f()); // acorda as esperas: a abertura corre até o fim
+  for(let i=0;i<200&&J===jogo&&J.f1.abrindo;i++){
+    const id=J.f1.fila[0];
+    if(id&&id.startsWith('intro')){fechaAvisoF1();} // a fala da abertura (já aberta) fecha sozinha
+    await new Promise(r=>setTimeout(r,30));[...dormindo].forEach(f=>f());
+  }
+  if(J===jogo)PULA_AB=false;
 }
 async function turnoSelvagem(l){
   RITMO_IA=J.turno<=2?RITMO_INICIO:1;J.ocupado=true;
@@ -2972,7 +2999,7 @@ function trazExercitoF1(proibidas){
 async function aberturaF2(semAnim){
   const jogo=J,caes=(J.f1.caes||[]).map(x=>({u:J.un.find(u=>u.id===x.id),focos:x.focos})).filter(x=>x.u);
   if(semAnim||!VEL||document.hidden||!caes.length){for(const k of J.f1.focosIni)criaChama(k);return;}
-  J.ocupado=true;J.f1.chegando=true;zoomCena(); // de perto; o zoom volta ao normal quando a câmera vai até o mestre
+  J.ocupado=true;J.f1.chegando=true;zoomCena();comecaAberturaF(); // de perto; o zoom volta ao normal quando a câmera vai até o mestre
   const mira=(x,y)=>{CAM.alvo={fixo:true,px:x,py:y};CAM.centrar=true;CAM.mao=false;};
   // o 2º Cão espera fora da tela (a câmera nunca mostra de onde ele vem)
   const [c2,...resto]=caes.slice(1),fora2=c2?(()=>{const [x,y]=centro(c2.u.c,c2.u.r);return {x0:x,y0:y-R*11};})():null; // vem de cima, de fora da tela
@@ -3744,7 +3771,7 @@ async function aberturaF3(semAnim){
   const vis=[];for(const k of qs.sort((a,b)=>DK(a)[0]-DK(b)[0]))if(vis.every(j=>d6c(...DK(k),...DK(j))>=4))vis.push(k);
   // a fala vem logo na primeira mata queimada (o jogador entende o que são essas casas); depois a câmera passa pelas outras
   J.f1.fila=J.f1.fila.filter(x=>x!=='intro1');J.f1.tourF3=true;
-  J.ocupado=true;J.f1.chegando=true;zoomCena();
+  J.ocupado=true;J.f1.chegando=true;zoomCena();comecaAberturaF();
   const ks=vis.slice(-3).reverse();
   for(let i=0;i<ks.length;i++){const k=ks[i],[x,y]=centro(...DK(k));CAM.alvo={fixo:true,px:x,py:y};CAM.centrar=true;CAM.mao=false;
     J.f1.fumacaK=k;await dorme(1100);if(J!==jogo)return;piscaHex(k,'#b8b0a8',900);await dorme(700);if(J!==jogo)return;
@@ -8145,6 +8172,9 @@ function atualiza(){
   {const bm=document.getElementById('btMagia'),ok=minha&&J.invocou?.[0]&&podeMagia(0);
    bm.classList.toggle('ativo',!!ok);
    bm.classList.toggle('brilha',!!ok&&!J.mg&&magiasDe(0).some(id=>J.mp[0]>=MAGIAS[id].custo&&magiaDisponivel(0,id)));}
+  // abertura da fase: sem os botões de baixo; o "Pular abertura" só para quem já viu esta abertura
+  {const ab=!!(J.f1&&J.f1.abrindo);document.getElementById('linhaFim').classList.toggle('naAbertura',ab);
+   document.getElementById('btPulaAb').classList.toggle('on',ab&&!!J.f1.podePular&&!PULA_AB);}
   // botão 👣: quantas criaturas suas ainda podem agir neste turno
   {const n=minha?criaturasPendentes().length+vilasSemProntas().length:0;
    document.getElementById('btProx').classList.toggle('ativo',n>0);
