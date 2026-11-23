@@ -1564,7 +1564,7 @@ function opcoesEvo(l,base){
   return R.para.map((para,i)=>({para,pts:p[i][0],motivo:p[i][0]>0?p[i][1]:'Ainda sem histórico para este caminho',i})).sort((a,b)=>b.pts-a.pts||a.i-b.i).slice(0,2);
 }
 const espInv=(l,s)=>J.evoFixa?.[l]?.[s]||s; // o que nasce ao invocar a criatura inicial s
-const INVOCAVEIS_F1=['brasa','girino'],INVOCAVEIS_F3=['brasa','girino']; // Fase 3: a Semente vem das vilas (uma por vila de cada vez), depois da Caipora // Fase 1: só Fogo e Água (a Água vence o Fogo do Bando; a Planta chega depois)
+const INVOCAVEIS_F1=['brasa','girino'],INVOCAVEIS_F3=['brasa','girino','semente']; // Fase 3: o mestre invoca Sementes como qualquer criatura (conta no limite); depois da Caipora, cada vila chama mais uma (fora do limite) // Fase 1: só Fogo e Água (a Água vence o Fogo do Bando; a Planta chega depois)
 const invocaveis=l=>(ehF3()?INVOCAVEIS_F3:ehF1()?INVOCAVEIS_F1:INVOCAVEIS).map(s=>espInv(l,s));
 const evoBases=()=>ehF2()?['girino']:INVOCAVEIS; // Fase 2: só o Girino evolui (vira Sapinho)
 const evoPendentes=l=>evoBases().filter(s=>!J.evoFixa?.[l]?.[s]);
@@ -2465,7 +2465,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.04'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.05'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -3477,7 +3477,7 @@ const F3_CHAVE='senhoresDoVeu.fase3';
 const F3_MIN_QUEIM=6,F3_NASCE=3,F3_MAX_OPER=4,F3_GUARDA=2,F3_RENASCE=0.3;
 const ehF3=()=>!!(J&&J.f1&&J.f1.n===3);
 function fase3Info(){try{return JSON.parse(localStorage.getItem(F3_CHAVE))||{};}catch(e){return {};}}
-const f3MetaTurnos=n=>5+Math.ceil(n*0.9); // a estrela dos turnos: cresce com a quantidade de mata queimada
+const f3MetaTurnos=n=>4+Math.ceil(n*0.7); // a estrela dos turnos: cresce com a quantidade de mata queimada
 function mapaF3(M){
   const m=mapaF2(M),cp=campanhaInfo();
   if(cp.f2Vilas)for(const k of Object.keys(m.vilas))m.vilas[k].n=Math.max(0,Math.min(F1_CAMP,cp.f2Vilas[k]??m.vilas[k].n));
@@ -3622,8 +3622,8 @@ function tiraChuva(){document.getElementById('chuvaCampo')?.remove();}
 const AVISOS_F3={
   intro1:{tit:'Fase 3 · Raízes do Vale',falas:['Tanta mata queimada...'],bt:'Continuar'},
   plantar:{falas:[{quem:'img',esp:'semente'},{quem:'soldado',cara:'feliz',txt:'Leve a Semente até uma mata queimada.'},'feliz|Deixe ela lá parada, que o broto pega!'],bt:'Começar'},
-  plantando:{falas:['feliz|O broto está pegando!','feliz|Mais uns turnos e a mata volta.']},
-  raiz:{falas:['feliz|A Semente criou raízes!',{quem:'soldado',cara:'feliz',txt:'Fincou raiz!<br>Logo ela vai recuperar a mata.'}]},
+  plantando:{falas:['feliz|O broto está pegando!','feliz|Mais um turno e a mata volta.']},
+  raiz:{falas:['feliz|A Semente criou raízes!',{quem:'soldado',cara:'feliz',txt:'Logo vai recuperar a mata.'}]},
   caiporaBroto:{falas:[{quem:'caipora',txt:'A mata precisa de ajuda.'},{quem:'caipora',txt:'Vou levar sementes para todas as vilas.'},{quem:'soldado',cara:'feliz',txt:'Toque numa vila para chamar uma Semente de lá.'}],bt:'Continuar',volta:true},
   comeu:{falas:['furia|As saúvas comeram o broto!',{quem:'soldado',txt:'Proteja as Sementes enquanto elas plantam!'}]},
   ninho:{falas:['Tanajura! A chuva acordou elas...',{quem:'soldado',txt:'Saúva corta folha nova.<br>E a gente vai plantar justamente isso.'}],bt:'Continuar',volta:true},
@@ -3660,7 +3660,7 @@ function presenteSementeF3(){
   atualiza();avisoF1('plantar');
 }
 const mataViva=k=>J.ter[k]==='flor'||J.f1.brotos.includes(k);
-const precisaF3=k=>vizinhos(...DK(k)).some(([c,r])=>mataViva(K(c,r)))?2:3;
+const precisaF3=k=>vizinhos(...DK(k)).some(([c,r])=>mataViva(K(c,r)))?1:2;
 // fim do seu turno: cada Semente parada numa mata queimada avança o broto; quem saiu da casa perde o que tinha
 async function plantioF3(){
   for(const [ks,p] of Object.entries(J.f1.plantio)){const u=J.un.find(x=>x.id===p.id);if(!u||K(u.c,u.r)!==+ks)delete J.f1.plantio[ks];}
@@ -3668,15 +3668,30 @@ async function plantioF3(){
   for(const u of J.un.filter(x=>x.lado===0&&x.esp==='semente')){
     const k=K(u.c,u.r);if(!J.f1.queim.includes(k))continue;
     const nova=!J.f1.plantio[k];
-    const p=J.f1.plantio[k]||(J.f1.plantio[k]={id:u.id,n:0,t0:performance.now(),r0:performance.now()});p.n++;p.t0=performance.now();
+    if(nova){await enraizaF3(u);if(J.fim)return;} // parou ali sem ter terminado a ação: enraíza agora
+    const p=J.f1.plantio[k];if(!p)continue;p.n++;p.t0=performance.now();
     const vai=p.n<precisaF3(k); // ainda não brota: a Semente fica enraizada
-    if(nova){await raizesF3(u,k,anima);if(J.fim)return;}
     if(!vai){delete J.f1.plantio[k];await brotaF3(u,k);if(J.fim)return;}
     else{if(anima&&!nova)await focar(u.c,u.r);flutua(u,'Plantando...','#9dffb8');piscaHex(k,'#6ee08a',800);J.f1.plantK=k;J.f1.raizK=k;
       if(anima)await dorme(500);
-      if(!J.f1.vistos.raiz)await avisoJaF1('raiz');else if(!J.f1.vistos.plantando)await avisoJaF1('plantando');}
+      if(!nova&&!J.f1.vistos.plantando)await avisoJaF1('plantando');}
   }
   if(J.f1.ninho1==null&&!J.fim){const k0=+Object.keys(J.f1.plantio)[0]||J.f1.brotos[0];if(k0!=null&&!isNaN(k0))await primeiroNinhoF3(k0);}
+}
+// a Semente enraíza assim que termina a ação numa mata queimada (ou no fim do turno, se ficou parada ali sem agir)
+async function enraizaF3(u){
+  const k=K(u.c,u.r),anima=VEL&&!document.hidden;if(J.f1.plantio[k])return;
+  J.f1.plantio[k]={id:u.id,n:0,t0:performance.now(),r0:anima?Infinity:0,rDur:1}; // r0 infinito: as raízes esperam a animação
+  await raizesF3(u,k,anima);if(J.fim)return;
+  J.f1.raizK=k;J.f1.plantK=k;
+  if(!J.f1.vistos.raiz)await avisoJaF1('raiz');
+}
+// sua vez: uma Semente que já agiu e está parada numa mata queimada, ainda sem raízes, enraíza na hora
+function checaRaizF3(){
+  if(!ehF3()||J.vez!==0||J.ocupado||J.fim||J.f1.raizando)return;
+  const u=J.un.find(x=>x.lado===0&&x.esp==='semente'&&x.agiu&&J.f1.queim.includes(K(x.c,x.r))&&!J.f1.plantio[K(x.c,x.r)]);if(!u)return;
+  J.f1.raizando=true;J.ocupado=true;if(J.sel===u)desseleciona();
+  (async()=>{try{await enraizaF3(u);}finally{if(J&&J.f1){J.f1.raizando=false;J.ocupado=false;atualiza();}}})();
 }
 // a Semente cria raízes na mata queimada: na 1ª vez a câmera chega perto e as raízes se espalham devagar; depois, rápido
 async function raizesF3(u,k,anima){
@@ -3696,7 +3711,7 @@ async function raizesF3(u,k,anima){
 // raízes da Semente que está plantando: linhas de pixel saindo da base em seis direções, crescendo quando ela enraíza
 function desenhaRaizesF3(now){
   for(const [ks,p] of Object.entries(J.f1.plantio)){const k=+ks,[x,y]=centro(...DK(k));
-    const q=Math.min(1,(now-(p.r0||0))/(p.rDur||1)),pul=.6+.4*Math.sin(now/400+k);
+    const q=Math.max(0,Math.min(1,(now-(p.r0||0))/(p.rDur||1))),pul=.6+.4*Math.sin(now/400+k);if(q<=0)continue;
     ctx.save();
     const seg=[];
     for(let i=0;i<6;i++){const ang=Math.PI*(i/3)+Math.PI/6+((k*7+i*3)%5-2)*.08,len=R*.95*q;
@@ -3892,6 +3907,10 @@ function iconeFormigueiro(){
 // fumacinha das matas queimadas: a madeira molhada ainda solta fumaça na chuva (mais forte na casa que a abertura mostra)
 function fumacaQueimF3(now){
   ctx.save();
+  // brilho de brasa pulsando devagar no meio da casa: mostra que ali dá pra ir (e plantar), sem gritar
+  for(const k of J.f1.queim){const [x,y]=centro(...DK(k)),a=.18+.08*Math.sin(now/650+k*1.7);
+    const g=ctx.createRadialGradient(x,y+R*.1,0,x,y+R*.1,R*.85);g.addColorStop(0,`rgba(255,96,32,${a})`);g.addColorStop(1,'rgba(255,60,20,0)');
+    ctx.globalAlpha=1;ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y+R*.1,R*.85,0,Math.PI*2);ctx.fill();}
   for(const k of J.f1.queim){const [x,y]=centro(...DK(k)),forte=J.f1.fumacaK===k,n=forte?9:5,a=forte?.95:.7;
     for(let i=0;i<n;i++){const t=((now/(forte?1500:2200))+i/n+k*.37)%1,ox=((i*7+k*3)%5-2)*R*.2;
       const rr=R*(.1+t*(forte?.42:.3)),px=x+ox+Math.sin(t*5+i+k)*R*.14-t*R*.3,py=y+R*.1-t*R*(forte?1.8:1.35);
@@ -3909,7 +3928,7 @@ function desenhaF3(now){
     const w=51*(.55+.45*Math.min(1,s)),h=51*s;
     ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(iconeFormigueiro(),x-w/2+tr+bate,y+27.5-h,w,h);ctx.restore();}
   // o broto que está pegando: uma mudinha que cresce a cada turno parada
-  for(const [ks,p] of Object.entries(J.f1.plantio)){const k=+ks,[x,y]=centro(...DK(k)),q=Math.min(1,p.n/precisaF3(k)),t=Math.min(1,(now-(p.t0||0))/700);
+  for(const [ks,p] of Object.entries(J.f1.plantio)){if(p.r0===Infinity)continue;const k=+ks,[x,y]=centro(...DK(k)),q=Math.min(1,p.n/precisaF3(k)),t=Math.min(1,(now-(p.t0||0))/700);
     const alt=Math.round((4+q*7)*(.4+.6*t)),bx=Math.round(x+R*.45),by=Math.round(y+R*.55);
     ctx.save();ctx.fillStyle='#2b6a22';ctx.fillRect(bx,by-alt,2,alt);
     ctx.fillStyle='#7fe08a';ctx.fillRect(bx-3,by-alt,3,2);ctx.fillRect(bx+2,by-alt-2,3,2);ctx.fillStyle='#4f9a3e';ctx.fillRect(bx-2,by-alt+3,2,2);ctx.restore();}
@@ -4013,7 +4032,7 @@ const ativo=l=>!(J.fora&&J.fora[l]);
 const rivais=l=>LADOS().filter(o=>o!==l&&ativo(o));
 function mestreMaisPerto(l,c,r){let b=null,bd=Infinity;for(const o of rivais(l)){const m=mestreDe(o);if(!m)continue;const d=d6c(c,r,m.c,m.r);if(d<bd){bd=d;b=m;}}return b;}
 const sufixo=l=>l===0?'':NP()>2?' '+doM(l):' inimigo'; // "Brasa inimiga" no 1x1, "Brasa do Warlock" no 1x1x1
-const criaturas=l=>J.un.filter(u=>u.lado===l&&!ESP[u.esp].mestre).length;
+const criaturas=l=>J.un.filter(u=>u.lado===l&&!ESP[u.esp].mestre&&u.vila==null).length; // Fase 3: a Semente chamada por uma vila não conta no limite
 const terDe=u=>J.ter[K(u.c,u.r)];
 // terreno que vale para a evasão: castelo e fortaleza do inimigo não protegem o invasor (conta como planície)
 const invasao=(lado,k)=>(J.ter[k]==='cast'||J.ter[k]==='fort')&&J.dono[k]!=null&&J.dono[k]!==lado;
@@ -5234,7 +5253,7 @@ function magiaDoBotao(){
 // ----- Botão 👣: próxima criatura que ainda não agiu -----
 // conta quem ainda não tem o ✓ (inclui quem andou e ainda pode atacar). O mestre fica de fora, e quem está
 // sob Sono/Petrificar também (começa o turno já marcado como "agiu").
-const criaturasPendentes=()=>J.un.filter(u=>u.lado===0&&!ESP[u.esp].mestre&&!u.agiu);
+const criaturasPendentes=()=>J.un.filter(u=>u.lado===0&&!ESP[u.esp].mestre&&!u.agiu&&!(ehF3()&&u.esp==='semente'&&plantandoU(u)&&!J.un.some(e=>e.lado!==0&&d6(u,e)<=ESP[u.esp].alc))); // Fase 3: a Semente enraizada só conta se tiver quem atacar ao lado
 // cada clique vai para a pendente mais perto da atual, sem repetir até ter passado por todas
 function abreFichaSel(){if(J&&J.sel)abreFicha(J.sel.id);}
 function proximaCriatura(){
@@ -6269,7 +6288,7 @@ const PAL_TER={
   plan:['#3f6b25','#5a8a30','#73a13d','#9cc65c'],
   torre:['#55585e','#74777d','#8f9298','#b3b6bb'], // pedra cinza neutra; capturada, ganha a cor do dono
   flor:['#12351a','#235f26','#3d8a33','#7dbb4f'],
-  queim:['#1b1512','#2c2420','#45372f','#6a5546','#ff7a30'], // floresta queimada (Fase 2): copas carbonizadas, brasas
+  queim:['#1b1512','#2c2420','#45372f','#6a5546','#ff8a3a','#c23a1c'], // floresta queimada (Fase 2): copas carbonizadas, brasas (vivas e vermelhas)
   broto:['#2a2016','#3b2c1e','#4f3b28','#2f7a24','#62c23e','#a8ec62'], // Mata de brotos (Fase 3): terra molhada e mudinhas
   // pedreira: pedras grandes arredondadas [vão, sombra, corpo, claro, brilho]
   pedr:['#2a1a12','#5a3a2a','#7e5a44','#a88672','#ded4cc','#3f6e2c'], // granito: [escuro, marrom, marrom claro, cinza-rosado, branco, musgo]
@@ -6321,9 +6340,9 @@ function tomTer(t,x,y,hx,hy){
     case 'queim':{
       // as mesmas copas da floresta, carbonizadas, com uma brasa aqui e ali
       const c=celula(x,y,6.5,2),rr=3.3;
-      if(c.d1>rr)return hsh(x,y,71)>.97?4:0;
-      if(c.d1>rr-.9||c.oy>1.4)return 1;
-      if(hsh(x,y,73)>.985)return 4;
+      if(c.d1>rr){const b=hsh(x,y,71);return b>.965?4:b>.915?5:0;} // brasas nos vãos: destacam a casa sem gritar
+      if(c.d1>rr-.9||c.oy>1.4)return hsh(x,y,72)>.95?5:1;
+      {const b=hsh(x,y,73);if(b>.975)return 4;if(b>.95)return 5;}
       if(c.ox<-.2&&c.oy<-.4)return 3;
       return 2;}
     case 'broto':{
@@ -7579,6 +7598,7 @@ let PLACAR_TORRE=null; // ícone de torre do placar (pixel art gerada uma vez)
 function atualiza(){
   if(!J)return;
   relogio();
+  if(J.f1&&J.f1.n===3)setTimeout(checaRaizF3,0); // Fase 3: a Semente que terminou a ação na mata queimada enraíza
   document.getElementById('vez').innerHTML=J.fim?'Fim de jogo':`${J.vez===0?'<span style="color:var(--p0)">Sua vez</span>':`<span style="color:var(--p${J.vez})">${ART(J.vez)} ${NM(J.vez)} está agindo…</span>`}`;
   // celular deitado: a reserva e o saldo de MP vão junto do turno, na barra do topo (o placar fica atrás do 📜)
   // celular em pé: só o turno (mana, monstros e torres ficam no placar abaixo do topo)
@@ -7848,7 +7868,7 @@ function menus(){
     const cartao=(s,extra='')=>{const e=ESP[s],ok=J.mp[0]>=e.custo&&cabeInv(s);
       return `<button onclick="escolherInvocacao('${s}')" ${ok?'':'disabled'}${extra}><b class="custo">${e.custo}</b>${iconeSpr(s,48,'cor')}<span class="nm">${e.nome}</span><small style="color:${EL[e.el]}">${ELN[e.el]}</small>${VANT_INV&&!ehF1()?faixaVant(e.el):''}</button>`;};
     for(const s of invocaveis(0))h+=cartao(s); // Fase 1: os dois iniciais lado a lado, sem flechas
-    h+=`</div>${podeTerMais(0)?'':`<div class="vez">${motivoLimite()}${ehF3()&&J.f1.vilaSem?' As Sementes vêm das vilas e não contam no limite.':''}</div>`}`;
+    h+=`</div>${podeTerMais(0)?'':`<div class="vez">${motivoLimite()}${ehF3()&&J.f1.vilaSem?' As Sementes chamadas pelas vilas não contam no limite.':''}</div>`}`;
     // Evoluir: o mesmo do menu do mestre, ao alcance de quem está escolhendo o que invocar
     if(podeEvoluir(0))h+=`<button class="btEvoInv" onclick="abrirEvo()" title="Fixa a forma de estágio 1 de uma criatura inicial: dali em diante ela já nasce evoluída."><span style="color:#6ee08a">▲</span> Evoluir · ${EVO_CUSTO} MP</button>`;
     mm.classList.add('grade');
