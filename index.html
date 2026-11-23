@@ -2478,7 +2478,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.10'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.11'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -2789,8 +2789,10 @@ function alvoSelvagem(u){
   }
   if(vs.length){
     const aqui=vs.find(k=>pertoVila(u,k));if(aqui!=null)return {k:aqui,vila:true};
+    // Fase 2: o Cão prefere a vila onde a mata ainda não queimou (o fogo se espalha pelo vale, e a Fase 3 herda isso)
+    const fresca=k=>ehF2()?Math.min(6,...J.f1.queim.map(j=>d6c(...DK(j),...DK(k))),...J.un.filter(x=>x.chama).map(x=>d6c(x.c,x.r,...DK(k))))*1.5:0;
     let b=vs[0],bd=Infinity;
-    for(const k of vs){const d=distanciasAte(k,u.esp).get(K(u.c,u.r))??999;if(d<bd){bd=d;b=k;}}
+    for(const k of vs){const d=(distanciasAte(k,u.esp).get(K(u.c,u.r))??999)-fresca(k);if(d<bd){bd=d;b=k;}}
     return {k:b,vila:true};
   }
   const m=mestreDe(0);return m?{k:K(m.c,m.r),vila:false}:null;
@@ -2881,7 +2883,7 @@ async function saqueiaVila(u){
 // Estrelas: vencer; todas as vilas de pé; ao menos F2_MATA_ESTRELA da mata salva.
 // Os camponeses vêm da Fase 1 (campanha): quem sobreviveu lá é quem mora nestas vilas.
 const F2_CHAVE='senhoresDoVeu.fase2';
-const F2_QUEIMA=4,F2_MAX_CHAMAS=8,F2_CAIPORA_TURNO=3,F2_CONSELHO_TURNO=5,F2_XP=0.35,F2_CAO=[12,2],F2_CAO2=[5,4],F2_CUSPE=3,F2_CUSPE_ALC=4,F2_ALIMENTA_XP=8,F2_ALIMENTA_HP=3,F2_MATA_ESTRELA=0.5; // mata salva: desde a Fase 3, toda mata que pegou fogo fica queimada (antes só a que queimava até o fim), daí 50%
+const F2_QUEIMA=4,F2_MAX_CHAMAS=8,F2_CAIPORA_TURNO=3,F2_CONSELHO_TURNO=5,F2_XP=0.35,F2_CAO=[12,2],F2_CAO2=[5,4],F2_CUSPE=3,F2_CUSPE_ALC=3,F2_ALIMENTA_XP=8,F2_ALIMENTA_HP=3,F2_MATA_ESTRELA=0.5; // mata salva: desde a Fase 3, toda mata que pegou fogo fica queimada (antes só a que queimava até o fim), daí 50%
 const ehF2=()=>!!(J&&J.f1&&J.f1.n===2);
 function fase2Info(){try{return JSON.parse(localStorage.getItem(F2_CHAVE))||{};}catch(e){return {};}}
 // A Fase 2 acontece no MESMO vale da Fase 1 (MAPAS_F1): o Cão entra por onde os Filhotes entraram, e as vilas
@@ -3307,7 +3309,8 @@ async function caoIncendeia(u){
 }
 // vila ameaçada: já pegou fogo ou tem fogo ao lado (o Cão vai procurar outra)
 const vilaAmeacada=k=>chamaEm(k)||vizinhos(...DK(k)).some(([c,r])=>chamaEm(K(c,r)));
-// de tempos em tempos o Cão cospe uma bola de fogo numa mata longe do fogo que já existe (até F2_CUSPE_ALC casas dele)
+// de tempos em tempos o Cão cospe uma bola de fogo numa mata longe do fogo que já existe e das matas que já queimaram
+// (até F2_CUSPE_ALC casas dele): o fogo se espalha pelo vale, e a Fase 3 herda essas queimadas
 async function caoCospe(u){
   if(!J.un.includes(u)||J.fim)return;
   const i=Math.max(0,(J.f1.caes||[]).findIndex(x=>x.id===u.id));
@@ -3317,7 +3320,7 @@ async function caoCospe(u){
   for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const k=K(c,r);
     if(J.ter[k]!=='flor'||J.vilas[k]||unidadeEm(c,r)||k===J.f1.caiporaK||k===J.f1.caiporaFogo)continue;
     const d=d6c(u.c,u.r,c,r);if(d<2||d>F2_CUSPE_ALC)continue;
-    const longe=Math.min(9,...chamas.map(x=>d6c(x.c,x.r,c,r)));
+    const longe=Math.min(9,...chamas.map(x=>d6c(x.c,x.r,c,r)),...J.f1.queim.map(j=>d6c(...DK(j),c,r)));
     const sc=longe*3-d6c(c,r,...J.f1.castelo)*.5+((c*7+r*13+J.turno)%5)*.1;if(sc>bs){bs=sc;b=k;}}
   if(b==null)return;
   if(VEL&&!document.hidden){await focar(u.c,u.r);flutua(u,'Grrr!','#ff8a50');await dorme(350);}
@@ -3510,7 +3513,7 @@ function desenhaVilas(now){
 // (o ataque zera o broto daquela casa); a soldado fica de guarda no formigueiro. Sem evolução da Semente nesta fase.
 // Vitória: todas as matas queimadas com brotos. Derrota: o mestre cair. Estrelas: vencer · nenhum broto comido · poucos turnos.
 const F3_CHAVE='senhoresDoVeu.fase3';
-const F3_MIN_QUEIM=6,F3_NASCE=3,F3_MAX_OPER=4,F3_GUARDA=2,F3_RENASCE=0.3;
+const F3_PLANT_NINHO=2,F3_MIN_QUEIM=6,F3_NASCE=3,F3_MAX_OPER=4,F3_GUARDA=2,F3_RENASCE=0.3;
 const ehF3=()=>!!(J&&J.f1&&J.f1.n===3);
 function fase3Info(){try{return JSON.parse(localStorage.getItem(F3_CHAVE))||{};}catch(e){return {};}}
 const f3MetaTurnos=n=>4+Math.ceil(n*0.7); // a estrela dos turnos: cresce com a quantidade de mata queimada
@@ -3519,17 +3522,20 @@ function mapaF3(M){
   if(cp.f2Vilas)for(const k of Object.keys(m.vilas))m.vilas[k].n=Math.max(0,Math.min(F1_CAMP,cp.f2Vilas[k]??m.vilas[k].n));
   for(const k of Object.keys(m.vilas))m.vilas[k].inicio=m.vilas[k].n;
   const vs=Object.keys(m.vilas).map(Number),flor=k=>m.ter[k]==='flor';
-  const queim=(cp.f2Queim||[]).filter(flor);
+  // as matas queimadas são as que a Fase 2 deixou (o que acontece lá vale aqui). Se vierem poucas, o jogo completa até
+  // F3_MIN_QUEIM, espalhando: cada nova fica longe das já queimadas e perto de alguma vila
+  const queim=(cp.f2Queim||[]).filter(flor),dC=k=>d6c(...DK(k),...m.f0);
   const dMin=(k,ks)=>Math.min(99,...ks.map(j=>d6c(...DK(k),...DK(j))));
   const add=k=>{if(!queim.includes(k))queim.push(k);};
   // a primeira Semente nasce no castelo e anda devagar: sempre há mata queimada a até 4 casas dele
-  if(!queim.some(k=>d6c(...DK(k),...m.f0)<=4)){
-    const c=m.ter.map((t,k)=>k).filter(k=>flor(k)&&d6c(...DK(k),...m.f0)>=2).sort((a,b)=>d6c(...DK(a),...m.f0)-d6c(...DK(b),...m.f0)||a-b)[0];
-    if(c!=null)add(c);}
-  // o mínimo: as matas mais perto das vilas e das que já queimaram
+  if(!queim.some(k=>dC(k)<=4)){const c=m.ter.map((t,k)=>k).filter(k=>flor(k)&&dC(k)>=2&&dC(k)<=4).sort((a,b)=>dC(a)-dC(b)||a-b)[0];if(c!=null)add(c);}
+  const matas=m.ter.map((t,k)=>k).filter(k=>flor(k)&&dC(k)>=2);
   while(queim.length<F3_MIN_QUEIM){
-    const c=m.ter.map((t,k)=>k).filter(k=>flor(k)&&!queim.includes(k)).sort((a,b)=>(dMin(a,vs)+dMin(a,queim)*.6)-(dMin(b,vs)+dMin(b,queim)*.6)||a-b)[0];
-    if(c==null)break;add(c);}
+    let b=null,bs=-Infinity;
+    for(const k of matas){if(queim.includes(k))continue;
+      const sc=Math.min(4,dMin(k,queim))*1.6-Math.max(0,dMin(k,vs)-2)*.8-Math.max(0,dC(k)-9)*.5+Math.random()*.8;
+      if(sc>bs){bs=sc;b=k;}}
+    if(b==null)break;add(b);}
   for(const k of queim)m.ter[k]='plan';
   // formigueiros: planícies livres longe do castelo, com mata queimada por perto, longe um do outro
   const nF=queim.length>=10?3:2,formig=[];
@@ -3552,7 +3558,7 @@ function iniciaF3(m){
     meta:f3MetaTurnos(m.queim.length)};
   J.vilas=m.vilas;
   for(const a of Object.values(ARTE_F1)){imgF1(a.mapa);imgF1(a.luta);}for(const r of imgsRostos())imgF1(r);
-  // os formigueiros só se formam depois que a 1ª Semente é plantada (a chuva acorda as tanajuras; o broto atrai as saúvas)
+  // os formigueiros só se formam depois que F3_PLANT_NINHO Sementes forem plantadas (o cheiro das Sementes atrai as tanajuras)
   trazExercitoF2(new Set(m.formig));
 }
 // um formigueiro se forma: o monte cresce, voa terra, e uma soldado sai para ficar de guarda ao lado
@@ -3700,7 +3706,7 @@ const AVISOS_F3={
   caiporaBroto:{falas:[{quem:'caipora',txt:'A mata precisa de ajuda.'},{quem:'caipora',txt:'Vou levar sementes para todas as vilas.'}],bt:'Continuar'},
   vilasSem:{falas:[{quem:'soldado',cara:'feliz',txt:'Toque numa vila para chamar uma Semente de lá.'}],bt:'Continuar',volta:true},
   comeu:{falas:['furia|As saúvas comeram o broto!',{quem:'soldado',txt:'Proteja as Sementes enquanto elas plantam!'}]},
-  ninho:{falas:['Tanajura! A chuva acordou elas...',{quem:'soldado',txt:'Saúva corta folha nova.<br>E a gente vai plantar justamente isso.'}],bt:'Continuar',volta:true},
+  ninho:{falas:['Tanajura! O cheiro das sementes atraiu elas...',{quem:'soldado',txt:'Saúva corta folha nova.<br>E a gente vai plantar justamente isso.'}],bt:'Continuar',volta:true},
   ninhos:{falas:['Tem mais... tem ninho por todo lado!'],bt:'Continuar',volta:true},
   ninhoCaiu:{falas:['feliz|Derrubamos o formigueiro!',{quem:'soldado',txt:'Cuidado: as que fugiram podem cavar outro.'}]},
   renasce:{falas:['furia|Olha lá! Outro formigueiro!'],bt:'Continuar',volta:true},
@@ -3763,12 +3769,13 @@ async function plantioF3(){
       if(anima)await dorme(500);
       if(!nova&&!J.f1.vistos.plantando)await avisoJaF1('plantando');}
   }
-  if(J.f1.ninho1==null&&!J.fim){const k0=+Object.keys(J.f1.plantio)[0]||J.f1.brotos[0];if(k0!=null&&!isNaN(k0))await primeiroNinhoF3(k0);}
+  if(J.f1.ninho1==null&&!J.fim&&(J.f1.nPlant||0)>=F3_PLANT_NINHO){const k0=J.f1.ultPlant??(+Object.keys(J.f1.plantio)[0]||J.f1.brotos[0]);if(k0!=null&&!isNaN(k0))await primeiroNinhoF3(k0);} // o cheiro das Sementes atrai as saúvas
 }
 // a Semente enraíza assim que termina a ação numa mata queimada (ou no fim do turno, se ficou parada ali sem agir)
 async function enraizaF3(u){
   const k=K(u.c,u.r),anima=VEL&&!document.hidden;if(J.f1.plantio[k])return;
   J.f1.plantio[k]={id:u.id,n:0,t0:performance.now(),r0:anima?Infinity:0,rDur:1}; // r0 infinito: as raízes esperam a animação
+  J.f1.nPlant=(J.f1.nPlant||0)+1;J.f1.ultPlant=k; // as saúvas acordam depois da 2ª Semente plantada
   await raizesF3(u,k,anima);if(J.fim)return;
   J.f1.raizK=k;J.f1.plantK=k;
   if(!J.f1.vistos.raiz)await avisoJaF1('raiz');
@@ -3857,7 +3864,8 @@ async function caiporaBrotoF3(kb){
     J.f1.caiporaAnim={x0:x,y0:y,x1:ox,y1:oy,t0:performance.now(),dur:900,sai:true};await dorme(950);if(J!==jogo)return;
     J.f1.caiporaAnim=null;J.f1.caiporaK=null;
     // a câmera passa pelas vilas: em cada uma, um puf de folhas e a sementinha aparece
-    const vs=vilasVivas().sort((a,b)=>d6c(...DK(a),...DK(kb))-d6c(...DK(b),...DK(kb)));
+    const todas=vilasVivas().sort((a,b)=>d6c(...DK(a),...DK(kb))-d6c(...DK(b),...DK(kb))),vs=todas.slice(0,1);
+    J.f1.vilaSemOk=[...vs];J.f1.vilaSemFila=todas.slice(1);J.f1.vilaSemLote=0;
     J.f1.semTour={};J.f1.vilaSem=true;
     if(vs.length){
       J.f1.chegando=true;CAM.zAlvo=zBase();CAM.enq=true;
@@ -3871,7 +3879,9 @@ async function caiporaBrotoF3(kb){
     J.f1.semTour=null;J.f1.vilasSemK=vs[0]??kb;
     await avisoJaF1('vilasSem');if(J!==jogo)return;
     J.ocupado=false;
-  }else{J.f1.caiporaFala=kb;J.f1.vilasSemK=vilasVivas()[0]??kb;avisoF1('caiporaBroto');avisoF1('vilasSem');}
+  }else{const todas=vilasVivas().sort((a,b)=>d6c(...DK(a),...DK(kb))-d6c(...DK(b),...DK(kb)));
+    J.f1.vilaSemOk=todas.slice(0,1);J.f1.vilaSemFila=todas.slice(1);J.f1.vilaSemLote=0;
+    J.f1.caiporaFala=kb;J.f1.vilasSemK=todas[0]??kb;avisoF1('caiporaBroto');avisoF1('vilasSem');}
   J.f1.vilaSem=true;log('🌿 A Caipora fez as Sementes nascerem nas vilas.');
   atualiza();
 }
@@ -3885,7 +3895,18 @@ function pertoDeF3(k0){
   return b;
 }
 // Fase 3, depois da Caipora: cada vila de pé chama uma Semente (uma por vila de cada vez; a Semente não conta no limite)
-const vilaSemF3=k=>ehF3()&&J.f1.vilaSem&&J.vilas[k]&&J.vilas[k].n>0;
+const vilaSemF3=k=>ehF3()&&J.f1.vilaSem&&J.vilas[k]&&J.vilas[k].n>0&&(!J.f1.vilaSemOk||J.f1.vilaSemOk.includes(k));
+// as vilas ganham Semente aos poucos: a Caipora leva à primeira; depois, a cada turno seu, mais 2, mais 1, mais 1...
+const VILAS_SEM_LOTE=[2,1];
+function liberaVilasF3(){
+  const F=J.f1;if(!F.vilaSemOk||!F.vilaSemFila||!F.vilaSemFila.length)return;
+  const n=VILAS_SEM_LOTE[Math.min(F.vilaSemLote||0,VILAS_SEM_LOTE.length-1)];F.vilaSemLote=(F.vilaSemLote||0)+1;
+  const novas=F.vilaSemFila.filter(v=>J.vilas[v]&&J.vilas[v].n>0).slice(0,n);
+  F.vilaSemFila=F.vilaSemFila.filter(v=>!novas.includes(v)&&J.vilas[v]&&J.vilas[v].n>0);
+  if(!novas.length)return;
+  F.vilaSemOk.push(...novas); // o puf de folhas sai sozinho quando a vila fica pronta (desenhaSemVilas)
+  log(`🌱 A Caipora levou Sementes para mais ${novas.length>1?novas.length+' vilas':'uma vila'}.`);
+}
 const vilaTemSemF3=v=>J.un.some(u=>u.lado===0&&u.esp==='semente'&&u.vila===v);
 function casaSemVilaF3(v){ // a própria vila, ou a casa livre ao lado mais perto de uma mata queimada
   const ok=k=>{const [c,r]=DK(k);return dentro(c,r)&&!unidadeEm(c,r)&&isFinite(custoMov('semente',J.ter[k]))&&!['mont','rio'].includes(J.ter[k])&&!J.f1.formig.includes(k);};
@@ -4354,6 +4375,7 @@ function inicioTurno(l){
   if(!selvagem(l))cobrarMana(l); // o Bando Infernal não tem mana nem manutenção
   if(l===0&&J.f1)setTimeout(()=>{if(J&&J.f1&&J.vez===0&&!J.fim){checaTorreF1();atualiza();}},0);
   if(l===0&&ehF2())checaCaiporaF2(); // depois de liberar as criaturas (abaixo)
+  if(l===0&&ehF3()&&J.f1.vilaSem)liberaVilasF3(); // mais vilas com Semente a cada turno
   if(l===0&&!ehF2()&&podeEvoluir(0)&&!J.evoAvisado){J.evoAvisado=true;J.avisoEvo=true;} // na Fase 2 quem chama para evoluir é a Caipora
   if(l===0){J.passarDispensado=null;if(J.turno>1)setTimeout(()=>{if(J&&J.vez===0&&!J.fim)gravar('auto');},0);} // turno 1 não grava: "Novo jogo" sem querer não apaga o automático da partida anterior
   J.magiaUsada[l]=false;J.forcaUsada[l]=false;
