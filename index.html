@@ -248,6 +248,18 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 @keyframes f1Aparece{from{opacity:0}to{opacity:1}} /* só opacidade: não mexe no transform de quem a usa */
 @keyframes f1Seq{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 #fimPorque{margin:12px 0 16px;text-align:left;font-size:13.5px;line-height:1.5}
+/* fim de fase: quem segue e a Fogueira */
+.segueG{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.segueG button,.fogG button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;height:auto;min-height:0;border-radius:8px}
+.segueG button.sel,.fogG button.sel{outline:2px solid var(--acc);outline-offset:-1px;background:#2a2615}
+.segueG .nm{font-weight:700;font-size:13.5px}.segueG small{color:var(--dim);font-size:12px}.segueG .vai{color:var(--acc)}
+.essP{display:inline-block;padding:4px 12px;border-radius:99px;background:#3a3016;color:#ffd77a;font-weight:700;font-size:14px}
+.fogTopo{display:flex;justify-content:center;margin:0 0 10px}
+.fogG{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.fogG button{position:relative}.fogG .ic{font-size:26px;line-height:1}.fogG .ef{font-weight:700;font-size:15px}.fogG .ef.off{color:var(--dim);opacity:.7}
+.fogG .rom{position:absolute;top:5px;right:8px;font-family:Georgia,serif;font-size:13px;letter-spacing:1px}
+.fogDet{margin-top:10px;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.fogDet b{font-size:14px}.fogDet p{margin:2px 0 8px;color:var(--dim)}.fogDet button{width:100%}.fogDet .err{color:#ff8a80;margin:6px 0 0}
 #fimPorque .porque{margin:0 0 8px}
 #fimPorque .placarFim{display:grid;grid-template-columns:auto 1fr 1fr;gap:2px 12px;font-size:12.5px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;margin:0 0 8px}
 #fimPorque .placarFim b{text-align:center}
@@ -1951,6 +1963,7 @@ function novoJogo(op=prefs(),semIntro=false){ // semIntro: a partida de fundo, a
      ...estadoMagiaNovo(ordens,0)}; // mana só pela renda (padrão do jogo)
   m.f.forEach((f,l)=>criaUnidade(ORDENS[ordens[l]].esp,l,...f));
   J.op=op; // para Reiniciar partida
+  J.bencao=f1&&fase>1?{...(campanhaInfo().bencaos||{})}:{}; // Fogueira: as bênçãos compradas no fim das fases anteriores
   if(f1){if(fase===3)iniciaF3(m);else if(fase===2)iniciaF2(m);else iniciaF1(m);if(fase===3){const cp=campanhaInfo();if(cp.evoFixa)J.evoFixa[0]={...cp.evoFixa};}}
   J.tut=!semIntro&&(f1?fase===1:tutorialPendente())?{n:0}:null;
   zoomInicio(true);
@@ -2642,7 +2655,7 @@ function avisoF1(id){if(!id||!J.f1||J.f1.vistos[id])return;J.f1.vistos[id]=true;
 // da outra sem uma ação no meio (andar, atacar, invocar, um saque do Bando). Uma fala que não pôde sair espera a próxima
 // ação; se passarem 2 ações sem ela sair, perdeu o contexto e é descartada. As da abertura, do alerta do camponês, da
 // evolução do Cão e da vitória saem sempre. A da torre é conferida de novo na hora de aparecer.
-const PRIOR_F1=new Set(['inunda','ninhoCaiu','renasce','raiz','ninho','ninhos','plantar','caiporaBroto','comeu','vilaVerde','plantando','formig','intro1','intro2','vitoria','semente','campones','evoluiu','cao','caipora','caiporaChega','sapinho','vilaQueima','incendiou','cinza','alimentou','cacaCaes']);
+const PRIOR_F1=new Set(['inunda','ninhoCaiu','renasce','raiz','ninho','ninhos','plantar','caiporaBroto','vilasSem','comeu','vilaVerde','plantando','formig','intro1','intro2','vitoria','semente','campones','evoluiu','cao','caipora','caiporaChega','sapinho','vilaQueima','incendiou','cinza','alimentou','cacaCaes']);
 const acaoF1=()=>{if(J&&J.f1)J.f1.acao=(J.f1.acao||0)+1;};
 const podeFalarF1=id=>PRIOR_F1.has(id)||(J.f1.acao||0)>(J.f1.ultFala??-1);
 function proxAvisoF1(){
@@ -2688,7 +2701,7 @@ async function chegadaF1(){
 // a caixa da fala fica perto de onde a coisa acontece: a abertura junto da vila da entrada, as torres junto da torre,
 // o saque junto da vila atacada. Sem lugar definido, ela fica no meio do mapa (como antes).
 const ANCORA_F1={
-  plantar:()=>J.f1.sementeK,plantando:()=>J.f1.plantK,raiz:()=>J.f1.raizK,caiporaBroto:()=>J.f1.caiporaFala,comeu:()=>J.f1.comeuK,vilaVerde:()=>J.f1.vilaK,formig:()=>J.f1.formK,ninho:()=>J.f1.ninhoK,ninhos:()=>J.f1.ninhosK,ninhoCaiu:()=>J.f1.ninhoCaiuK,renasce:()=>J.f1.renasceK,inunda:()=>J.f1.inundaK,
+  plantar:()=>J.f1.sementeK,plantando:()=>J.f1.plantK,raiz:()=>J.f1.raizK,caiporaBroto:()=>J.f1.caiporaFala,vilasSem:()=>J.f1.vilasSemK,comeu:()=>J.f1.comeuK,vilaVerde:()=>J.f1.vilaK,formig:()=>J.f1.formK,ninho:()=>J.f1.ninhoK,ninhos:()=>J.f1.ninhosK,ninhoCaiu:()=>J.f1.ninhoCaiuK,renasce:()=>J.f1.renasceK,inunda:()=>J.f1.inundaK,
   intro1:()=>ehF3()?J.f1.intro1K:ehF2()?(J.f1.foco2??J.f1.foco0):+Object.keys(J.vilas).find(k=>J.vilas[k].estrela===false),
   incendiou:()=>J.f1.vilaK,cacaCaes:()=>J.f1.cacaK,caiporaChega:()=>J.f1.caiporaK,caipora:()=>J.f1.caiporaK,semente:()=>ehF2()?J.f1.caiporaK:null,vilaQueima:()=>J.f1.vilaK,cinza:()=>J.f1.cinzaK,apagou:()=>J.f1.apagouK,alimentou:()=>J.f1.alimK,cao:()=>J.f1.caoK,
   torreMagica:()=>J.f1.torreK,torre:()=>J.f1.torreFrenteK,
@@ -3411,7 +3424,7 @@ function mostraFimF2(v,motivo){
     document.getElementById('fimPorque').innerHTML=`<div class="estrelasF1">${[0,1,2].map(i=>`<span class="${i<est?'on':''}">★</span>`).join('')}</div>
       <p class="porque" style="text-align:center">${salvas} de ${vs.length} vilas de pé · ${camp} de ${vs.reduce((s,x)=>s+x.inicio,0)} casas de pé · ${pct}% da mata salva</p>
       <p class="dicaFim" style="text-align:center">★ vencer · ★ todas as vilas de pé · ★ ${Math.round(F2_MATA_ESTRELA*100)}% da mata salva</p>`;
-    b.textContent='Continuar';b.onclick=()=>jogarFase3();
+    {const ex=exercitoCampanha();b.textContent='Continuar';b.onclick=()=>quemSegueTela(2,ex,jogarFase3);}
     b2.textContent='Tentar novamente';b2.onclick=()=>jogarFase2();
   }else{
     document.getElementById('fimSub').textContent=motivo==='vilas'?`Todas as vilas viraram cinzas no turno ${J.turno}.`:`${OM(0)} caiu no turno ${J.turno}.`;
@@ -3682,7 +3695,8 @@ const AVISOS_F3={
   plantar:{falas:[{quem:'img',esp:'semente'},{quem:'soldado',cara:'feliz',txt:'Leve a Semente até uma mata queimada.'},'feliz|Plante ela, que o broto pega!'],bt:'Começar'},
   plantando:{falas:['feliz|O broto está pegando!','feliz|Depois de plantar, logo a mata renascerá.']},
   raiz:{falas:['feliz|A Semente criou raízes!',{quem:'soldado',cara:'feliz',txt:'Logo vai recuperar a mata.'}]},
-  caiporaBroto:{falas:[{quem:'caipora',txt:'A mata precisa de ajuda.'},{quem:'caipora',txt:'Vou levar sementes para todas as vilas.'},{quem:'soldado',cara:'feliz',txt:'Toque numa vila para chamar uma Semente de lá.'}],bt:'Continuar',volta:true},
+  caiporaBroto:{falas:[{quem:'caipora',txt:'A mata precisa de ajuda.'},{quem:'caipora',txt:'Vou levar sementes para todas as vilas.'}],bt:'Continuar'},
+  vilasSem:{falas:[{quem:'soldado',cara:'feliz',txt:'Toque numa vila para chamar uma Semente de lá.'}],bt:'Continuar',volta:true},
   comeu:{falas:['furia|As saúvas comeram o broto!',{quem:'soldado',txt:'Proteja as Sementes enquanto elas plantam!'}]},
   ninho:{falas:['Tanajura! A chuva acordou elas...',{quem:'soldado',txt:'Saúva corta folha nova.<br>E a gente vai plantar justamente isso.'}],bt:'Continuar',volta:true},
   ninhos:{falas:['Tem mais... tem ninho por todo lado!'],bt:'Continuar',volta:true},
@@ -3839,10 +3853,24 @@ async function caiporaBrotoF3(kb){
     await avisoJaF1('caiporaBroto');if(J!==jogo)return;
     // volta para a mata
     J.f1.caiporaAnim={x0:x,y0:y,x1:ox,y1:oy,t0:performance.now(),dur:900,sai:true};await dorme(950);if(J!==jogo)return;
-    J.f1.caiporaAnim=null;J.f1.caiporaK=null;J.ocupado=false;
-  }else{J.f1.caiporaFala=kb;avisoF1('caiporaBroto');}
+    J.f1.caiporaAnim=null;J.f1.caiporaK=null;
+    // a câmera passa pelas vilas: em cada uma, um puf de folhas e a sementinha aparece
+    const vs=vilasVivas().sort((a,b)=>d6c(...DK(a),...DK(kb))-d6c(...DK(b),...DK(kb)));
+    J.f1.semTour={};J.f1.vilaSem=true;
+    if(vs.length){
+      J.f1.chegando=true;CAM.zAlvo=zBase();CAM.enq=true;
+      const ps=vs.map(v=>centro(...DK(v)));
+      CAM.alvo={fixo:true,px:ps.reduce((s,p)=>s+p[0],0)/ps.length,py:ps.reduce((s,p)=>s+p[1],0)/ps.length};CAM.centrar=true;CAM.mao=false;
+      await dorme(900);if(J!==jogo)return;
+      for(const v of vs){J.f1.semTour[v]=performance.now();pufSementeVila(v);atualiza();await dorme(420);if(J!==jogo)return;}
+      await dorme(600);if(J!==jogo)return;
+      J.f1.chegando=false;
+    }
+    J.f1.semTour=null;J.f1.vilasSemK=vs[0]??kb;
+    await avisoJaF1('vilasSem');if(J!==jogo)return;
+    J.ocupado=false;
+  }else{J.f1.caiporaFala=kb;J.f1.vilasSemK=vilasVivas()[0]??kb;avisoF1('caiporaBroto');avisoF1('vilasSem');}
   J.f1.vilaSem=true;log('🌿 A Caipora fez as Sementes nascerem nas vilas.');
-  for(const v of vilasVivas())piscaHex(v,'#6ee08a',1200);
   atualiza();
 }
 // uma casa livre a até 2 passos de k, colada numa floresta (de onde a Caipora sai)
@@ -3862,6 +3890,41 @@ function casaSemVilaF3(v){ // a própria vila, ou a casa livre ao lado mais pert
   if(ok(v))return v;
   const dq=k=>Math.min(99,...J.f1.queim.map(j=>d6c(...DK(k),...DK(j))));
   return vizinhos(...DK(v)).map(([c,r])=>K(c,r)).filter(ok).sort((a,b)=>dq(a)-dq(b)||a-b)[0]??null;
+}
+// o sinal da vila: uma sementinha flutuando sobre o telhado (cinza e parada quando falta mana ou casa livre);
+// quando a vila fica pronta de novo, um puf de folhinhas
+const SEM_ICO={};
+function iconeSementeVila(cinza){
+  const id=cinza?'c':'v';if(SEM_ICO[id])return SEM_ICO[id];
+  const A=['kkk.....kkk','kgGk...kGgk','kGGGk.kGGGk','.kGGGsGGGk.','...kkskk...','....ksk....','...kbbbk...','..kbBbbbk..','.kbBbbbdbk.','.kbbbbbdbk.','.kbbbbddbk.','..kbbddbk..','...kkkkk...'];
+  const P=cinza?{k:'#1a1a1a',G:'#8a8a8a',g:'#b8b8b8',s:'#6a6a6a',b:'#7a7a7a',B:'#9c9c9c',d:'#555'}
+               :{k:'#1c140c',G:'#7fe08a',g:'#d4f7b8',s:'#4f9a3e',b:'#a0703c',B:'#d8a868',d:'#6e4524'};
+  const c=document.createElement('canvas');c.width=11;c.height=13;const g=c.getContext('2d');
+  A.forEach((l,y)=>[...l].forEach((ch,x)=>{if(P[ch]){g.fillStyle=P[ch];g.fillRect(x,y,1,1);}}));
+  return SEM_ICO[id]=c;
+}
+function pufSementeVila(v){
+  const [x,y]=centro(...DK(v)),n=performance.now();
+  for(let i=0;i<9;i++)fx.push({folha:true,x:x+(i%3-1)*R*.35,y:y-R*.2,dx:(Math.random()-.5)*R*1.5,t0:n+i*45,dur:1000,cor:i%3?'#7fe08a':'#4f9a3e'});
+}
+const semProntaF3=v=>!vilaTemSemF3(v)&&J.mp[0]>=ESP.semente.custo&&casaSemVilaF3(v)!=null;
+function desenhaSemVilas(now){
+  const T=J.f1.semTour,pr=J.f1.semPronta||(J.f1.semPronta={});
+  for(const ks of Object.keys(J.vilas)){const v=+ks;
+    if(!vilaSemF3(v)||vilaTemSemF3(v)||(T&&T[v]==null)){pr[v]=false;continue;}
+    const ok=semProntaF3(v);
+    if(!T&&ok&&pr[v]===false)pufSementeVila(v); // ficou pronta de novo
+    pr[v]=ok;
+    if(!T&&J.vez!==0)continue; // na vez dos outros, o sinal some
+    const [x,y]=centro(...DK(v)),ap=T?Math.min(1,(now-T[v])/350):1;
+    const esc=ap<1?.4+ap*.8-Math.max(0,ap-.7)*.67:1; // aparece estufando
+    const by=ok?Math.round(Math.sin(now/380+v)*2.5):0,S=2*esc,cx=x+13,cy=y-26+by;
+    ctx.save();
+    if(ok){const a=.35+.15*Math.sin(now/300+v),gr=ctx.createRadialGradient(cx,cy,1,cx,cy,15*esc);
+      gr.addColorStop(0,`rgba(140,240,150,${a})`);gr.addColorStop(1,'rgba(140,240,150,0)');ctx.fillStyle=gr;ctx.fillRect(cx-16,cy-16,32,32);}
+    ctx.imageSmoothingEnabled=false;ctx.globalAlpha=ok?1:.85;
+    ctx.drawImage(iconeSementeVila(!ok),Math.round(cx-5.5*S),Math.round(cy-6.5*S),Math.round(11*S),Math.round(13*S));
+    ctx.restore();}
 }
 function abrirVilaF3(k){desseleciona();J.invocando=null;J.invocHex=null;J.invHex=null;J.menuInv=false;J.vilaInv=k;atualiza();}
 function invocaVilaF3(){
@@ -4041,7 +4104,7 @@ function mostraFimF3(v,motivo){
     document.getElementById('fimPorque').innerHTML=`<div class="estrelasF1">${[0,1,2].map(i=>`<span class="${i<est?'on':''}">★</span>`).join('')}</div>
       <p class="porque" style="text-align:center">${J.f1.brotos.length} matas com brotos · ${J.f1.comidos?`${J.f1.comidos} ${J.f1.comidos>1?'brotos comidos':'broto comido'} pelas saúvas`:'nenhum broto comido'} · ${camp} camponeses</p>
       <p class="dicaFim" style="text-align:center">★ vencer · ★ nenhum broto comido · ★ até o turno ${J.f1.meta}</p>`;
-    b.textContent='Continuar';b.onclick=()=>telaEmObras();
+    {const ex=exercitoCampanha();b.textContent='Continuar';b.onclick=()=>quemSegueTela(3,ex,telaEmObras);}
     b2.textContent='Tentar novamente';b2.onclick=()=>jogarFase3();
   }else{
     document.getElementById('fimSub').textContent=`${OM(0)} caiu no turno ${J.turno}.`;
@@ -4051,6 +4114,60 @@ function mostraFimF3(v,motivo){
     b2.textContent='Menu';b2.onclick=()=>abreConfig();
   }
   document.getElementById('fim').style.display='flex';
+}
+// ---------- Fim de fase: quem segue com você, e a Fogueira ----------
+// Só 1 criatura segue para a fase seguinte (o jogador escolhe). As outras viram Essência (1 a 4, pelo estágio), que
+// fortalece as bênçãos da Fogueira: cada bênção vale para as SUAS criaturas daquele elemento, com níveis I, II e III
+// (o nível n custa n Essências). Os elementos aparecem conforme a história: Fogo e Água desde a Fase 1, Planta na 3.
+// A Essência de cada fase é guardada por fase: jogar a mesma fase de novo substitui, não soma.
+const BENCAOS={
+  fogo:{nome:'Fogo',ic:'🔥',cor:'#ff9a5a',ef:['+5%','+10%','+15%'],un:'dano',txt:'Suas criaturas de Fogo causam mais dano.'},
+  agua:{nome:'Água',ic:'💧',cor:'#6ec3ff',ef:['+2','+3','+4'],un:'cura',txt:'Suas criaturas de Água se curam no começo de cada turno.'},
+  planta:{nome:'Planta',ic:'🌿',cor:'#6ee08a',ef:['+1','+2','+3'],un:'defesa',txt:'Suas criaturas de Planta defendem mais.'},
+};
+const ROMANO=['','I','II','III'];
+const bencaosAte=n=>n>=3?['fogo','agua','planta']:['fogo','agua'];
+const listaE=a=>a.length>1?a.slice(0,-1).join(', ')+' e '+a[a.length-1]:a.join('');
+const essDe=x=>Math.min(4,1+(ESP[x.esp]?.tier||0));
+const nivBencao=el=>(J&&J.bencao&&J.bencao[el])||0;
+function essLivre(){const cp=campanhaInfo(),g=Object.values(cp.essGanho||{}).reduce((s,v)=>s+v,0),b=cp.bencaos||{};
+  return Math.max(0,g-Object.values(b).reduce((s,n)=>s+n*(n+1)/2,0));}
+function quemSegueTela(n,lista,prox){
+  lista=lista.filter(x=>ESP[x.esp]);
+  if(lista.length<=1){fogueiraTela(n,lista,[],prox);return;}
+  let sel=null;
+  const b=document.getElementById('fimBt'),b2=document.getElementById('fimBt2');
+  const desenha=()=>{
+    document.getElementById('fimTxt').textContent='Quem segue com você?';
+    document.getElementById('fimSub').textContent='Escolha uma criatura. As outras viram Essência para a Fogueira.';
+    document.getElementById('fimPorque').innerHTML=`<div class="segueG">${lista.map((x,i)=>`<button class="${i===sel?'sel':''}" onclick="quemSegueTela.pick(${i})">${iconeSpr(x.esp,48,'cor')}<span class="nm">${ESP[x.esp].nome}</span><small>${i===sel?'<span class="vai">Segue com você</span>':`Vira ${essDe(x)} ✨`}</small></button>`).join('')}</div>`;
+    b.textContent='Confirmar';b.disabled=sel==null;b2.style.display='none';
+  };
+  quemSegueTela.pick=i=>{sel=i;desenha();};
+  b.onclick=()=>{if(sel==null)return;b.disabled=false;fogueiraTela(n,[lista[sel]],lista.filter((x,i)=>i!==sel),prox);};
+  desenha();
+}
+function fogueiraTela(n,segue,ficam,prox){
+  const ganho=ficam.reduce((s,x)=>s+essDe(x),0),cp=campanhaInfo();
+  salvaCampanha({['f'+n+'Exercito']:segue,essGanho:{...(cp.essGanho||{}),[n]:ganho}});
+  const els=bencaosAte(n);let sel=els[0],erro=false;
+  const b=document.getElementById('fimBt'),b2=document.getElementById('fimBt2');b2.style.display='none';
+  const desenha=()=>{
+    const nv=campanhaInfo().bencaos||{},livre=essLivre(),B=BENCAOS[sel],k=nv[sel]||0,custo=k+1;
+    document.getElementById('fimTxt').textContent='Fogueira';
+    document.getElementById('fimSub').textContent=ficam.length?`${listaE(ficam.map(x=>ESP[x.esp].nome))} ${ficam.length>1?'deixaram':'deixou'} sua força: ${ganho} ✨`:'Fortaleça as suas criaturas com a Essência guardada.';
+    document.getElementById('fimPorque').innerHTML=`<div class="fogTopo"><span class="essP">✨ ${livre} Essência</span></div>
+      <div class="fogG">${els.map(el=>{const x=BENCAOS[el],m=nv[el]||0;return `<button class="${el===sel?'sel':''}" onclick="fogueiraTela.pick('${el}')"><span class="rom" style="color:${x.cor}">${ROMANO[m]}</span><span class="ic">${x.ic}</span><span class="ef${m?'':' off'}" style="${m?'color:'+x.cor:''}">${x.ef[Math.max(0,m-1)]} ${x.un}</span></button>`;}).join('')}</div>
+      <div class="fogDet"><b>${B.ic} ${B.nome}${k?' '+ROMANO[k]:''}</b><p>${B.txt}${k<3?` Próximo: ${B.ef[k]} ${B.un}.`:''}</p>
+      <button ${k>=3?'disabled':''} onclick="fogueiraTela.sobe()">${k>=3?'Nível máximo':`Fortalecer · ${custo} ✨`}</button>${erro?'<p class="err">Essência insuficiente.</p>':''}</div>`;
+    b.textContent='Continuar';b.disabled=false;
+  };
+  fogueiraTela.pick=el=>{sel=el;erro=false;desenha();};
+  fogueiraTela.sobe=()=>{const nv={...(campanhaInfo().bencaos||{})},k=nv[sel]||0;if(k>=3)return;
+    if(essLivre()<k+1){erro=true;desenha();return;}
+    nv[sel]=k+1;salvaCampanha({bencaos:nv});erro=false;desenha();};
+  b.onclick=()=>{document.getElementById('fim').style.display='none';prox();};
+  desenha();
 }
 // o exército que segue para a próxima fase (sem mestre, figurantes, elementais e dominados)
 const exercitoCampanha=()=>J.un.filter(u=>u.lado===0&&!ESP[u.esp].mestre&&!u.figurante&&!u.elemental&&u.dominado==null).map(u=>({esp:u.esp,xp:u.xp||0,c:u.c,r:u.r}));
@@ -4069,7 +4186,7 @@ function mostraFimF1(v,motivo){
     document.getElementById('fimSub').textContent=`O Bando Infernal caiu no turno ${J.turno}.`;
     document.getElementById('fimPorque').innerHTML=`<div class="estrelasF1">${[0,1,2].map(i=>`<span class="${i<est?'on':''}">★</span>`).join('')}</div>
       <p class="porque" style="text-align:center">${salvas} de ${vs.length} vilas salvas · ${camp} de ${tot} camponeses vivos</p>`;
-    b.textContent='Continuar';b.onclick=()=>jogarFase2();
+    {const ex=J.un.filter(u=>u.lado===0&&!ESP[u.esp].mestre&&!u.figurante&&!u.elemental&&u.dominado==null).map(u=>({esp:u.esp,xp:u.xp||0,c:u.c,r:u.r}));b.textContent='Continuar';b.onclick=()=>quemSegueTela(1,ex,jogarFase2);}
     b2.textContent='Tentar novamente';b2.onclick=()=>jogarFase1();
   }else{
     document.getElementById('fimSub').textContent=motivo==='vilas'?`O Bando Infernal destruiu todas as vilas no turno ${J.turno}.`:`${OM(0)} caiu no turno ${J.turno}.`;
@@ -4248,6 +4365,7 @@ function inicioTurno(l){
     // quem a segura não pode se curar parado ali
     if(ehConstrucao(t)&&J.dono[K(u.c,u.r)]===l&&!ehCristal(K(u.c,u.r)))cura=Math.round(e.hp*(ehF1()?0.4:0.2));
     if(e.mestre)cura=Math.max(cura,8);
+    if(l===0&&e.el==='agua'&&nivBencao('agua'))cura+=[0,2,3,4][nivBencao('agua')]; // bênção da Água (Fogueira)
     cura=Math.min(cura,e.hp-u.hp);
     if(cura>0){u.hp+=cura;flutua(u,'+'+cura,'#6ee08a');}
   }
@@ -4761,7 +4879,7 @@ function danoBase(a,d){
   const ea=ESP[a.esp],ed=ESP[d.esp];
   // sem mana: ataca 25% mais fraco e recebe 25% mais dano
   const fome=(a.semMana?0.75:1)*(d.semMana?1.25:1);
-  return 1.3*ea.atk*20/(20+ed.def)*multEl(ea.el,ed.el)*fome*atkTer(a.esp,J.ter[K(a.c,a.r)])*(a.elemental?forcaContra(d):1)*(d.chama&&ea.el==='agua'?4/3:1); // Fase 2: a Água faz o dobro de dano nas chamas
+  return 1.3*ea.atk*20/(20+ed.def+(d.lado===0&&ed.el==='planta'?nivBencao('planta'):0))*multEl(ea.el,ed.el)*fome*(a.lado===0&&ea.el==='fogo'?1+.05*nivBencao('fogo'):1)*atkTer(a.esp,J.ter[K(a.c,a.r)])*(a.elemental?forcaContra(d):1)*(d.chama&&ea.el==='agua'?4/3:1); // Fase 2: a Água faz o dobro de dano nas chamas
 }
 // Golpe Místico: criaturas Arcanas (não os mestres) ignoram até 20% da evasão do terreno do alvo
 const GOLPE_MISTICO=0.20;
@@ -7380,6 +7498,7 @@ function desenha(now){
   for(const k of cam.vulc)if(!(mostraAlc&&!J.alc.dest.has(k))){const [x,y]=centro(...DK(k));brilhoVulcao(x,y,k);}
   if(J.vilas)desenhaVilas(now);
   if(ehF3())desenhaF3(now); // formigueiros, brotos pegando e os rios enchendo
+  if(ehF3()&&J.f1.vilaSem&&J.vilas)desenhaSemVilas(now); // as vilas com Semente para chamar
   if(ehF2())fumacaQueimF3(now); // Fase 2: a mata que terminou de queimar fumega e brilha em brasa
   if((ehF2()||ehF3())&&J.f1.caiporaK!=null)desenhaCaipora(); // a Caipora fica de pé na casa dela
   const tom=faseAtual().tom;
