@@ -2504,7 +2504,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.19'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.20'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -3751,8 +3751,7 @@ const AVISOS_F3={
   plantar:{falas:[{quem:'img',esp:'semente'},{quem:'soldado',cara:'feliz',txt:'Leve a Semente até uma mata queimada.'},'feliz|Plante ela, que o broto pega!'],bt:'Começar'},
   plantando:{falas:['feliz|O broto está pegando!','feliz|Depois de plantar, logo a mata renascerá.']},
   raiz:{falas:['feliz|A Semente criou raízes!',{quem:'soldado',cara:'feliz',txt:'Logo vai recuperar a mata.'}]},
-  caiporaBroto:{falas:[{quem:'caipora',txt:'A mata precisa de ajuda.'},{quem:'caipora',txt:'Vou levar sementes para todas as vilas.'}],bt:'Continuar'},
-  vilasSem:{falas:[{quem:'soldado',cara:'feliz',txt:'Toque numa vila para chamar uma Semente de lá.'}],bt:'Continuar',volta:true},
+  caiporaBroto:{falas:[{quem:'caipora',txt:'A mata precisa de ajuda.'},{quem:'caipora',txt:'Vou levar as sementes para as vilas.'}],bt:'Continuar'},
   comeu:{falas:['furia|As saúvas comeram o broto!',{quem:'soldado',txt:'Proteja as Sementes enquanto elas plantam!'}]},
   ninho:{falas:['Tanajura! O cheiro das sementes atraiu elas...',{quem:'soldado',txt:'Saúva corta folha nova.<br>E a gente vai plantar justamente isso.'}],bt:'Continuar',volta:true},
   ninhos:{falas:['Tem mais... tem ninho por todo lado!'],bt:'Continuar',volta:true},
@@ -3926,11 +3925,12 @@ async function caiporaBrotoF3(kb){
       J.f1.chegando=false;
     }
     J.f1.semTour=null;J.f1.vilasSemK=vs[0]??kb;
-    await avisoJaF1('vilasSem');if(J!==jogo)return;
-    J.ocupado=false;
+    await dorme(500);if(J!==jogo)return; // (sem fala aqui: o sinal na vila já mostra o que fazer)
+    soltaEnquadra();seguir(mestreDe(0),true);
+    J.ocupado=false;atualiza();
   }else{const todas=vilasVivas().sort((a,b)=>d6c(...DK(a),...DK(kb))-d6c(...DK(b),...DK(kb)));
     J.f1.vilaSemOk=todas.slice(0,1);J.f1.vilaSemFila=todas.slice(1);J.f1.vilaSemLote=0;
-    J.f1.caiporaFala=kb;J.f1.vilasSemK=todas[0]??kb;avisoF1('caiporaBroto');avisoF1('vilasSem');}
+    J.f1.caiporaFala=kb;J.f1.vilasSemK=todas[0]??kb;avisoF1('caiporaBroto');}
   J.f1.vilaSem=true;log('🌿 A Caipora fez as Sementes nascerem nas vilas.');
   atualiza();
 }
@@ -3997,6 +3997,28 @@ function desenhaSemVilas(now){
     ctx.imageSmoothingEnabled=false;ctx.globalAlpha=ok?1:.85;
     ctx.drawImage(iconeSementeVila(!ok),Math.round(cx-5.5*S),Math.round(cy-6.5*S),Math.round(11*S),Math.round(13*S));
     ctx.restore();}
+}
+// tocar na sementinha (ou na vila) com a Semente pronta: ela cai do ícone direto na vila, sem menu; sem poder, o menu explica por quê
+function toqueSementeVila(v){
+  if(J.vez!==0||J.ocupado||J.fim||!vilaSemF3(v)||vilaTemSemF3(v))return false;
+  if(!semProntaF3(v)){abrirVilaF3(v);return true;}
+  desseleciona();J.invocando=null;J.invocHex=null;J.invHex=null;J.menuInv=false;
+  const [vx,vy]=centro(...DK(v)),ix=vx+13,iy=vy-26;
+  J.vilaInv=v;invocaVilaF3();
+  const u=J.un[J.un.length-1];
+  if(u&&u.esp==='semente'&&u.vila===v&&VEL&&!document.hidden){
+    const [x,y]=centro(u.c,u.r);u.anim={x0:ix,y0:iy,t0:performance.now(),dur:520,arco:R*.35,pulos:1};
+    setTimeout(()=>{for(let i=0;i<7;i++)fx.push({folha:true,x:x+(i%3-1)*R*.3,y:y+R*.2,dx:(Math.random()-.5)*R*1.2,t0:performance.now()+i*40,dur:900,cor:i%2?'#7fe08a':'#4f9a3e'});
+      if(u.anim&&u.anim.dur===520)u.anim=null;atualiza();},530);}
+  return true;
+}
+// a sementinha que boia sobre a vila: o toque nela vale mesmo se cair na casa do lado
+function vilaDoIcone(x,y){
+  if(!ehF3()||!J.f1?.vilaSem||J.vez!==0)return null;
+  const raio=ultTipo!=='mouse'?20:15;
+  for(const ks of Object.keys(J.vilas)){const v=+ks;if(!vilaSemF3(v)||vilaTemSemF3(v))continue;
+    const [vx,vy]=centro(...DK(v));if((x-vx-13)**2+(y-vy+26)**2<=raio*raio)return v;}
+  return null;
 }
 function abrirVilaF3(k){desseleciona();J.invocando=null;J.invocHex=null;J.invHex=null;J.menuInv=false;J.vilaInv=k;atualiza();}
 function invocaVilaF3(){
@@ -5634,14 +5656,14 @@ function proximaCriatura(){
   if(J.evo)J.evo=null;
   J.invocando=null;J.invocHex=null;J.menuInv=false;J.invHex=null;J.insp=null;J.menuAlvo=null;
   if(!J.proxVistos||J.proxVistos.turno!==J.turno)J.proxVistos={turno:J.turno,ids:new Set()};
-  const vistos=J.proxVistos.ids,atual=J.sel||(J.vilaInv!=null?ps.find(p=>p.pVila===J.vilaInv):null);
+  const vistos=J.proxVistos.ids,atual=J.sel||(J.proxVila!=null?ps.find(p=>p.pVila===J.proxVila):null);J.proxVila=null;
   if(atual)vistos.add(atual.id);
   let livres=ps.filter(u=>!vistos.has(u.id)&&u!==atual);
   if(!livres.length){vistos.clear();livres=ps.filter(u=>u!==atual);if(!livres.length)livres=ps;}
   const ref=atual||mestreDe(0)||livres[0];
   livres.sort((a,b)=>d6c(a.c,a.r,ref.c,ref.r)-d6c(b.c,b.r,ref.c,ref.r));
   const u=livres[0];vistos.add(u.id);
-  if(u.pVila!=null){abrirVilaF3(u.pVila);CAM.alvo={c:u.c,r:u.r,fixo:true};CAM.centrar=false;CAM.mao=false;CAM.parado=false;atualiza();return;} // vai até a vila e abre o menu da Semente
+  if(u.pVila!=null){desseleciona();J.vilaInv=null;CAM.alvo={c:u.c,r:u.r,fixo:true};CAM.centrar=false;CAM.mao=false;CAM.parado=false;piscaHex(u.pVila,'#6ee08a',900);J.proxVila=u.pVila;atualiza();return;} // vai até a vila (a sementinha dela é o próximo toque)
   desseleciona();seleciona(u);atualiza();
 }
 function abrirForca(){if(!podeForca(0)||J.ocupado)return;desseleciona();J.mg=null;J.fz={fase:'alvo'};J.prevArea=null;atualiza();}
@@ -5769,7 +5791,7 @@ async function clique(c,r){
   // clicar numa construção válida ao lado do mestre abre o menu de invocação ali
   const podeAndarAli=s&&!menuAberto()&&J.alc&&J.alc.dest.has(k);
   if(!alvo&&!podeAndarAli&&hexesInvocacao(0).has(k)){abrirInvHex(k);return;}
-  if(!alvo&&!podeAndarAli&&vilaSemF3(k)){abrirVilaF3(k);return;} // Fase 3: a vila chama uma Semente
+  if(!alvo&&!podeAndarAli&&vilaSemF3(k)){if(!toqueSementeVila(k))abrirVilaF3(k);return;} // Fase 3: a vila chama uma Semente (pronta: cai direto)
   if(s&&menuAberto()){
     // com o menu do mestre aberto, clicar no mapa fecha o menu
     desseleciona();
@@ -8461,8 +8483,9 @@ function menus(){
 }
 
 // ---------- Entrada ----------
+const pontoMundo=ev=>{const b=cv.getBoundingClientRect();return paraMundo((ev.clientX-b.left)*TW/b.width,(ev.clientY-b.top)*TH/b.height);};
 function hexNoPonto(ev){
-  const b=cv.getBoundingClientRect(),[x,y]=paraMundo((ev.clientX-b.left)*TW/b.width,(ev.clientY-b.top)*TH/b.height);
+  const [x,y]=pontoMundo(ev);
   let best=null,bd=Infinity;
   for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const [cx,cy]=centro(c,r),d=(cx-x)**2+(cy-y)**2;if(d<bd){bd=d;best=[c,r];}}
   return bd<=R*R?best:null;
@@ -8482,7 +8505,9 @@ let tBloq=0; // depois de arrastar, pinçar ou segurar o dedo, o "click" que vem
 const bloqueiaClique=()=>{tBloq=performance.now()+300;};
 // celular em pé, sem criatura selecionada: a ficha mostra a casa tocada; tocar de novo nela, arrastar o mapa ou cancelar a recolhe
 const fichaSolta=()=>RETRATO()&&ultTipo!=='mouse'&&!J.sel&&!J.insp&&!!J.hoverInfo;
-cv.addEventListener('click',ev=>{if(performance.now()<tBloq)return;const h=hexNoPonto(ev);if(!h)return;
+cv.addEventListener('click',ev=>{if(performance.now()<tBloq)return;
+  if(J&&!J.ocupado&&!(J.f1&&proxAvisoF1())){const v=vilaDoIcone(...pontoMundo(ev));if(v!=null){J.vilaInv=null;toqueSementeVila(v);atualiza();return;}} // Fase 3: a sementinha da vila
+  const h=hexNoPonto(ev);if(!h)return;
   if(ultTipo!=='mouse'){const mesma=fichaSolta()&&J.hoverInfo[0]===h[0]&&J.hoverInfo[1]===h[1]&&!unidadeEm(...h);J.hoverInfo=mesma?null:h;}
   clique(...h);});
 // ---------- Mini mapa (canto superior direito) ----------
