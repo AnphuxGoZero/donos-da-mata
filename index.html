@@ -3516,7 +3516,7 @@ function desenhaVilas(now){
 // (o ataque zera o broto daquela casa); a soldado fica de guarda no formigueiro. Sem evolução da Semente nesta fase.
 // Vitória: todas as matas queimadas com brotos. Derrota: o mestre cair. Estrelas: vencer · nenhum broto comido · poucos turnos.
 const F3_CHAVE='senhoresDoVeu.fase3';
-const F3_PLANT_NINHO=2,F3_MIN_QUEIM=6,F3_NASCE=3,F3_MAX_OPER=4,F3_GUARDA=2,F3_RENASCE=0.3;
+const F3_PLANT_NINHO=1,F3_MIN_QUEIM=6,F3_NASCE=3,F3_MAX_OPER=4,F3_GUARDA=2,F3_RENASCE=0.3;
 const ehF3=()=>!!(J&&J.f1&&J.f1.n===3);
 function fase3Info(){try{return JSON.parse(localStorage.getItem(F3_CHAVE))||{};}catch(e){return {};}}
 const f3MetaTurnos=n=>4+Math.ceil(n*0.7); // a estrela dos turnos: cresce com a quantidade de mata queimada
