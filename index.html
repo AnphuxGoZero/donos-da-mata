@@ -2481,7 +2481,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.13'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.14'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -3835,7 +3835,8 @@ async function brotaF3(u,k){
   log(`🌱 A mata queimada voltou a brotar (${J.f1.brotos.length} de ${J.f1.queim0}).`);
   atualiza();if(anima)await dorme(900);
   await vilasVerdesF3();if(J.fim)return;
-  if(J.f1.brotos.length===1&&!J.f1.vistos.caiporaBroto){await caiporaBrotoF3(k);if(J.fim)return;}
+  // a Caipora vem pelo 1º broto, mas nunca no mesmo turno em que as tanajuras chegam: espera a sua próxima vez
+  if(J.f1.brotos.length===1&&!J.f1.vistos.caiporaBroto){if(J.f1.ninho1==null||J.f1.ninho1>=J.turno)J.f1.caiporaPend=k;else{await caiporaBrotoF3(k);if(J.fim)return;}}
   checaVitoriaF3();
 }
 // vila com todas as matas queimadas em volta já brotando: comemora e ganha um camponês (uma vila em ruínas volta a ter casa)
@@ -5510,25 +5511,26 @@ function magiaDoBotao(){
 // sob Sono/Petrificar também (começa o turno já marcado como "agiu").
 const criaturasPendentes=()=>J.un.filter(u=>u.lado===0&&!ESP[u.esp].mestre&&!u.agiu&&!(ehF3()&&u.esp==='semente'&&plantandoU(u)&&!J.un.some(e=>e.lado!==0&&d6(u,e)<=ESP[u.esp].alc))); // Fase 3: a Semente enraizada só conta se tiver quem atacar ao lado
 // Fase 3: vilas que já podem chamar uma Semente agora (contam como coisa a fazer no turno)
-const vilasSemProntas=()=>ehF3()&&J.f1?.vilaSem&&J.vilas?Object.keys(J.vilas).map(Number).filter(v=>vilaSemF3(v)&&semProntaF3(v)):[];
+// (vila com alguém em cima fica de fora: o toque ali seleciona quem está na casa, não abre a vila)
+const vilasSemProntas=()=>ehF3()&&J.f1?.vilaSem&&J.vilas?Object.keys(J.vilas).map(Number).filter(v=>vilaSemF3(v)&&semProntaF3(v)&&!unidadeEm(...DK(v))):[];
 // cada clique vai para a pendente mais perto da atual, sem repetir até ter passado por todas
 function abreFichaSel(){if(J&&J.sel)abreFicha(J.sel.id);}
 function proximaCriatura(){
   if(J.vez!==0||J.ocupado||J.fim||CENA)return;
-  // pendentes: criaturas que ainda agem + (Fase 3) vilas com Semente pronta, que entram como {vila,c,r,id:'v…'}
-  const ps=[...criaturasPendentes(),...vilasSemProntas().map(v=>{const [c,r]=DK(v);return {vila:v,c,r,id:'v'+v};})];if(!ps.length)return;
+  // pendentes: criaturas que ainda agem + (Fase 3) vilas com Semente pronta, que entram como {pVila,c,r,id:'v…'} (a Semente já tem .vila: não confundir)
+  const ps=[...criaturasPendentes(),...vilasSemProntas().map(v=>{const [c,r]=DK(v);return {pVila:v,c,r,id:'v'+v};})];if(!ps.length)return;
   if(J.mg||J.fz)sairMagia();
   if(J.evo)J.evo=null;
   J.invocando=null;J.invocHex=null;J.menuInv=false;J.invHex=null;J.insp=null;J.menuAlvo=null;
   if(!J.proxVistos||J.proxVistos.turno!==J.turno)J.proxVistos={turno:J.turno,ids:new Set()};
-  const vistos=J.proxVistos.ids,atual=J.sel||(J.vilaInv!=null?ps.find(p=>p.vila===J.vilaInv):null);
+  const vistos=J.proxVistos.ids,atual=J.sel||(J.vilaInv!=null?ps.find(p=>p.pVila===J.vilaInv):null);
   if(atual)vistos.add(atual.id);
   let livres=ps.filter(u=>!vistos.has(u.id)&&u!==atual);
   if(!livres.length){vistos.clear();livres=ps.filter(u=>u!==atual);if(!livres.length)livres=ps;}
   const ref=atual||mestreDe(0)||livres[0];
   livres.sort((a,b)=>d6c(a.c,a.r,ref.c,ref.r)-d6c(b.c,b.r,ref.c,ref.r));
   const u=livres[0];vistos.add(u.id);
-  if(u.vila!=null){abrirVilaF3(u.vila);CAM.alvo={c:u.c,r:u.r,fixo:true};CAM.centrar=false;CAM.mao=false;CAM.parado=false;atualiza();return;} // vai até a vila e abre o menu da Semente
+  if(u.pVila!=null){abrirVilaF3(u.pVila);CAM.alvo={c:u.c,r:u.r,fixo:true};CAM.centrar=false;CAM.mao=false;CAM.parado=false;atualiza();return;} // vai até a vila e abre o menu da Semente
   desseleciona();seleciona(u);atualiza();
 }
 function abrirForca(){if(!podeForca(0)||J.ocupado)return;desseleciona();J.mg=null;J.fz={fase:'alvo'};J.prevArea=null;atualiza();}
@@ -5823,6 +5825,8 @@ async function fimTurnoJogo(){
   if(J.fim)return;
   const antes=faseIdx();
   J.vez=0;J.turno++;avancaCiclo();anunciaFase(antes);inicioTurno(0);atualiza();
+  if(ehF3()&&J.f1.caiporaPend!=null&&!J.fim){const k=J.f1.caiporaPend;J.f1.caiporaPend=null; // Fase 3: a Caipora que esperou as tanajuras chega agora
+    if(!J.f1.vistos.caiporaBroto){J.ocupado=true;try{await caiporaBrotoF3(k);}finally{J.ocupado=false;atualiza();}}}
 }
 
 // ---------- IA ----------
