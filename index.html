@@ -2459,7 +2459,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.06'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.07'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -3651,13 +3651,13 @@ function animaChuva(d){
   const cv=document.createElement('canvas');d.appendChild(cv);const g=cv.getContext('2d');
   let gotas=[],resp=[],w=0,h=0,dens=-1,ult=performance.now();
   const nova=ini=>{const z=Math.random();return {x:Math.random()*(w+80)-20,y:ini?Math.random()*h:-10-Math.random()*80,
-    v:380+z*560,len:5+z*13,lw:z>.75?2:1,a:.18+z*.42,cor:z>.55?'#e6f0ff':'#9fbbe0',chao:h*(.15+Math.random()*.95)};};
+    v:380+z*560,len:6+z*14,lw:z>.7?2:1,a:.26+z*.46,cor:z>.55?'#e6f0ff':'#9fbbe0',chao:h*(.15+Math.random()*.95)};};
   function passo(now){
     if(!d.isConnected)return;requestAnimationFrame(passo);
     const dt=Math.min(.05,(now-ult)/1000);ult=now;
     const W=d.clientWidth,H=d.clientHeight;if(!W||!H)return;
     if(W!==w||H!==h){w=W;h=H;cv.width=W;cv.height=H;gotas=[];}
-    const alvo=Math.round(W*H/(d.classList.contains('forte')?2300:5200));dens=dens<0?alvo:dens+(alvo-dens)*Math.min(1,dt*2);d._n=gotas.length; // começa já chovendo; depois a intensidade muda devagar
+    const alvo=Math.round(W*H/(d.classList.contains('forte')?1700:3200));dens=dens<0?alvo:dens+(alvo-dens)*Math.min(1,dt*2);d._n=gotas.length; // começa já chovendo; depois a intensidade muda devagar
     const n=Math.round(dens);while(gotas.length<n)gotas.push(nova(!gotas.length&&!resp.length));if(gotas.length>n)gotas.length=n;
     g.clearRect(0,0,W,H);g.lineCap='round';
     for(const p of gotas){
