@@ -259,12 +259,14 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 .segueG .nm{font-weight:700;font-size:13.5px}.segueG small{color:var(--dim);font-size:12px}.segueG .vai{color:var(--acc)}
 .bencTag{display:inline-block;padding:0 5px;border:1px solid;border-radius:4px;font-size:11px;font-family:Georgia,serif;line-height:15px;vertical-align:1px;white-space:nowrap}
 .essP{display:inline-block;padding:4px 12px;border-radius:99px;background:#3a3016;color:#ffd77a;font-weight:700;font-size:14px}
-.fogTopo{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:6px;margin:0 0 10px}.fogTopo .essP,.fogTopo .arvReset{white-space:nowrap;margin:0}
+.fogTopo{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:6px;margin:0 0 10px}.fogTopo .essP,.fogTopo .arvReset{white-space:nowrap;margin:0}.essMais{margin-left:6px;color:#9dffb8;font-size:12.5px}.arvReset.ic{width:34px;height:34px;padding:0;font-size:17px;display:inline-flex;align-items:center;justify-content:center}
 .fogG{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
 .fogG button{position:relative}.fogG .ic{font-size:26px;line-height:1}.fogG .ef{font-weight:700;font-size:15px}.fogG .ef.off{color:var(--dim);opacity:.7}
 .fogG .rom{position:absolute;top:5px;right:8px;font-family:Georgia,serif;font-size:13px;letter-spacing:1px}
 .fogDet{margin-top:10px;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
 .arvAbas{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;margin:0 0 8px}.arvAbas button{height:auto;min-height:0;padding:7px 4px;font-size:13px;font-weight:700;border-radius:8px;border:1px solid var(--line);color:var(--c);display:flex;flex-direction:column;align-items:center;gap:1px}
+.arvAbas button{position:relative;overflow:hidden;min-height:54px;justify-content:center}.arvAbas button>*:not(.abaArte){position:relative;z-index:1;text-shadow:0 1px 3px #000,0 0 6px #000}.arvAbas small{color:#e8e8e8!important}
+.abaArte{position:absolute;inset:0;background-size:cover;background-position:center;filter:brightness(.42) saturate(.5);z-index:0;transition:filter .2s}.arvAbas button.sel .abaArte{filter:brightness(.8)}
 .arvAbas button.sel{background:color-mix(in srgb,var(--c) 22%,transparent);border-color:var(--c)}.arvAbas small{color:var(--dim);font-weight:400;font-size:11px}
 .arvVert{display:flex;flex-direction:column;align-items:center;min-height:324px;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:12px 10px;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 10%,transparent),transparent 70%)}
 .arvVert>.arvNo{width:54%}.arvVert .arvGarfo{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}.arvRamo{position:relative;width:100%;height:28px;color:var(--c)}.arvRamo svg{display:block;width:100%;height:100%}.arvRamo i{position:absolute;bottom:0;transform:translateX(-50%);border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid currentColor}.arvRamo i.off{border-top-color:#3a3f4a}
@@ -2534,7 +2536,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.32'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.33'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -4378,7 +4380,8 @@ const ARTE_IMG={f1:'img/arvore/f1.webp?v=44a95821',f2a:'img/arvore/f2a.webp?v=a8
   a1:'img/arvore/a1.webp?v=59de23fa',a2a:'img/arvore/a2a.webp?v=baf1f9fd',a2b:'img/arvore/a2b.webp?v=af64b696',a3:'img/arvore/a3.webp?v=0d7035f9',
   p1:'img/arvore/p1.webp?v=e585ef75',p2a:'img/arvore/p2a.webp?v=372cc75e',p2b:'img/arvore/p2b.webp?v=385357d3',p3:'img/arvore/p3.webp?v=176c7e84',
   xFA:'img/arvore/xFA.webp?v=748824c2',xFP:'img/arvore/xFP.webp?v=8f28b4e0',xAP:'img/arvore/xAP.webp?v=262b1c24'};
-const ARTE_POS={xAP:'72% 40%'}; // onde centrar a cena quando o nó corta as laterais (Segredos são quase quadrados)
+const ARTE_POS={xAP:'72% 40%'};
+const ABA_IMG={fogo:'img/arvore/aba-fogo.webp?v=21718507',agua:'img/arvore/aba-agua.webp?v=5fbcd1d4',planta:'img/arvore/aba-planta.webp?v=a716cf18'}; // fundo das abas da Árvore (2:1) // onde centrar a cena quando o nó corta as laterais (Segredos são quase quadrados)
 const arteNo=(id,cls='arte')=>ARTE_IMG[id]?`<span class="${cls} foto" style="background-image:url(${ARTE_IMG[id]})${ARTE_POS[id]?`;background-position:${ARTE_POS[id]}`:''}"></span>`
   :`<span class="${cls}" style="background-image:url(${arteURL(id)}),radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--c) 40%,#14161b),#101216 80%)"></span>`;
 function quemSegueTela(n,lista,prox,est){
@@ -4418,7 +4421,7 @@ function fogueiraTela(n,segue,ficam,prox,est,teste){
       const g=[f1,f2].filter(vis); // só aparece o que já pode ser usado (o lado fechado do garfo continua à vista)
       const e1=niv(f1)>0,e2=niv(f2)>0,algum=e1||e2; // antes de escolher, as duas setas ficam acesas
       return `<div class="arvVert" style="--c:${R.cor}">${no(a)}${g.length?ramo(1,!algum||e1,!algum||e2)+`<div class="arvGarfo">${g.map(no).join('')}</div>`:''}${vis(z)?ramo(0,e1,e2)+no(z):''}</div>`;};
-    const abas=els.length>1?`<div class="arvAbas">${els.map(el=>{const R=ARVORE[el],k=tem.filter(id=>NO_ARV[id].el===el).length;return `<button class="${el===aba?'sel':''}" style="--c:${R.cor}" onclick="fogueiraTela.aba('${el}')">${R.ic} ${R.nome}<small>${k?k+' '+(k>1?'pontos':'ponto'):'—'}</small></button>`;}).join('')}</div>`:'';
+    const abas=els.length>1?`<div class="arvAbas">${els.map(el=>{const R=ARVORE[el],k=tem.filter(id=>NO_ARV[id].el===el).length;return `<button class="${el===aba?'sel':''}" style="--c:${R.cor}" onclick="fogueiraTela.aba('${el}')">${ABA_IMG[el]?`<span class="abaArte" style="background-image:url(${ABA_IMG[el]})"></span>`:''}<b>${R.nome}</b></button>`;}).join('')}</div>`:'';
     const cruz=ARV_CRUZ.filter(x=>vis(x.id));
     const x=NO_ARV[sel],s=st(sel),k=niv(sel),m=maxNo(sel),custo=custoNo(sel);
     let dica='';
@@ -4427,10 +4430,10 @@ function fogueiraTela(n,segue,ficam,prox,est,teste){
     else if(compravel(s)){dica=x.p===2&&!k?`Escolher este fecha ${ARVORE[x.el].nos.find(y=>y.p===2&&y.id!==sel).nome}. `:'';dica+=livre<custo?`Precisa de ${custo} ✨.`:`Toque em ${k?'Fortalecer':'Despertar'} para confirmar.`;}
     const niveis=m>1?`<div class="nivL">${x.ef.map((e,i)=>`<span class="${i<k?'on':''}${i===k&&s!=='tem'?' prox':''}">${ROM[i+1]} ${e}</span>`).join('')}</div>`:'';
     document.getElementById('fimTxt').textContent='Fogueira';
-    document.getElementById('fimSub').textContent=teste?'Modo de teste: a Essência de teste não conta nas fases.':ganho?`A Fogueira ganhou força: +${ganho} ✨${agora<ESS_MAX?' (3 estrelas dão +1)':''}`:antes>=ESS_MAX?'Esta fase já deu toda a sua Essência.':'Sem Essência nova: faça 3 estrelas para ganhar +1 ✨.';
-    document.getElementById('fimPorque').innerHTML=`<div class="fogTopo"><span class="essP">✨ ${livre} Essência</span>${teste?`<button class="arvReset" onclick="fogueiraTela.ess(1)">+1 ✨</button><button class="arvReset" onclick="fogueiraTela.ess(-1)">−1 ✨</button>`:''}${tem.length?`<button class="arvReset" onclick="fogueiraTela.reset()">↺ Recomeçar</button>`:''}</div>
+    document.getElementById('fimSub').textContent='';
+    document.getElementById('fimPorque').innerHTML=`<div class="fogTopo"><span class="essP">✨ ${livre} Essência${ganho?`<span class="essMais">+${ganho}</span>`:''}</span>${teste?`<button class="arvReset" onclick="fogueiraTela.ess(1)">+1 ✨</button><button class="arvReset" onclick="fogueiraTela.ess(-1)">−1 ✨</button>`:''}${tem.length?`<button class="arvReset ic" title="Recomeçar a árvore" aria-label="Recomeçar a árvore" onclick="fogueiraTela.reset()">↺</button>`:''}</div>
       ${abas}${col(aba)}
-      <div class="fogDet"><b>${x.ic} ${x.nome}${m>1?` <span class="nivB">${k?`nível ${ROM[k]} de ${ROM[m]}`:`${m} níveis`}</span>`:''}</b><p>${x.txt}</p>${niveis}<p class="dica">${dica||'&nbsp;'}</p></div>
+      <div class="fogDet"><b>${x.nome}${m>1?` <span class="nivB">${k?`nível ${ROM[k]} de ${ROM[m]}`:`${m} níveis`}</span>`:''}</b><p>${x.txt}</p>${niveis}<p class="dica">${dica||'&nbsp;'}</p></div>
       ${cruz.length?`<div class="arvCruz"><div class="arvCab">✦ Segredos</div><div class="arvCruzG">${cruz.map(y=>no(y.id)).join('')}</div></div>`:''}`;
     document.querySelector('#fim .cx').classList.add('fogCx');
     b.textContent=teste?'Fechar':'Continuar';b.disabled=false;
