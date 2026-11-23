@@ -260,9 +260,9 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 .fogG button{position:relative}.fogG .ic{font-size:26px;line-height:1}.fogG .ef{font-weight:700;font-size:15px}.fogG .ef.off{color:var(--dim);opacity:.7}
 .fogG .rom{position:absolute;top:5px;right:8px;font-family:Georgia,serif;font-size:13px;letter-spacing:1px}
 .fogDet{margin-top:10px;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
-.arvG{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px}.arvCol{display:flex;flex-direction:column;align-items:stretch;border:1px solid var(--line);border-radius:8px;padding:6px}
-.arvCab{text-align:center;font-weight:700;font-size:13px;color:var(--c,var(--acc));margin:0 0 6px}.arvLig{width:2px;height:8px;background:var(--line);margin:0 auto}
-.arvGarfo{display:grid;grid-template-columns:1fr 1fr;gap:4px}.arvCruz{margin-top:8px;border:1px dashed var(--line);border-radius:8px;padding:6px}.arvCruzG{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:4px}
+.arvG{display:flex;flex-direction:column;gap:8px}.arvCol{border:1px solid var(--line);border-left:3px solid var(--c);border-radius:8px;padding:6px 8px 8px}
+.arvCab{font-weight:700;font-size:13px;color:var(--c,var(--acc));margin:0 0 6px}.arvLinha{display:grid;grid-template-columns:1fr 12px 1fr 12px 1fr;align-items:center}
+.arvLig{height:2px;background:var(--line)}.arvGarfo{display:flex;flex-direction:column;gap:4px}.arvGarfo .arvNo{flex-direction:row;justify-content:center;gap:5px;padding:5px 4px}.arvGarfo .arvNo .ic{font-size:16px}.arvGarfo .arvNo small{margin-left:auto;white-space:nowrap}.arvNo small{white-space:nowrap}.arvCruz{margin-top:8px;border:1px dashed var(--line);border-radius:8px;padding:6px}.arvCruzG{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:4px}
 .arvNo{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 2px;height:auto;min-height:0;border-radius:7px;border:1px solid var(--line);font-size:11px;line-height:1.15}
 .arvNo .ic{font-size:20px;line-height:1}.arvNo .nm{font-weight:700}.arvNo small{color:#ffd77a;font-size:10.5px}
 .arvNo.tem{background:color-mix(in srgb,var(--c) 28%,transparent);border-color:var(--c)}.arvNo.pode{border-color:var(--c)}
@@ -2489,7 +2489,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.15'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.16'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -3722,7 +3722,7 @@ const AVISOS_F3={
   ninhoCaiu:{falas:['feliz|Derrubamos o formigueiro!',{quem:'soldado',txt:'Cuidado: as que fugiram podem cavar outro.'}]},
   renasce:{falas:['furia|Olha lá! Outro formigueiro!'],bt:'Continuar',volta:true},
   formig:{falas:['Saúvas! Elas saem daquele formigueiro.']},
-  vilaVerde:{falas:['feliz|A mata em volta da vila está brotando!','feliz|Mais uma família voltou pra vila!']},
+  vilaVerde:{falas:['feliz|Mais uma família voltou pra vila!']},
   inunda:{falas:['Os rios estão inundando!'],bt:'Continuar'},
   vitoria:{falas:[{quem:'soldado',txt:'Primeiro os Cães Infernais...<br>Agora essa chuva que não para...'},
     {quem:'caipora',txt:'Nada disso é normal.'},{quem:'caipora',txt:'Quem será que está por trás disso?'}],bt:'Continuar'},
@@ -4241,7 +4241,7 @@ function fogueiraTela(n,segue,ficam,prox,est){
     const no=id=>{const x=NO_ARV[id],s=st(id),R=ARVORE[x.el]||ARVORE[x.els[0]],cor=R.cor,ve=s!=='oculto'&&(s!=='trancado'||x.p<4);
       return `<button class="arvNo ${s}${id===sel?' sel':''}" style="--c:${cor}" onclick="fogueiraTela.pick('${id}')"><span class="ic">${ve?x.ic:'❔'}</span><span class="nm">${ve?x.nome:'???'}</span>${s==='tem'||!ve?'':`<small>${custoNo(id)} ✨</small>`}</button>`;};
     const col=el=>{const R=ARVORE[el],[a,f1,f2,z]=R.nos.map(x=>x.id);
-      return `<div class="arvCol" style="--c:${R.cor}"><div class="arvCab">${R.ic} ${R.nome}</div>${no(a)}<div class="arvLig"></div><div class="arvGarfo">${no(f1)}${no(f2)}</div><div class="arvLig"></div>${no(z)}</div>`;};
+      return `<div class="arvCol" style="--c:${R.cor}"><div class="arvCab">${R.ic} ${R.nome}</div><div class="arvLinha">${no(a)}<div class="arvLig"></div><div class="arvGarfo">${no(f1)}${no(f2)}</div><div class="arvLig"></div>${no(z)}</div></div>`;};
     const cruz=ARV_CRUZ.filter(x=>st(x.id)!=='oculto');
     const x=NO_ARV[sel],s=st(sel),ve=s!=='oculto'&&(s!=='trancado'||x.p<4),custo=custoNo(sel);
     let acao;
