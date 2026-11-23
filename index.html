@@ -228,7 +228,11 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 .chuvaF2.on{opacity:1}
 .chuvaF2 i{position:absolute;inset:-60px;background:repeating-linear-gradient(105deg,transparent 0 22px,#d6e8ffb0 22px 24px,transparent 24px 47px);animation:chuvaCai .45s linear infinite}
 .chuvaF2 i+i{background:repeating-linear-gradient(105deg,transparent 0 13px,#eef5ff80 13px 14px,transparent 14px 31px);animation-duration:.3s}
-#chuvaCampo{opacity:0}#chuvaCampo.on{opacity:.55}#chuvaCampo.forte{opacity:1} /* Fase 3: chove a fase inteira (mais leve, para não esconder o mapa) */
+#chuvaCampo{opacity:0}#chuvaCampo.on{opacity:.4}#chuvaCampo.forte{opacity:1} /* Fase 3: chove a fase inteira (mais leve, para não esconder o mapa) */
+/* a chuva de fundo da Fase 3 é fina: uma camada só de pingos, caindo mais devagar, e quase sem véu azul; a forte (cena final) segue cheia */
+#chuvaCampo:not(.forte){background:linear-gradient(#4a6fa022,#1e325a2e)}
+#chuvaCampo:not(.forte) i{animation-duration:.75s}
+#chuvaCampo:not(.forte) i+i{display:none}
 @keyframes chuvaCai{from{transform:translate(0,0)}to{transform:translate(-12px,60px)}}
 @media (hover:hover) and (pointer:fine){#passar.f1 .rosto{width:76px;height:76px}} /* PC: rostos maiores */
 #passar.f1 .rosto.oculto{visibility:hidden;height:0}
@@ -2439,7 +2443,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='1.98'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='1.99'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem "Voltar ao jogo"
 function abreConfig(inicio=false){
