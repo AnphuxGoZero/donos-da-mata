@@ -2459,7 +2459,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.07'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.08'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -2651,7 +2651,7 @@ function proxAvisoF1(){
 const marcaFalaF1=()=>{if(J&&J.f1)J.f1.ultFala=J.f1.acao||0;};
 // quando cada fala do aviso aparece (s1, s2...: os mesmos tempos das classes .seq.sN)
 const ATRASO_FALA=n=>[0,.2,1.4,2.8,4.4][n]??4.4+1.6*(n-4);
-function fechaAvisoF1(){if(J&&J.f1){const id=J.f1.fila.shift();marcaFalaF1();if(id==='intro1')voltaMestreF1();if(id==='caipora')liberaEvoF2();if(avisosF()[id]?.volta){soltaEnquadra();seguir(mestreDe(0),true);}if(J.f1.solta){const s=J.f1.solta;J.f1.solta=null;s();}}atualiza();}
+function fechaAvisoF1(){if(J&&J.f1){const id=J.f1.fila.shift();marcaFalaF1();if(id==='intro1'&&!J.f1.tourF3)voltaMestreF1();if(id==='caipora')liberaEvoF2();if(avisosF()[id]?.volta){soltaEnquadra();seguir(mestreDe(0),true);}if(J.f1.solta){const s=J.f1.solta;J.f1.solta=null;s();}}atualiza();}
 // ----- vez do Bando Infernal -----
 // abertura da Fase 1: a câmera abre na borda leste e os dois Filhotes entram correndo de fora do mapa, um depois
 // do outro; rosnam, e a câmera volta para o seu mestre. Só então aparece o aviso de abertura (que espera J.ocupado)
@@ -3675,7 +3675,7 @@ function animaChuva(d){
 function tiraChuva(){document.getElementById('chuvaCampo')?.remove();}
 const AVISOS_F3={
   intro1:{tit:'Fase 3 · Raízes do Vale',falas:['Tanta mata queimada...'],bt:'Continuar'},
-  plantar:{falas:[{quem:'img',esp:'semente'},{quem:'soldado',cara:'feliz',txt:'Leve a Semente até uma mata queimada.'},'feliz|Deixe ela lá parada, que o broto pega!'],bt:'Começar'},
+  plantar:{falas:[{quem:'img',esp:'semente'},{quem:'soldado',cara:'feliz',txt:'Leve a Semente até uma mata queimada.'},'feliz|Plante ela, que o broto pega!'],bt:'Começar'},
   plantando:{falas:['feliz|O broto está pegando!','feliz|Depois de plantar, logo a mata renascerá.']},
   raiz:{falas:['feliz|A Semente criou raízes!',{quem:'soldado',cara:'feliz',txt:'Logo vai recuperar a mata.'}]},
   caiporaBroto:{falas:[{quem:'caipora',txt:'A mata precisa de ajuda.'},{quem:'caipora',txt:'Vou levar sementes para todas as vilas.'},{quem:'soldado',cara:'feliz',txt:'Toque numa vila para chamar uma Semente de lá.'}],bt:'Continuar',volta:true},
@@ -3695,24 +3695,36 @@ async function aberturaF3(semAnim){
   chuvaCampo(false);
   const jogo=J,qs=[...J.f1.queim];if(semAnim||!VEL||document.hidden||!qs.length)return;
   const vis=[];for(const k of qs.sort((a,b)=>DK(a)[0]-DK(b)[0]))if(vis.every(j=>d6c(...DK(k),...DK(j))>=4))vis.push(k);
+  // a fala vem logo na primeira mata queimada (o jogador entende o que são essas casas); depois a câmera passa pelas outras
+  J.f1.fila=J.f1.fila.filter(x=>x!=='intro1');J.f1.tourF3=true;
   J.ocupado=true;J.f1.chegando=true;zoomCena();
-  for(const k of vis.slice(-3).reverse()){const [x,y]=centro(...DK(k));CAM.alvo={fixo:true,px:x,py:y};CAM.centrar=true;CAM.mao=false;
-    J.f1.fumacaK=k;await dorme(1100);if(J!==jogo)return;piscaHex(k,'#b8b0a8',900);await dorme(700);if(J!==jogo)return;}
-  J.f1.fumacaK=null;J.f1.intro1K=vis[vis.length-1];
-  J.f1.chegando=false;J.ocupado=false;atualiza(); // vem a fala; ao fechar, a câmera vai ao mestre e a Semente nasce
+  const ks=vis.slice(-3).reverse();
+  for(let i=0;i<ks.length;i++){const k=ks[i],[x,y]=centro(...DK(k));CAM.alvo={fixo:true,px:x,py:y};CAM.centrar=true;CAM.mao=false;
+    J.f1.fumacaK=k;await dorme(1100);if(J!==jogo)return;piscaHex(k,'#b8b0a8',900);await dorme(700);if(J!==jogo)return;
+    if(i===0){J.f1.intro1K=k;J.f1.chegando=false;await avisoJaF1('intro1');if(J!==jogo)return;J.f1.chegando=true;}}
+  J.f1.fumacaK=null;J.f1.chegando=false;J.ocupado=false;atualiza();
+  voltaMestreF1(); // a câmera vai ao mestre e a Semente nasce
 }
 // depois da abertura: a primeira Semente (o presente da Caipora na Fase 2) nasce ao lado do mestre
-function presenteSementeF3(){
-  if(J.f1.presente)return;J.f1.presente=true;
+async function presenteSementeF3(){
+  if(J.f1.presente)return;J.f1.presente=true;const jogo=J,anima=VEL&&!document.hidden;
   const m=mestreDe(0);if(!m)return;
   const ok=k=>{const [c,r]=DK(k);return !unidadeEm(c,r)&&isFinite(custoMov('semente',J.ter[k]))&&J.ter[k]!=='rio';};
   const alvo=J.f1.queim.slice().sort((a,b)=>d6c(...DK(a),m.c,m.r)-d6c(...DK(b),m.c,m.r))[0];
   const ks=[...hexesInvocacao(0)].filter(ok);if(!ks.length)ks.push(...vizinhos(m.c,m.r).map(([c,r])=>K(c,r)).filter(ok));
   ks.sort((a,b)=>(alvo!=null?d6c(...DK(a),...DK(alvo))-d6c(...DK(b),...DK(alvo)):0)||a-b);
-  if(ks.length){const u=criaUnidade('semente',0,...DK(ks[0]));flutua(u,'Presente da Caipora!','#6ee08a');piscaHex(ks[0],'#6ee08a',900);seguir(u,true);
-    J.f1.sementeK=alvo;log('🌱 A Semente que a Caipora deu brotou ao lado do mestre.');}
+  // a Semente brota do chão ao lado do mestre (um pulinho, folhas subindo); só depois vem a explicação
+  if(ks.length){const k0=ks[0],[x,y]=centro(...DK(k0));
+    if(anima){J.ocupado=true;CAM.alvo={fixo:true,px:x,py:y};CAM.centrar=true;CAM.mao=false;await dorme(700);if(J!==jogo)return;}
+    const u=criaUnidade('semente',0,...DK(k0));u.movido=u.agiu=false;
+    if(anima){u.anim={x0:x,y0:y+R*.35,t0:performance.now(),dur:650,arco:R*.55,pulos:1};
+      for(let i=0;i<8;i++)fx.push({folha:true,x:x+(i%4-1.5)*R*.3,y:y+R*.3,dx:(Math.random()-.5)*R*1.2,t0:performance.now()+i*50,dur:1000,cor:i%2?'#7fe08a':'#4f9a3e'});
+      await dorme(680);if(J!==jogo)return;u.anim=null;}
+    seguir(u,true);flutua(u,'Presente da Caipora!','#6ee08a');piscaHex(k0,'#6ee08a',900);
+    J.f1.sementeK=alvo;log('🌱 A Semente que a Caipora deu brotou ao lado do mestre.');
+    if(anima){await dorme(1100);if(J!==jogo)return;J.ocupado=false;}}
   for(const k of J.f1.queim)piscaHex(k,'#9dffb8',1200);
-  atualiza();avisoF1('plantar');
+  avisoF1('plantar');atualiza();
 }
 const mataViva=k=>J.ter[k]==='flor'||J.f1.brotos.includes(k);
 const precisaF3=k=>vizinhos(...DK(k)).some(([c,r])=>mataViva(K(c,r)))?1:2;
@@ -3983,12 +3995,12 @@ function iconeFormigueiro(){
 }
 // fumacinha das matas queimadas: a madeira molhada ainda solta fumaça na chuva (mais forte na casa que a abertura mostra)
 function fumacaQueimF3(now){
-  ctx.save();
+  ctx.save();const f2=ehF2(); // Fase 2: a mata acabou de queimar e ainda não chove: fumaça e brasa um pouco mais fortes
   // brilho de brasa pulsando devagar no meio da casa: mostra que ali dá pra ir (e plantar), sem gritar
-  for(const k of J.f1.queim){const [x,y]=centro(...DK(k)),a=.18+.08*Math.sin(now/650+k*1.7);
+  for(const k of J.f1.queim){const [x,y]=centro(...DK(k)),a=(f2?.24:.18)+.08*Math.sin(now/650+k*1.7);
     const g=ctx.createRadialGradient(x,y+R*.1,0,x,y+R*.1,R*.85);g.addColorStop(0,`rgba(255,96,32,${a})`);g.addColorStop(1,'rgba(255,60,20,0)');
     ctx.globalAlpha=1;ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y+R*.1,R*.85,0,Math.PI*2);ctx.fill();}
-  for(const k of J.f1.queim){const [x,y]=centro(...DK(k)),forte=J.f1.fumacaK===k,n=forte?9:5,a=forte?.95:.7;
+  for(const k of J.f1.queim){const [x,y]=centro(...DK(k)),forte=J.f1.fumacaK===k,n=forte?9:f2?7:5,a=forte?.95:f2?.82:.7;
     for(let i=0;i<n;i++){const t=((now/(forte?1500:2200))+i/n+k*.37)%1,ox=((i*7+k*3)%5-2)*R*.2;
       const rr=R*(.1+t*(forte?.42:.3)),px=x+ox+Math.sin(t*5+i+k)*R*.14-t*R*.3,py=y+R*.1-t*R*(forte?1.8:1.35);
       ctx.globalAlpha=a*(1-t)*Math.min(1,t*6);
@@ -7362,6 +7374,7 @@ function desenha(now){
   for(const k of cam.vulc)if(!(mostraAlc&&!J.alc.dest.has(k))){const [x,y]=centro(...DK(k));brilhoVulcao(x,y,k);}
   if(J.vilas)desenhaVilas(now);
   if(ehF3())desenhaF3(now); // formigueiros, brotos pegando e os rios enchendo
+  if(ehF2())fumacaQueimF3(now); // Fase 2: a mata que terminou de queimar fumega e brilha em brasa
   if((ehF2()||ehF3())&&J.f1.caiporaK!=null)desenhaCaipora(); // a Caipora fica de pé na casa dela
   const tom=faseAtual().tom;
   if(tom){ctx.fillStyle=tom;ctx.fillRect(0,0,VW,VH);}
