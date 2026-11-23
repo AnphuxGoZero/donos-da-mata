@@ -274,7 +274,14 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 .arvVert .arvNo .ic{font-size:26px}.arvNo small{white-space:nowrap}.arvCruz{margin-top:8px;border:1px dashed var(--line);border-radius:8px;padding:6px}.arvCruzG{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:4px}
 .arvNo{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 2px;height:auto;min-height:0;border-radius:7px;border:1px solid var(--line);font-size:11px;line-height:1.15}
 .arvNo .ic{font-size:20px;line-height:1}.arvNo .nm{font-weight:700}.arvNo small{color:#ffd77a;font-size:10.5px}
-.arvNo.tem{background:color-mix(in srgb,var(--c) 28%,transparent);border-color:var(--c)}.arvNo.pode{border-color:#4a5060}.arvNo:not(.tem) .ic{filter:grayscale(1);opacity:.7}
+.arvNo.tem{background:color-mix(in srgb,var(--c) 28%,transparent);border-color:var(--c)}.arvNo.pode{border-color:#4a5060}
+.arvNo{position:relative;overflow:hidden;justify-content:flex-end!important;padding:0 4px 6px!important}.arvNo .arte{position:absolute;inset:0;background-size:cover,100% 100%;background-position:center;background-repeat:no-repeat;image-rendering:pixelated;z-index:0}
+.arvNo::after{content:'';position:absolute;left:0;right:0;bottom:0;height:58%;background:linear-gradient(transparent,#000d 70%);z-index:0}.arvNo>*:not(.arte){position:relative;z-index:1}.arvNo .nm{text-shadow:0 1px 2px #000}
+.arvNo:not(.aceso) .arte{filter:grayscale(1) brightness(.75)}.arvNo.aceso{border-color:var(--c)}.arvVert .arvNo{min-height:104px}.arvCruzG .arvNo{min-height:90px}
+.arvNo .pips{position:absolute!important;top:6px;left:6px;display:flex;gap:3px}.arvNo .pips i{width:8px;height:8px;border-radius:50%;border:1.5px solid #fff9;background:#0008}.arvNo .pips i.on{background:var(--c);border-color:#fff}
+.arvNo small,.arvNo .desp{position:absolute!important;top:5px;right:5px;padding:1px 7px;border-radius:99px;background:#000b;font-size:10.5px}.arvNo .desp{background:#f2c14e;color:#2a2008;font-weight:700;font-size:11px;margin:0}
+.nivL{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 4px}.nivL span{font-size:11.5px;padding:1px 7px;border-radius:99px;border:1px solid var(--line);color:var(--dim)}.nivL span.on{border-color:#f2c14e;color:#ffd77a}.nivL span.prox{border-style:dashed;color:#e8e8e8}.nivB{font-size:12px;color:#ffd77a;font-weight:400;margin-left:4px}
+
 .arvNo .desp{margin-top:2px;padding:2px 10px;border-radius:99px;background:#f2c14e;color:#2a2008;font-weight:700;font-size:11.5px;white-space:nowrap}.arvNo .desp.falta{background:#5a2a2a;color:#ffb0a8}
 .arvNo.oculto,.arvNo.trancado{opacity:.5}.arvNo.fechado{opacity:.35}.arvNo.fechado .nm{text-decoration:line-through}.arvNo.sel{outline:2px solid var(--acc);outline-offset:-1px}
 .arvReset{margin-left:8px;height:auto;min-height:0;padding:4px 10px;font-size:12px;border-radius:99px}
@@ -2527,7 +2534,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.30'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.31'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -4258,58 +4265,65 @@ function mostraFimF3(v,motivo){
 // de 2 nós (escolher um fecha o outro) e 1 nó no fim. Os nós de baixo aparecem como "???" até o de cima despertar.
 // Nós secretos ligam dois ramos: só aparecem quando um dos dois chega ao garfo, e só despertam com os dois.
 // O custo sobe com a profundidade (ARV_CUSTO); recomeçar a árvore na Fogueira é de graça e devolve tudo.
-const ARV_CUSTO=[0,1,2,3],ARV_CUSTO_CRUZ=3; // ajuste fino: custo pela profundidade e dos nós secretos
+const ARV_CUSTO=[0,1,2,3],ARV_CUSTO_CRUZ=3; // ajuste fino: custo de CADA nível pela profundidade, e dos nós secretos
+// cada nó tem 1 a 3 níveis (ef: o efeito de cada nível); cada nível custa ARV_CUSTO[profundidade]
 const ARVORE={
   fogo:{nome:'Fogo',ic:'🔥',cor:'#ff9a5a',nos:[
-    {id:'f1',p:1,ic:'🔥',curto:'+10% dano',nome:'Chama Forte',txt:'Suas criaturas de Fogo causam +10% de dano.'},
-    {id:'f2a',p:2,ic:'✴️',curto:'deixa em brasa',nome:'Faísca',txt:'Golpe de Fogo deixa o alvo em brasa: ele perde 3 de vida no começo do turno dele, sem cair por isso.'},
-    {id:'f2b',p:2,ic:'💨',curto:'+1 movimento',nome:'Fogo Ligeiro',txt:'Suas criaturas de Fogo andam +1.'},
-    {id:'f3',p:3,ic:'🌋',curto:'cura ao derrubar',nome:'Coivara',txt:'Quando uma criatura de Fogo derruba um inimigo, recupera metade da vida que falta.'}]},
+    {id:'f1',p:1,ic:'🔥',nome:'Chama Forte',ef:['+5% dano','+10% dano','+15% dano'],txt:'Suas criaturas de Fogo causam mais dano.'},
+    {id:'f2a',p:2,ic:'✴️',nome:'Faísca',ef:['brasa −2','brasa −4'],txt:'Golpe de Fogo deixa o alvo em brasa: ele perde vida no começo do turno dele, sem cair por isso.'},
+    {id:'f2b',p:2,ic:'💨',nome:'Fogo Ligeiro',ef:['+1 movimento','+1 mov. · +10% acerto'],txt:'Suas criaturas de Fogo andam mais longe; no nível II também acertam mais.'},
+    {id:'f3',p:3,ic:'🌋',nome:'Coivara',ef:['cura ao derrubar'],txt:'Quando uma criatura de Fogo derruba um inimigo, recupera metade da vida que falta.'}]},
   agua:{nome:'Água',ic:'💧',cor:'#6ec3ff',nos:[
-    {id:'a1',p:1,ic:'💧',curto:'+2 cura/turno',nome:'Orvalho',txt:'Suas criaturas de Água recuperam 2 de vida no começo de cada turno.'},
-    {id:'a2a',p:2,ic:'⛲',curto:'cura vizinhos',nome:'Nascente',txt:'Toda criatura sua ao lado de uma de Água recupera 2 de vida no começo do turno.'},
-    {id:'a2b',p:2,ic:'🌊',curto:'anda na água',nome:'Correnteza',txt:'Suas criaturas de Água pagam só 1 de movimento em rio e pântano.'},
-    {id:'a3',p:3,ic:'🧜',curto:'salva 1 vez',nome:'Iara',txt:'Uma vez por fase, a primeira criatura sua de Água que cairia fica de pé com 1 de vida.'}]},
+    {id:'a1',p:1,ic:'💧',nome:'Orvalho',ef:['+1 cura/turno','+2 cura/turno','+3 cura/turno'],txt:'Suas criaturas de Água recuperam vida no começo de cada turno.'},
+    {id:'a2a',p:2,ic:'⛲',nome:'Nascente',ef:['vizinhos +1 cura','vizinhos +2 cura'],txt:'Toda criatura sua ao lado de uma de Água recupera vida no começo do turno.'},
+    {id:'a2b',p:2,ic:'🌊',nome:'Correnteza',ef:['anda na água','anda · +10% esquiva'],txt:'Suas criaturas de Água pagam só 1 de movimento em rio e pântano; no nível II também esquivam mais neles.'},
+    {id:'a3',p:3,ic:'🧜',nome:'Iara',ef:['salva 1 vez'],txt:'Uma vez por fase, a primeira criatura sua de Água que cairia fica de pé com 1 de vida.'}]},
   planta:{nome:'Planta',ic:'🌿',cor:'#6ee08a',nos:[
-    {id:'p1',p:1,ic:'🌿',curto:'+2 defesa',nome:'Casca Grossa',txt:'Suas criaturas de Planta ganham +2 de defesa.'},
-    {id:'p2a',p:2,ic:'🌳',curto:'esquiva na mata',nome:'Raízes',txt:'Na floresta, suas criaturas de Planta ficam 10% mais difíceis de acertar.'},
-    {id:'p2b',p:2,ic:'🌱',curto:'cura na mata',nome:'Rebrota',txt:'Na floresta, suas criaturas de Planta recuperam 3 de vida no começo do turno.'},
-    {id:'p3',p:3,ic:'🪵',curto:'revide total',nome:'Mata Fechada',txt:'Suas criaturas de Planta revidam com força total.'}]},
+    {id:'p1',p:1,ic:'🌿',nome:'Casca Grossa',ef:['+1 defesa','+2 defesa','+3 defesa'],txt:'Suas criaturas de Planta ganham defesa.'},
+    {id:'p2a',p:2,ic:'🌳',nome:'Raízes',ef:['+5% esquiva','+10% esquiva'],txt:'Na floresta, suas criaturas de Planta ficam mais difíceis de acertar.'},
+    {id:'p2b',p:2,ic:'🌱',nome:'Rebrota',ef:['+2 cura na mata','+4 cura na mata'],txt:'Na floresta, suas criaturas de Planta recuperam vida no começo do turno.'},
+    {id:'p3',p:3,ic:'🪵',nome:'Mata Fechada',ef:['revide total'],txt:'Suas criaturas de Planta revidam com força total.'}]},
 };
 const ARV_CRUZ=[
-  {id:'xFA',els:['fogo','agua'],ic:'♨️',curto:'sem desvantagem',nome:'Vapor',txt:'Suas criaturas de Fogo e de Água não sofrem desvantagem de elemento ao atacar.'},
-  {id:'xFP',els:['fogo','planta'],ic:'🍂',curto:'dano e defesa',nome:'Cinza Fértil',txt:'Suas criaturas de Planta causam +15% de dano e as de Fogo ganham +2 de defesa.'},
-  {id:'xAP',els:['agua','planta'],ic:'🪷',curto:'Planta na água',nome:'Igapó',txt:'Planta paga só 1 de movimento em rio e pântano. Água e Planta curam 2 por turno nesses terrenos.'},
+  {id:'xFA',els:['fogo','agua'],ic:'♨️',nome:'Vapor',ef:['sem desvantagem'],txt:'Suas criaturas de Fogo e de Água não sofrem desvantagem de elemento ao atacar.'},
+  {id:'xFP',els:['fogo','planta'],ic:'🍂',nome:'Cinza Fértil',ef:['dano e defesa'],txt:'Suas criaturas de Planta causam +15% de dano e as de Fogo ganham +2 de defesa.'},
+  {id:'xAP',els:['agua','planta'],ic:'🪷',nome:'Igapó',ef:['Planta na água'],txt:'Planta paga só 1 de movimento em rio e pântano. Água e Planta curam 2 por turno nesses terrenos.'},
 ];
 const NO_ARV={};for(const [el,r] of Object.entries(ARVORE))for(const n of r.nos)NO_ARV[n.id]={...n,el};for(const n of ARV_CRUZ)NO_ARV[n.id]={...n,p:4};
-const custoNo=id=>NO_ARV[id].p>3?ARV_CUSTO_CRUZ:ARV_CUSTO[NO_ARV[id].p];
+const custoNo=id=>NO_ARV[id].p>3?ARV_CUSTO_CRUZ:ARV_CUSTO[NO_ARV[id].p]; // custo de um nível
+const maxNo=id=>NO_ARV[id].ef.length;
+const nivEm=(id,lista)=>(lista||[]).filter(x=>x===id).length; // a árvore guarda um id por nível comprado
 const bencaosAte=n=>n>=3?['fogo','agua','planta']:['fogo','agua'];
 const listaE=a=>a.length>1?a.slice(0,-1).join(', ')+' e '+a[a.length-1]:a.join('');
 const ESS_MAX=2,essDaFase=est=>est>=3?2:1; // Essência por fase: 1 por vencer, 2 com as 3 estrelas
-// efeitos em jogo: só para as suas criaturas (não o mestre/Fogueira), com os nós guardados em J.arvore
-const temNo=id=>!!(J&&J.arvore&&J.arvore.includes(id));
+// efeitos em jogo: só para as suas criaturas (não o mestre/Fogueira), com os níveis guardados em J.arvore
+const nivNo=id=>J&&J.arvore?Math.min(maxNo(id),nivEm(id,J.arvore)):0;
+const temNo=id=>nivNo(id)>0;
 const elU=u=>ESP[u.esp].mestre?null:ESP[u.esp].el;
 const meuEl=(u,el)=>u.lado===0&&elU(u)===el;
-const arvDef=d=>(meuEl(d,'planta')&&temNo('p1')?2:0)+(meuEl(d,'fogo')&&temNo('xFP')?2:0);
-const arvAtk=a=>(meuEl(a,'fogo')&&temNo('f1')?1.1:1)*(meuEl(a,'planta')&&temNo('xFP')?1.15:1);
+const arvDef=d=>(meuEl(d,'planta')?nivNo('p1'):0)+(meuEl(d,'fogo')&&temNo('xFP')?2:0);
+const arvAtk=a=>(meuEl(a,'fogo')?1+.05*nivNo('f1'):1)*(meuEl(a,'planta')&&temNo('xFP')?1.15:1);
 const arvMultEl=(a,m)=>m<1&&temNo('xFA')&&(meuEl(a,'fogo')||meuEl(a,'agua'))?1:m;
+const arvPrec=a=>meuEl(a,'fogo')&&nivNo('f2b')>=2?.1:0; // Fogo Ligeiro II
+const arvEsq=(d,t)=>(t==='flor'&&meuEl(d,'planta')?.05*nivNo('p2a'):0)+(naAgua(t)&&meuEl(d,'agua')&&nivNo('a2b')>=2?.1:0); // Raízes; Correnteza II
 const naAgua=t=>t==='rio'||t==='pant';
 function custoMovU(u,t){const c=custoMov(u.esp,t);
   return u.lado===0&&naAgua(t)&&isFinite(c)&&((meuEl(u,'agua')&&temNo('a2b'))||(meuEl(u,'planta')&&temNo('xAP')))?1:c;}
 function curaArvore(u,t){if(u.lado!==0)return 0;let c=0;
-  if(meuEl(u,'agua')&&temNo('a1'))c+=2;
-  if(temNo('a2a')&&J.un.some(o=>o!==u&&meuEl(o,'agua')&&d6(o,u)===1))c+=2;
-  if(meuEl(u,'planta')&&temNo('p2b')&&t==='flor')c+=3;
+  if(meuEl(u,'agua'))c+=nivNo('a1');
+  if(temNo('a2a')&&J.un.some(o=>o!==u&&meuEl(o,'agua')&&d6(o,u)===1))c+=nivNo('a2a');
+  if(meuEl(u,'planta')&&t==='flor')c+=2*nivNo('p2b');
   if((meuEl(u,'agua')||meuEl(u,'planta'))&&temNo('xAP')&&naAgua(t))c+=2;
   return c;}
 // na ficha: os nós da árvore que valem para esta criatura
 function bencaoTag(u){if(u.lado!==0)return '';const el=elU(u),R=ARVORE[el];if(!R)return '';
-  const nos=(J.arvore||[]).map(id=>NO_ARV[id]).filter(n=>n&&(n.el===el||(n.els&&n.els.includes(el))));if(!nos.length)return '';
-  return ` <span class="bencTag" style="color:${R.cor};border-color:${R.cor}88" title="Árvore da Fogueira: ${nos.map(n=>n.nome).join(', ')}">${R.ic} ${nos.length}</span>`;}
+  const nos=[...new Set(J.arvore||[])].map(id=>NO_ARV[id]).filter(n=>n&&(n.el===el||(n.els&&n.els.includes(el))));if(!nos.length)return '';
+  return ` <span class="bencTag" style="color:${R.cor};border-color:${R.cor}88" title="Árvore da Fogueira: ${nos.map(n=>n.nome+(maxNo(n.id)>1?' '+ROM[nivNo(n.id)]:'')).join(', ')}">${R.ic} ${nos.length}</span>`;}
+const ROM=['','I','II','III'];
 function essLivre(){const cp=campanhaInfo(),g=Object.values(cp.essGanho||{}).reduce((s,v)=>s+Math.min(ESS_MAX,v||0),0);
   return Math.max(0,g+(cp.essTeste||0)-(cp.arvore||[]).filter(id=>NO_ARV[id]).reduce((s,id)=>s+custoNo(id),0));}
-// estado de um nó: 'tem' | 'pode' | 'fechado' (o outro lado do garfo) | 'trancado' (falta o de cima, mas já se vê) | 'oculto'
-function estadoNo(id,tem,els){const n=NO_ARV[id];if(tem.includes(id))return 'tem';
+// estado de um nó: 'tem' (nível máximo) | 'sobe' (já tem, pode subir) | 'pode' | 'fechado' (o outro lado do garfo) | 'trancado' | 'oculto'
+function estadoNo(id,tem,els){const n=NO_ARV[id],k=nivEm(id,tem);if(k>=maxNo(id))return 'tem';if(k>0)return 'sobe';
   const temP=(el,p)=>ARVORE[el].nos.some(x=>x.p===p&&tem.includes(x.id));
   if(n.els){if(!n.els.every(e=>els.includes(e)))return 'oculto';
     const a=n.els.filter(e=>temP(e,2)).length;return a===2?'pode':a===1?'trancado':'oculto';}
@@ -4317,6 +4331,49 @@ function estadoNo(id,tem,els){const n=NO_ARV[id];if(tem.includes(id))return 'tem
   if(n.p===1)return 'pode';
   if(n.p===2){if(ARVORE[n.el].nos.some(x=>x.p===2&&x.id!==id&&tem.includes(x.id)))return 'fechado';return temP(n.el,1)?'pode':'oculto';}
   return temP(n.el,2)?'pode':'oculto';}
+// Arte dos nós da Árvore: pixel art 20×14 (um caractere por pixel, '.' = fundo), desenhada num canvas e usada como
+// fundo do nó inteiro. Enquanto o nó não é despertado, a arte fica em tons de cinza (CSS).
+const ARTE_PAL={k:'#1a1410',r:'#e8452c',o:'#ff9a3a',y:'#ffd84a',w:'#fff6d8',e:'#5a2a18',
+  b:'#2f6fd0',c:'#6ec3ff',l:'#bfe8ff',g:'#2e8b3e',G:'#6ee08a',d:'#1f4a26',n:'#7a4a26',N:'#b07a40',
+  s:'#9aa0a8',S:'#5c6068',p:'#d86ab8',P:'#f6b8e4'};
+const ARTE={
+  f1:['....................','.........r..........','........rr..........','........ror.........','.......roor....r....','.......rooor..rr....',
+      '......rooyoor.ror...','.....rooyyyoorroor..','....rooyywyyoooor...','....rooywwwyyoor....','....rooywwwyyoor....','.....rooyyyyoor.....','......rooooor.......','.......rrrrr........'],
+  f2a:['.........y..........','.........y..........','...y.....y.....y....','....y...yoy...y.....','.....y.yooy..y......','......yoowooy.......',
+      '.yyyyyoowwwooyyyyy..','......yoowooy.......','.....y.yooy.y.......','....y...yoy...y.....','...y.....y.....y....','.........y..........','.........y..........','....................'],
+  f2b:['....................','..............r.....','.............ror....','............roor....','...ooooo...rooyor...','..........rooyyor...',
+      '.ooooooo..rooywyor..','..........rooyyor...','...ooooo...rooyor...','............roor....','.............rr.....','....................','....................','....................'],
+  f3:['.........y..........','........ror.........','.......r.o.r........','.........r..........','.......kkrkk........','......knoronk.......',
+      '.....knnorrnnk......','....knnnnronnnk.....','...knnnnnrnnnnnk....','..knnnnnnnnnnnnnk...','.knnnnnnnnnnnnnnnk..','kkkkkkkkkkkkkkkkkkkk','eeeeeeeeeeeeeeeeeeee','....................'],
+  a1:['.........c..........','.........c..........','........ccc.........','........ccc.........','.......cclcc........','.......clllcc.......',
+      '......cclwlccc......','......ccllcccb......','......cccccccb......','......bcccccbb......','.......bcccbb.......','........bbbb........','....................','....................'],
+  a2a:['.....c.......c......','....c.c.....c.c.....','...c...c.l.c...c....','..c.....clc.....c...','..c......l......c...','.........l..........',
+      '...sssssssssssss....','...Slllccccclll.S...','....SSccccccccSS....','......SSsssSS.......','.........s..........','........sss.........','......sssssss.......','....................'],
+  a2b:['....................','....bbbb............','..bbccccbb.....bb...','.bccllllccb...bccb..','bcclw..llccbbbccllb.','bcl.....lcccccclw.b.',
+      '.b........lcccl.....','....................','....bbbb.......bbbb.','..bbccccbb...bbccccb','.bccllllccbbbccllllc','bcclw..llcccccclw..l','....................','....................'],
+  a3:['....................','..cc..........cc....','..ccc........ccc....','...cccc....cccc.....','....cccccccccc......','......cccccc........',
+      '.......cccc.........','.......bccb.........','.......bccb.........','......bbccbb........','....bbbbbbbbbb......','..bcbcbcbcbcbcbcb...','.cbcbcbcbcbcbcbcbc..','....................'],
+  p1:['....................','....nnnnnnnnnnnn....','....nNNNnNNNnNNn....','....nNnNNnNNnNNn....','....nNNnNNNnNNnn....','....nNNNnNNNnNNn....',
+      '....nnNNnNgNNnnn....','.....nNNNgGgNNn.....','.....nNNgGGGgNn.....','......nNNgGgNn......','.......nNNgNn.......','........nNNn........','.........nn.........','....................'],
+  p2a:['......gggggggg......','....ggGGggGGgggg....','...gGGgggGGggGGgg...','...ggggGGgggggGgg...','....gggggggGgggg....','......ggnnnngg......',
+      '........nNnn........','........nNnn........','........nNnn........','.......nnNnnn.......','.....nn.nNn..nn.....','...nn..n.n.n...nn...','..n...n..n..n....n..','....................'],
+  p2b:['....................','......GG....GG......','.....GGGg..gGGG.....','....GGGGgggggGGG....','.....GGggggggGG.....','.......ggg.gg.......',
+      '.........gg.........','.........g..........','.........g..........','.........g..........','.....nnnnnnnnnn.....','...nnNNNNNNNNNNnn...','..nNNnNNNNnNNNNNnn..','....................'],
+  p3:['...g.......g.....g..','..ggg.....ggg...ggg.','.gGggg...gGggg.gGggg','..ggg.g...ggg...ggg.','.gGggGg..gGggg.gGggg','gggggggggggggggggggg',
+      '.gGgg.ggGgggg.gGggg.','gggGgggggGggggggGggg','.ggggggggggggggggggg','...n.....n.....n....','...n.....n.....n....','dddddddddddddddddddd','dddddddddddddddddddd','....................'],
+  xFA:['....l.....l.....l...','...l.....l.....l....','....l.....l.....l...','.....l.....l.....l..','....l.....l.....l...','...l.....l.....l....',
+      '....................','..ssssssssssssssss..','..Sccccccccccccccs..','...Sccccccccccccs...','....SSSSSSSSSSSS....','....r..o..r..o..r...','...ror.oyo.ror.oyo..','..roooroyyorooooyyo.'],
+  xFP:['....................','.........GG.........','........GGgG........','.......gG.gGG.......','.........g..........','.........g..........',
+      '.........g..........','.......SSgSS........','.....SSsssssSS......','...SSssSsssSssSS....','..SsssssssSsssssS...','.SssSssssssssSsssS..','o.e.o.e.o.e.o.e.o.e.','....................'],
+  xAP:['....................','.........P..........','........PpP.........','....P..PpppP..P.....','....PP.PpppP.PP.....','.....PPPpppPPP......',
+      '......PPpppPP.......','....gggGGGGGggg.....','..ggGGGGGGGGGGGGgg..','....gggggggggggg....','..bb..cc..bb..cc..b.','.bccbbccbbccbbccbbc.','....................','....................'],
+};
+const arteCache={};
+function arteURL(id){if(arteCache[id])return arteCache[id];const rows=ARTE[id];if(!rows)return '';
+  const cv=document.createElement('canvas');cv.width=20;cv.height=14;const g=cv.getContext('2d');
+  rows.forEach((r,y)=>{for(let x=0;x<20;x++){const c=ARTE_PAL[r[x]];if(c){g.fillStyle=c;g.fillRect(x,y,1,1);}}});
+  return arteCache[id]=cv.toDataURL();}
+const arteNo=(id,cls='arte')=>`<span class="${cls}" style="background-image:url(${arteURL(id)}),radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--c) 40%,#14161b),#101216 80%)"></span>`;
 function quemSegueTela(n,lista,prox,est){
   lista=lista.filter(x=>ESP[x.esp]);
   if(lista.length<=1){fogueiraTela(n,lista,[],prox,est);return;}
@@ -4335,39 +4392,44 @@ function quemSegueTela(n,lista,prox,est){
 function fogueiraTela(n,segue,ficam,prox,est,teste){
   const cp=campanhaInfo(),antes=Math.min(ESS_MAX,(cp.essGanho||{})[n]||0),agora=essDaFase(est||1),ganho=teste?0:Math.max(0,agora-antes); // refazer a fase só completa o que faltou
   if(!teste)salvaCampanha({['f'+n+'Exercito']:segue,essGanho:{...(cp.essGanho||{}),[n]:Math.max(antes,agora)},...(cp.bencaos?{bencaos:undefined}:{})}); // as bênçãos antigas viram Essência de volta
-  const els=bencaosAte(n);let aba=els[0],sel=ARVORE[aba].nos[0].id,erro=false;
+  const els=bencaosAte(n);let aba=els[0],sel=ARVORE[aba].nos[0].id;
   const b=document.getElementById('fimBt'),b2=document.getElementById('fimBt2');b2.style.display='none';
   const desenha=()=>{
-    const tem=(campanhaInfo().arvore||[]).filter(id=>NO_ARV[id]),livre=essLivre(),st=id=>estadoNo(id,tem,els);
-    const no=id=>{const x=NO_ARV[id],s=st(id),R=ARVORE[x.el]||ARVORE[x.els[0]],cor=R.cor,ve=s!=='oculto'&&(s!=='trancado'||x.p<4);
-      return `<button class="arvNo ${s}${id===sel?' sel':''}" style="--c:${cor}" onclick="fogueiraTela.pick('${id}')"><span class="ic">${ve?x.ic:'❔'}</span><span class="nm">${ve?x.nome:'???'}</span><span class="cu">${ve?x.curto:'&nbsp;'}</span>${s==='pode'&&id===sel?(livre>=custoNo(id)?`<span class="desp">Despertar · ${custoNo(id)} ✨</span>`:`<span class="desp falta">Falta ✨ · ${custoNo(id)}</span>`):`<small>${s==='tem'?'✓ desperto':s==='fechado'?'fechado':ve?custoNo(id)+' ✨':'&nbsp;'}</small>`}</button>`;};
+    const tem=(campanhaInfo().arvore||[]).filter(id=>NO_ARV[id]),livre=essLivre(),st=id=>estadoNo(id,tem,els),niv=id=>nivEm(id,tem);
+    const compravel=s=>s==='pode'||s==='sobe';
+    const no=id=>{const x=NO_ARV[id],s=st(id),R=ARVORE[x.el]||ARVORE[x.els[0]],k=niv(id),m=maxNo(id),c=custoNo(id);
+      const pips=m>1?`<span class="pips">${Array.from({length:m},(_,i)=>`<i class="${i<k?'on':''}"></i>`).join('')}</span>`:'';
+      const rod=compravel(s)&&id===sel?(livre>=c?`<span class="desp">${k?'Fortalecer':'Despertar'} · ${c} ✨</span>`:`<span class="desp falta">Falta ✨ · ${c}</span>`)
+        :`<small>${s==='tem'?(m>1?'✓ máximo':'✓ desperto'):s==='fechado'?'fechado':c+' ✨'}</small>`;
+      return `<button class="arvNo ${s}${k?' aceso':''}${id===sel?' sel':''}" style="--c:${R.cor}" onclick="fogueiraTela.pick('${id}')">${arteNo(id)}<span class="nm">${x.nome}</span><span class="cu">${x.ef[Math.max(0,k-1)]}</span>${pips}${rod}</button>`;};
     const ramo=up=>`<div class="arvRamo"><svg viewBox="0 0 100 28" preserveAspectRatio="none"><path d="${up?'M50 0V12M25 12H75M25 12V21M75 12V21':'M25 0V12M75 0V12M25 12H75M50 12V21'}" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none" vector-effect="non-scaling-stroke"/></svg>${(up?[25,75]:[50]).map(x=>`<i style="left:${x}%"></i>`).join('')}</div>`; // setas na cor do ramo
     const vis=id=>{const s=st(id);return s!=='oculto'&&s!=='trancado';}; // nós ainda indisponíveis não aparecem
     const col=el=>{const R=ARVORE[el],[a,f1,f2,z]=R.nos.map(x=>x.id);
       const g=[f1,f2].filter(vis); // só aparece o que já pode ser usado (o lado fechado do garfo continua à vista)
       return `<div class="arvVert" style="--c:${R.cor}">${no(a)}${g.length?ramo(1)+`<div class="arvGarfo">${g.map(no).join('')}</div>`:''}${vis(z)?ramo(0)+no(z):''}</div>`;};
-    const abas=els.length>1?`<div class="arvAbas">${els.map(el=>{const R=ARVORE[el],k=R.nos.filter(y=>tem.includes(y.id)).length;return `<button class="${el===aba?'sel':''}" style="--c:${R.cor}" onclick="fogueiraTela.aba('${el}')">${R.ic} ${R.nome}<small>${k} de 3</small></button>`;}).join('')}</div>`:'';
+    const abas=els.length>1?`<div class="arvAbas">${els.map(el=>{const R=ARVORE[el],k=tem.filter(id=>NO_ARV[id].el===el).length;return `<button class="${el===aba?'sel':''}" style="--c:${R.cor}" onclick="fogueiraTela.aba('${el}')">${R.ic} ${R.nome}<small>${k?k+' '+(k>1?'pontos':'ponto'):'—'}</small></button>`;}).join('')}</div>`:'';
     const cruz=ARV_CRUZ.filter(x=>vis(x.id));
-    const x=NO_ARV[sel],s=st(sel),ve=s!=='oculto'&&(s!=='trancado'||x.p<4),custo=custoNo(sel);
+    const x=NO_ARV[sel],s=st(sel),k=niv(sel),m=maxNo(sel),custo=custoNo(sel);
     let dica='';
-    if(s==='tem')dica='✓ Já desperto.';
+    if(s==='tem')dica=m>1?'✓ Nível máximo.':'✓ Já desperto.';
     else if(s==='fechado'){const o=ARVORE[x.el].nos.find(y=>y.p===2&&tem.includes(y.id));dica=`Caminho fechado: você escolheu ${o.nome}. ↺ Recomeçar desfaz.`;}
-    else if(s==='pode'){dica=x.p===2?`Escolher este fecha ${ARVORE[x.el].nos.find(y=>y.p===2&&y.id!==sel).nome}. `:'';dica+=livre<custo?`Precisa de ${custo} ✨.`:'Toque em Despertar para confirmar.';}
+    else if(compravel(s)){dica=x.p===2&&!k?`Escolher este fecha ${ARVORE[x.el].nos.find(y=>y.p===2&&y.id!==sel).nome}. `:'';dica+=livre<custo?`Precisa de ${custo} ✨.`:`Toque em ${k?'Fortalecer':'Despertar'} para confirmar.`;}
+    const niveis=m>1?`<div class="nivL">${x.ef.map((e,i)=>`<span class="${i<k?'on':''}${i===k&&s!=='tem'?' prox':''}">${ROM[i+1]} ${e}</span>`).join('')}</div>`:'';
     document.getElementById('fimTxt').textContent='Fogueira';
     document.getElementById('fimSub').textContent=teste?'Modo de teste: a Essência de teste não conta nas fases.':ganho?`A Fogueira ganhou força: +${ganho} ✨${agora<ESS_MAX?' (3 estrelas dão +1)':''}`:antes>=ESS_MAX?'Esta fase já deu toda a sua Essência.':'Sem Essência nova: faça 3 estrelas para ganhar +1 ✨.';
     document.getElementById('fimPorque').innerHTML=`<div class="fogTopo"><span class="essP">✨ ${livre} Essência</span>${teste?`<button class="arvReset" onclick="fogueiraTela.ess(1)">+1 ✨</button><button class="arvReset" onclick="fogueiraTela.ess(-1)">−1 ✨</button>`:''}${tem.length?`<button class="arvReset" onclick="fogueiraTela.reset()">↺ Recomeçar</button>`:''}</div>
       ${abas}${col(aba)}
-      <div class="fogDet"><b>${ve?x.ic+' '+x.nome:'❔ ???'}</b><p>${ve?x.txt:x.els?'Um segredo entre dois ramos.':'Um nó ainda escondido.'}</p><p class="dica">${dica||'&nbsp;'}</p></div>
+      <div class="fogDet"><b>${x.ic} ${x.nome}${m>1?` <span class="nivB">${k?ROM[k]:'—'} de ${ROM[m]}</span>`:''}</b><p>${x.txt}</p>${niveis}<p class="dica">${dica||'&nbsp;'}</p></div>
       ${cruz.length?`<div class="arvCruz"><div class="arvCab">✦ Segredos</div><div class="arvCruzG">${cruz.map(y=>no(y.id)).join('')}</div></div>`:''}`;
     document.querySelector('#fim .cx').classList.add('fogCx');
     b.textContent=teste?'Fechar':'Continuar';b.disabled=false;
   };
-  fogueiraTela.pick=id=>{if(id===sel){fogueiraTela.compra();return;}sel=id;if(NO_ARV[id].el)aba=NO_ARV[id].el;erro=false;desenha();}; // tocar de novo no mesmo nó desperta
-  fogueiraTela.aba=el=>{aba=el;sel=ARVORE[el].nos[0].id;erro=false;desenha();};
-  fogueiraTela.compra=()=>{const tem=(campanhaInfo().arvore||[]).filter(id=>NO_ARV[id]);if(estadoNo(sel,tem,els)!=='pode')return;
+  fogueiraTela.pick=id=>{if(id===sel){fogueiraTela.compra();return;}sel=id;if(NO_ARV[id].el)aba=NO_ARV[id].el;desenha();}; // tocar de novo no nó selecionado confirma
+  fogueiraTela.aba=el=>{aba=el;sel=ARVORE[el].nos[0].id;desenha();};
+  fogueiraTela.compra=()=>{const tem=(campanhaInfo().arvore||[]).filter(id=>NO_ARV[id]),s=estadoNo(sel,tem,els);if(s!=='pode'&&s!=='sobe')return;
     if(essLivre()<custoNo(sel))return;
-    salvaCampanha({arvore:[...tem,sel]});erro=false;desenha();};
-  fogueiraTela.reset=()=>{salvaCampanha({arvore:[]});erro=false;desenha();};
+    salvaCampanha({arvore:[...tem,sel]});desenha();};
+  fogueiraTela.reset=()=>{salvaCampanha({arvore:[]});desenha();};
   fogueiraTela.ess=d=>{const t=campanhaInfo().essTeste||0;salvaCampanha({essTeste:Math.max(0,t+d)});desenha();}; // TESTE
   b.onclick=()=>{document.querySelector('#fim .cx').classList.remove('fogCx');document.getElementById('fim').style.display='none';prox();};
   desenha();
@@ -4571,7 +4633,7 @@ function inicioTurno(l){
     // quem a segura não pode se curar parado ali
     if(ehConstrucao(t)&&J.dono[K(u.c,u.r)]===l&&!ehCristal(K(u.c,u.r)))cura=Math.round(e.hp*(ehF1()?0.4:0.2));
     if(e.mestre)cura=Math.max(cura,8);
-    if(u.brasa){u.brasa=false;const q=Math.min(3,u.hp-1);if(q>0){u.hp-=q;u.hit=performance.now();flutua(u,'-'+q+' brasa','#ff9a5a');}} // Faísca (Árvore da Fogueira): a brasa fere, mas não derruba
+    if(u.brasa){const q=Math.min(u.brasa===true?3:u.brasa,u.hp-1);u.brasa=false;if(q>0){u.hp-=q;u.hit=performance.now();flutua(u,'-'+q+' brasa','#ff9a5a');}} // Faísca (Árvore da Fogueira): a brasa fere, mas não derruba
     cura+=curaArvore(u,t); // Árvore da Fogueira
     cura=Math.min(cura,e.hp-u.hp);
     if(cura>0){u.hp+=cura;flutua(u,'+'+cura,'#6ee08a');}
@@ -5096,12 +5158,12 @@ const temGolpeMistico=esp=>ESP[esp].el==='arcano'&&!ESP[esp].mestre;
 const EV_MAX_F1=0.30;
 const capF1=d=>!!(d.selvagem&&J&&J.f1&&J.f1.n===1);
 function evasaoContra(a,d,tD){
-  let ev=d.chama?0:defTer(d.esp,tD)+(tD==='flor'&&meuEl(d,'planta')&&temNo('p2a')?0.1:0); // Fase 2: fogo não se esquiva (as chamas não ganham evasão do terreno); Raízes: +10% na floresta
+  let ev=d.chama?0:defTer(d.esp,tD)+arvEsq(d,tD); // Fase 2: fogo não se esquiva (as chamas não ganham evasão do terreno); Raízes: +10% na floresta
   if(capF1(d))ev=Math.min(ev,EV_MAX_F1);
   return temGolpeMistico(a.esp)&&ev>0?Math.max(0,ev-GOLPE_MISTICO):ev;
 }
 function chanceAcerto(a,d,tD){
-  const ch=Math.max(0.05,Math.min(0.95,precisao(a.esp)-evasaoContra(a,d,tD)+modHora(a.esp)));
+  const ch=Math.max(0.05,Math.min(0.95,precisao(a.esp)+arvPrec(a)-evasaoContra(a,d,tD)+modHora(a.esp)));
   // Barreira: o ataque mágico de uma Força elemental quase nunca acerta
   return a.elemental&&d.barreira?Math.min(ch,BARREIRA_ACERTO):ch;
 }
@@ -5146,7 +5208,7 @@ async function golpear(a,d,mult,contra){
       if(!d.elemental)hist(d).sofrido=(hist(d).sofrido||0)+dano;
       if(contaHj(a))hj(a.lado).feito+=dano;if(contaHj(d))hj(d.lado).sofrido+=dano;
       if(!d.figurante)ganhaXp(a,dano); // o saque já rende a XP do camponês
-      if(d.hp>0&&meuEl(a,'fogo')&&temNo('f2a')&&!d.elemental&&!d.figurante&&!d.chama&&!d.brasa){d.brasa=true;flutua(d,'Em brasa','#ff9a5a',260);} // Faísca
+      if(d.hp>0&&meuEl(a,'fogo')&&temNo('f2a')&&!d.elemental&&!d.figurante&&!d.chama&&!d.brasa){d.brasa=2*nivNo('f2a');flutua(d,'Em brasa','#ff9a5a',260);} // Faísca
       if(d.hp<=0&&meuEl(d,'agua')&&temNo('a3')&&!J.iaraUsada&&!d.elemental&&!d.figurante){d.hp=1;J.iaraUsada=true;flutua(d,'A Iara te salvou!','#6ec3ff',300);log(`A Iara segurou ${nome(d)} de pé com 1 de vida.`);} // Iara: uma vez por fase
       if(CENA)await cenaGolpe(a,d,true,dano,i);
       if(d.hp<=0){
