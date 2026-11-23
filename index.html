@@ -4366,7 +4366,9 @@ function log(t){J.logs.unshift(t);if(J.logs.length>60)J.logs.pop();}
 
 function inicioTurno(l){
   checaCerco(l);if(J.fim)return;
-  seguir(l===0&&J.un.find(u=>u.id===J.ultJogou&&u.lado===0)||mestreDe(l)); // sua vez: volta para a última criatura que você jogou (sem ela, o mestre)
+  // sua vez: volta para a PRIMEIRA criatura que você jogou no turno anterior (se caiu, a seguinte; sem nenhuma, o mestre): sensação de ciclo
+  if(l===0){const ids=J.jogaram||[];J.jogaram=[];seguir(ids.map(id=>J.un.find(u=>u.id===id&&u.lado===0)).find(Boolean)||mestreDe(0));}
+  else seguir(mestreDe(l));
   if(J.avisoCerco)J.avisoCerco[l]=false;
   // aviso de evolução: aparece quando a reserva CHEGA a EVO_CUSTO; depois de "Agora não", só volta
   // se a mana cair abaixo do custo e subir de novo
@@ -4425,7 +4427,7 @@ function alcancaveis(u){
 }
 function caminho(prev,k){const p=[];while(k!==undefined){p.unshift(k);k=prev.get(k);}return p;}
 // a última criatura sua que andou ou atacou: é nela que a câmera volta quando chega a sua vez
-const marcaJogou=u=>{if(u&&u.lado===0&&!ESP[u.esp].mestre)J.ultJogou=u.id;};
+const marcaJogou=u=>{if(u&&u.lado===0&&!ESP[u.esp].mestre){J.jogaram=J.jogaram||[];if(!J.jogaram.includes(u.id))J.jogaram.push(u.id);}}; // ordem em que suas criaturas agiram neste turno
 async function moverPara(u,k,prev){
   marcaJogou(u);
   if(k!==K(u.c,u.r)){
@@ -5507,22 +5509,26 @@ function magiaDoBotao(){
 // conta quem ainda não tem o ✓ (inclui quem andou e ainda pode atacar). O mestre fica de fora, e quem está
 // sob Sono/Petrificar também (começa o turno já marcado como "agiu").
 const criaturasPendentes=()=>J.un.filter(u=>u.lado===0&&!ESP[u.esp].mestre&&!u.agiu&&!(ehF3()&&u.esp==='semente'&&plantandoU(u)&&!J.un.some(e=>e.lado!==0&&d6(u,e)<=ESP[u.esp].alc))); // Fase 3: a Semente enraizada só conta se tiver quem atacar ao lado
+// Fase 3: vilas que já podem chamar uma Semente agora (contam como coisa a fazer no turno)
+const vilasSemProntas=()=>ehF3()&&J.f1?.vilaSem&&J.vilas?Object.keys(J.vilas).map(Number).filter(v=>vilaSemF3(v)&&semProntaF3(v)):[];
 // cada clique vai para a pendente mais perto da atual, sem repetir até ter passado por todas
 function abreFichaSel(){if(J&&J.sel)abreFicha(J.sel.id);}
 function proximaCriatura(){
   if(J.vez!==0||J.ocupado||J.fim||CENA)return;
-  const ps=criaturasPendentes();if(!ps.length)return;
+  // pendentes: criaturas que ainda agem + (Fase 3) vilas com Semente pronta, que entram como {vila,c,r,id:'v…'}
+  const ps=[...criaturasPendentes(),...vilasSemProntas().map(v=>{const [c,r]=DK(v);return {vila:v,c,r,id:'v'+v};})];if(!ps.length)return;
   if(J.mg||J.fz)sairMagia();
   if(J.evo)J.evo=null;
   J.invocando=null;J.invocHex=null;J.menuInv=false;J.invHex=null;J.insp=null;J.menuAlvo=null;
   if(!J.proxVistos||J.proxVistos.turno!==J.turno)J.proxVistos={turno:J.turno,ids:new Set()};
-  const vistos=J.proxVistos.ids,atual=J.sel;
+  const vistos=J.proxVistos.ids,atual=J.sel||(J.vilaInv!=null?ps.find(p=>p.vila===J.vilaInv):null);
   if(atual)vistos.add(atual.id);
   let livres=ps.filter(u=>!vistos.has(u.id)&&u!==atual);
   if(!livres.length){vistos.clear();livres=ps.filter(u=>u!==atual);if(!livres.length)livres=ps;}
   const ref=atual||mestreDe(0)||livres[0];
   livres.sort((a,b)=>d6c(a.c,a.r,ref.c,ref.r)-d6c(b.c,b.r,ref.c,ref.r));
   const u=livres[0];vistos.add(u.id);
+  if(u.vila!=null){abrirVilaF3(u.vila);CAM.alvo={c:u.c,r:u.r,fixo:true};CAM.centrar=false;CAM.mao=false;CAM.parado=false;atualiza();return;} // vai até a vila e abre o menu da Semente
   desseleciona();seleciona(u);atualiza();
 }
 function abrirForca(){if(!podeForca(0)||J.ocupado)return;desseleciona();J.mg=null;J.fz={fase:'alvo'};J.prevArea=null;atualiza();}
@@ -5609,7 +5615,7 @@ function escolheEvo(para){
 }
 function estadoAviso(){const m=mestreDe(0);return [J.mp[0],criaturas(0),m?m.c+','+m.r+','+m.movido+','+m.agiu:''].join('|');}
 function turnoEsgotado(){
-  return J.un.every(u=>u.lado!==0||ESP[u.esp].mestre||u.agiu)&&!(mestreDe(0)&&podeInvocarAlgo());
+  return J.un.every(u=>u.lado!==0||ESP[u.esp].mestre||u.agiu)&&!(mestreDe(0)&&podeInvocarAlgo())&&!vilasSemProntas().length;
 }
 function avisoFimTurno(){
   if(J.vez!==0||J.ocupado||J.fim||J.sel||J.invocando||J.invHex!=null||J.menuInv||J.mg||J.fz||J.evo||J.menuAlvo)return false;
@@ -5775,7 +5781,7 @@ setInterval(()=>{
   if(a!==ocio.assin){ocio.assin=a;ocio.seg=0;poeOcio(0);return;}
   if(document.hidden||telaPorCima())return; // pausa, sem zerar
   if(mestreDe(0)&&podeInvocarAlgo()){ocio.seg=0;poeOcio(0);return;} // ainda dá para pôr monstros em jogo: o botão não chama atenção
-  if(criaturasPendentes().length){ocio.seg=0;poeOcio(0);return;} // ainda há criatura sua que pode andar ou atacar: o botão não pisca
+  if(criaturasPendentes().length||vilasSemProntas().length){ocio.seg=0;poeOcio(0);return;} // ainda há criatura sua que pode andar ou atacar: o botão não pisca
   ocio.seg++;
   const lim=OCIO_SEG[J.turno<=1?'primeiro':'normal'].map(t=>turnoEsgotado()?t/2:t);
   poeOcio(ocio.seg>=lim[2]?3:ocio.seg>=lim[1]?2:ocio.seg>=lim[0]?1:0);
@@ -8041,7 +8047,7 @@ function atualiza(){
    bm.classList.toggle('ativo',!!ok);
    bm.classList.toggle('brilha',!!ok&&!J.mg&&magiasDe(0).some(id=>J.mp[0]>=MAGIAS[id].custo&&magiaDisponivel(0,id)));}
   // botão 👣: quantas criaturas suas ainda podem agir neste turno
-  {const n=minha?criaturasPendentes().length:0;
+  {const n=minha?criaturasPendentes().length+vilasSemProntas().length:0;
    document.getElementById('btProx').classList.toggle('ativo',n>0);
    document.getElementById('btProxN').textContent=n||'';}
   // celular deitado: figurinha da criatura selecionada ao lado do 👣 (dá um "pop" quando a seleção muda)
