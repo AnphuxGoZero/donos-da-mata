@@ -295,12 +295,13 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 #fimPorque .dicaFim{margin:0;color:#f2c14e}
 .arvVazio{visibility:hidden}
 .fogJFundo{position:fixed;inset:0;background:#000a;z-index:20}.fogJFundo.anima{animation:fogJF .15s}
-.fogJ{position:fixed;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(400px,calc(100vw - 24px));max-height:calc(100vh - 40px);overflow-y:auto;z-index:21;background:#14161b;border:1px solid var(--c);border-radius:12px;text-align:left;box-shadow:0 10px 40px #000c}.fogJ.anima{animation:fogJS .18s ease-out}
+.fogJ{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(400px,calc(100vw - 24px));max-height:calc(100vh - 40px);overflow-y:auto;z-index:21;background:#14161b;border:1px solid var(--c);border-radius:12px;text-align:left;box-shadow:0 10px 40px #000c}.fogJ.anima{animation:fogJS .18s ease-out}
 .fogJArte{position:relative;height:150px;border-bottom:1px solid var(--line)}.fogJArte .arte{position:absolute;inset:0;background-size:cover;background-position:center 40%}.fogJArte:not(.aceso) .arte{filter:grayscale(1) brightness(.75)}
 .fogJX{position:absolute;top:8px;right:8px;width:34px;height:34px;padding:0;border-radius:50%;background:#000b;border:1px solid #fff4;font-size:15px}
 .fogJCorpo{padding:12px 14px 14px}.fogJCorpo b{font-size:16px}.fogJCorpo p{margin:4px 0 10px;color:var(--dim);font-size:13.5px;line-height:1.4}.fogJCorpo .dica{color:#ffd77a;font-size:12.5px;margin:0 0 10px}
-.fogJBt{width:100%;padding:12px;border-radius:9px;background:#f2c14e;color:#2a2008;font-weight:700;font-size:15px;border:0}.fogJBt.falta{background:#5a2a2a;color:#ffb0a8}
-@keyframes fogJS{from{transform:translate(-50%,30px);opacity:0}}@keyframes fogJF{from{opacity:0}}
+.fogJBt{width:100%;padding:12px;border-radius:9px;background:linear-gradient(#ffe27a,#f5b028);color:#2a1a00;font-weight:800;font-size:15.5px;border:1px solid #fff3b0;box-shadow:0 0 14px #f5b02899,inset 0 1px 0 #fff8;animation:fogJBrilho 1.6s ease-in-out infinite}.fogJBt.falta{background:#5a2a2a;color:#ffb0a8;border-color:#7a3a3a;box-shadow:none;animation:none}
+@keyframes fogJBrilho{50%{box-shadow:0 0 22px #ffcf4acc,inset 0 1px 0 #fff8}}
+@keyframes fogJS{from{transform:translate(-50%,-50%) scale(.94);opacity:0}}@keyframes fogJF{from{opacity:0}}
 .ajuda{font-size:12px;color:var(--dim)}
 /* coluna da direita na altura do mapa: informações e registro rolam por dentro */
 #app{align-items:stretch}
@@ -2544,7 +2545,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.35'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.36'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
