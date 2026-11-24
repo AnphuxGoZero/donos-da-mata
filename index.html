@@ -293,6 +293,13 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 #fimPorque .placarFim b{text-align:center}
 #fimPorque .placarFim span:not(:first-child){text-align:center}
 #fimPorque .dicaFim{margin:0;color:#f2c14e}
+.fogJFundo{position:fixed;inset:0;background:#000a;z-index:20}.fogJFundo.anima{animation:fogJF .15s}
+.fogJ{position:fixed;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(400px,calc(100vw - 24px));max-height:calc(100vh - 40px);overflow-y:auto;z-index:21;background:#14161b;border:1px solid var(--c);border-radius:12px;text-align:left;box-shadow:0 10px 40px #000c}.fogJ.anima{animation:fogJS .18s ease-out}
+.fogJArte{position:relative;height:150px;border-bottom:1px solid var(--line)}.fogJArte .arte{position:absolute;inset:0;background-size:cover;background-position:center 40%}.fogJArte:not(.aceso) .arte{filter:grayscale(1) brightness(.75)}
+.fogJX{position:absolute;top:8px;right:8px;width:34px;height:34px;padding:0;border-radius:50%;background:#000b;border:1px solid #fff4;font-size:15px}
+.fogJCorpo{padding:12px 14px 14px}.fogJCorpo b{font-size:16px}.fogJCorpo p{margin:4px 0 10px;color:var(--dim);font-size:13.5px;line-height:1.4}.fogJCorpo .dica{color:#ffd77a;font-size:12.5px;margin:0 0 10px}
+.fogJBt{width:100%;padding:12px;border-radius:9px;background:#f2c14e;color:#2a2008;font-weight:700;font-size:15px;border:0}.fogJBt.falta{background:#5a2a2a;color:#ffb0a8}
+@keyframes fogJS{from{transform:translate(-50%,30px);opacity:0}}@keyframes fogJF{from{opacity:0}}
 .ajuda{font-size:12px;color:var(--dim)}
 /* coluna da direita na altura do mapa: informações e registro rolam por dentro */
 #app{align-items:stretch}
@@ -2536,7 +2543,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.33'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.34'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -4402,16 +4409,17 @@ function quemSegueTela(n,lista,prox,est){
 function fogueiraTela(n,segue,ficam,prox,est,teste){
   const cp=campanhaInfo(),antes=Math.min(ESS_MAX,(cp.essGanho||{})[n]||0),agora=essDaFase(est||1),ganho=teste?0:Math.max(0,agora-antes); // refazer a fase só completa o que faltou
   if(!teste)salvaCampanha({['f'+n+'Exercito']:segue,essGanho:{...(cp.essGanho||{}),[n]:Math.max(antes,agora)},...(cp.bencaos?{bencaos:undefined}:{})}); // as bênçãos antigas viram Essência de volta
-  const els=bencaosAte(n);let aba=els[0],sel=ARVORE[aba].nos[0].id;
+  const els=bencaosAte(n);let aba=els[0],sel=ARVORE[aba].nos[0].id,aberto=false,anima=false;
+  const janela=()=>matchMedia('(max-width:600px)').matches; // no celular, o texto da habilidade abre numa janela por cima
   const b=document.getElementById('fimBt'),b2=document.getElementById('fimBt2');b2.style.display='none';
   const desenha=()=>{
     const tem=(campanhaInfo().arvore||[]).filter(id=>NO_ARV[id]),livre=essLivre(),st=id=>estadoNo(id,tem,els),niv=id=>nivEm(id,tem);
     const compravel=s=>s==='pode'||s==='sobe';
     const no=id=>{const x=NO_ARV[id],s=st(id),R=ARVORE[x.el]||ARVORE[x.els[0]],k=niv(id),m=maxNo(id),c=custoNo(id);
       const pips=m>1?`<span class="pips">${Array.from({length:m},(_,i)=>`<i class="${i<k?'on':''}"></i>`).join('')}</span>`:'';
-      const rod=compravel(s)&&id===sel?(livre>=c?`<span class="desp">${k?'Fortalecer':'Despertar'} · ${c} ✨</span>`:`<span class="desp falta">Falta ✨ · ${c}</span>`)
+      const rod=compravel(s)&&id===sel&&!janela()?(livre>=c?`<span class="desp">${k?'Fortalecer':'Despertar'} · ${c} ✨</span>`:`<span class="desp falta">Falta ✨ · ${c}</span>`)
         :`<small>${s==='tem'?(m>1?'✓ máximo':'✓ desperto'):s==='fechado'?'fechado':c+' ✨'}</small>`;
-      return `<button class="arvNo ${s}${k?' aceso':''}${id===sel?' sel':''}" style="--c:${R.cor}" onclick="fogueiraTela.pick('${id}')">${arteNo(id)}<span class="nm">${x.nome}</span><span class="cu">${x.ef[Math.max(0,k-1)]}</span>${pips}${rod}</button>`;};
+      return `<button class="arvNo ${s}${k?' aceso':''}${id===sel&&(!janela()||aberto)?' sel':''}" style="--c:${R.cor}" onclick="fogueiraTela.pick('${id}')">${arteNo(id)}<span class="nm">${x.nome}</span><span class="cu">${x.ef[Math.max(0,k-1)]}</span>${pips}${rod}</button>`;};
     // setas na cor do ramo; num garfo já escolhido, o lado que não foi escolhido fica apagado
     const ramo=(up,esq,dir)=>{const tr=(d,on)=>`<path d="${d}" stroke="${on?'currentColor':'#3a3f4a'}" stroke-width="3" stroke-linecap="round" fill="none" vector-effect="non-scaling-stroke"/>`;
       const p=up?tr('M50 0V12',1)+tr('M50 12H25V21',esq)+tr('M50 12H75V21',dir):tr('M25 0V12H50',esq)+tr('M75 0V12H50',dir)+tr('M50 12V21',1);
@@ -4427,23 +4435,31 @@ function fogueiraTela(n,segue,ficam,prox,est,teste){
     let dica='';
     if(s==='tem')dica=m>1?'✓ Nível máximo.':'✓ Já desperto.';
     else if(s==='fechado'){const o=ARVORE[x.el].nos.find(y=>y.p===2&&tem.includes(y.id));dica=`Caminho fechado: você escolheu ${o.nome}. ↺ Recomeçar desfaz.`;}
-    else if(compravel(s)){dica=x.p===2&&!k?`Escolher este fecha ${ARVORE[x.el].nos.find(y=>y.p===2&&y.id!==sel).nome}. `:'';dica+=livre<custo?`Precisa de ${custo} ✨.`:`Toque em ${k?'Fortalecer':'Despertar'} para confirmar.`;}
+    else if(compravel(s)){dica=x.p===2&&!k?`Escolher este fecha ${ARVORE[x.el].nos.find(y=>y.p===2&&y.id!==sel).nome}. `:'';dica+=livre<custo?`Precisa de ${custo} ✨.`:janela()?'':`Toque em ${k?'Fortalecer':'Despertar'} para confirmar.`;}
     const niveis=m>1?`<div class="nivL">${x.ef.map((e,i)=>`<span class="${i<k?'on':''}${i===k&&s!=='tem'?' prox':''}">${ROM[i+1]} ${e}</span>`).join('')}</div>`:'';
-    document.getElementById('fimTxt').textContent='Fogueira';
+    const cab=`<b>${x.nome}${m>1?` <span class="nivB">${k?`nível ${ROM[k]} de ${ROM[m]}`:`${m} níveis`}</span>`:''}</b>`;
+    const det=`<div class="fogDet">${cab}<p>${x.txt}</p>${niveis}<p class="dica">${dica||'&nbsp;'}</p></div>`;
+    const btJ=compravel(s)?`<button class="fogJBt${livre<custo?' falta':''}" ${livre<custo?'disabled':''} onclick="fogueiraTela.compra()">${livre<custo?`Falta ✨ · ${custo}`:`${k?'Fortalecer':'Despertar'} · ${custo} ✨`}</button>`:'';
+    const jan=janela()&&aberto?`<div class="fogJFundo${anima?' anima':''}" onclick="fogueiraTela.fecha()"></div><div class="fogJ${anima?' anima':''}" style="--c:${(ARVORE[x.el]||ARVORE[x.els[0]]).cor}">
+      <div class="fogJArte${k?' aceso':''}">${arteNo(sel)}<button class="fogJX" aria-label="Fechar" onclick="fogueiraTela.fecha()">✕</button></div>
+      <div class="fogJCorpo">${cab}<p>${x.txt}</p>${niveis}${dica?`<p class="dica">${dica}</p>`:''}${btJ}</div></div>`:'';
+    anima=false;document.getElementById('fimTxt').textContent='Fogueira';
     document.getElementById('fimSub').textContent='';
     document.getElementById('fimPorque').innerHTML=`<div class="fogTopo"><span class="essP">✨ ${livre} Essência${ganho?`<span class="essMais">+${ganho}</span>`:''}</span>${teste?`<button class="arvReset" onclick="fogueiraTela.ess(1)">+1 ✨</button><button class="arvReset" onclick="fogueiraTela.ess(-1)">−1 ✨</button>`:''}${tem.length?`<button class="arvReset ic" title="Recomeçar a árvore" aria-label="Recomeçar a árvore" onclick="fogueiraTela.reset()">↺</button>`:''}</div>
       ${abas}${col(aba)}
-      <div class="fogDet"><b>${x.nome}${m>1?` <span class="nivB">${k?`nível ${ROM[k]} de ${ROM[m]}`:`${m} níveis`}</span>`:''}</b><p>${x.txt}</p>${niveis}<p class="dica">${dica||'&nbsp;'}</p></div>
-      ${cruz.length?`<div class="arvCruz"><div class="arvCab">✦ Segredos</div><div class="arvCruzG">${cruz.map(y=>no(y.id)).join('')}</div></div>`:''}`;
+      ${janela()?'':det}
+      ${cruz.length?`<div class="arvCruz"><div class="arvCab">✦ Segredos</div><div class="arvCruzG">${cruz.map(y=>no(y.id)).join('')}</div></div>`:''}${jan}`;
     document.querySelector('#fim .cx').classList.add('fogCx');
     b.textContent=teste?'Fechar':'Continuar';b.disabled=false;
   };
-  fogueiraTela.pick=id=>{if(id===sel){fogueiraTela.compra();return;}sel=id;if(NO_ARV[id].el)aba=NO_ARV[id].el;desenha();}; // tocar de novo no nó selecionado confirma
-  fogueiraTela.aba=el=>{aba=el;sel=ARVORE[el].nos[0].id;desenha();};
+  fogueiraTela.pick=id=>{if(janela()){sel=id;aberto=anima=true;desenha();return;} // celular: abre a janela da habilidade
+    if(id===sel){fogueiraTela.compra();return;}sel=id;if(NO_ARV[id].el)aba=NO_ARV[id].el;desenha();}; // tocar de novo no nó selecionado confirma
+  fogueiraTela.fecha=()=>{aberto=false;desenha();};
+  fogueiraTela.aba=el=>{aba=el;sel=ARVORE[el].nos[0].id;aberto=false;desenha();};
   fogueiraTela.compra=()=>{const tem=(campanhaInfo().arvore||[]).filter(id=>NO_ARV[id]),s=estadoNo(sel,tem,els);if(s!=='pode'&&s!=='sobe')return;
     if(essLivre()<custoNo(sel))return;
     salvaCampanha({arvore:[...tem,sel]});desenha();};
-  fogueiraTela.reset=()=>{salvaCampanha({arvore:[]});desenha();};
+  fogueiraTela.reset=()=>{salvaCampanha({arvore:[]});aberto=false;desenha();};
   fogueiraTela.ess=d=>{const t=campanhaInfo().essTeste||0;salvaCampanha({essTeste:Math.max(0,t+d)});desenha();}; // TESTE
   b.onclick=()=>{document.querySelector('#fim .cx').classList.remove('fogCx');document.getElementById('fim').style.display='none';prox();};
   desenha();
