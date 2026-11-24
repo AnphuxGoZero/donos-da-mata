@@ -616,6 +616,11 @@ html.retrato,.retrato body{height:100%;overflow:hidden;overscroll-behavior:none}
 #saves .cartaoFase.fechada{opacity:.6;cursor:default}
 #saves .cartaoFase.fechada .retrato{background:#0c1412;border-color:#4a5a52}
 #saves .cartaoFase.emBreve{border-style:dashed}
+#saves .fasesGrade .cartaoSaberes{grid-column:1/-1;position:relative;overflow:hidden;height:64px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;border-radius:10px;text-align:left}
+#saves.tela.arte button.cartaoSaberes.cartaoSaberes,#saves.tela.arte button.cartaoSaberes.cartaoSaberes:hover:not(:disabled){background:linear-gradient(90deg,#000b,#0004 55%,#0000),var(--arte) center 40%/cover;border:1.5px solid #e0b84e;box-shadow:0 4px 14px #0007}
+#saves.tela.arte button.cartaoSaberes.cartaoSaberes:hover:not(:disabled){border-color:#ffd66a;filter:brightness(1.12)}
+#saves .cartaoSaberes b{font:400 26px "Pirata One",serif;letter-spacing:.03em;color:#ffe9b0;text-shadow:0 2px 4px #000,0 0 10px #000}
+#saves .cartaoSaberes em{font-style:normal;font-size:14px;font-weight:700;background:#e0a634;color:#2a1a00;padding:3px 10px;border-radius:99px;box-shadow:0 1px 4px #0008}
 #saves .cartaoFase.emBreve .retrato{background:#1d2a5a;border-color:#7983ff}
 /* tela baixa (celular deitado): os botões da tela inicial em duas colunas; o principal (Jogar/Continuar) ocupa a linha toda */
 @media (max-height:560px){#saves.tela.ini .menuIni{display:grid;grid-template-columns:1fr 1fr;max-width:600px}#saves.tela.ini .menuIni button.pri{grid-column:1/-1}}
@@ -2583,7 +2588,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.42'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.43'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -2633,17 +2638,24 @@ function telaFases(){
       <span class="txt"><small>Fase ${f.n}</small><b>${aberta?f.nome:'???'}</b><span class="desc">${aberta?f.desc:`Vença a Fase ${f.n-1} para abrir`}</span></span>
       <span class="est">${sv?`<em>Turno ${sv.turno}</em>`:i.venceu?estrelasTxt(i.estrelas):aberta?'<em>Nova!</em>':''}</span></button>`;};
   el.innerHTML=`<div class="tituloJogo" style="font-family:'Pirata One',serif;font-weight:400;font-size:min(46px,10vw);text-align:center">Fases</div>
-    <div class="fasesGrade">${CAMPANHA.filter(faseAberta).map(cartao).join('') /* as fases aparecem conforme o jogador avança */}
+    <div class="fasesGrade">${faseSaberes()?cartaoSaberes():''}${CAMPANHA.filter(faseAberta).map(cartao).join('') /* as fases aparecem conforme o jogador avança */}
       ${CAMPANHA[CAMPANHA.length-1].info().venceu?`<button class="cartaoFase emBreve" onclick="telaEmObras()"><span class="retrato"><i>…</i></span>
         <span class="txt"><small>Fase ${CAMPANHA.length+1}</small><b>Em breve</b><span class="desc">Dê sua opinião no Discord</span></span><span class="est"></span></button>`:'' /* só depois de vencer a última fase que existe */}</div>
-    <div class="menuIni">${faseSaberes()?'<button onclick="abreSaberes()">🌿 Saberes da Mata</button>':''}<button onclick="desenhaInicio()">Voltar</button></div>
+    <div class="menuIni"><button onclick="desenhaInicio()">Voltar</button></div>
     <div class="versaoJogo" onclick="contaDiag()">v${VERSAO}</div>`;
   poeArte(el,'inicio');
   el.classList.remove('cfg','ini');el.classList.add('tela');el.style.display='block';
 }
 // Saberes da Mata pela tela de fases: o jogador consulta (e pode usar) a árvore da campanha fora do fim de fase.
 // Só aparece depois da primeira Essência; os ramos são os da última fase vencida (Planta a partir da Fase 3).
-const faseSaberes=()=>Math.max(0,...Object.keys(campanhaInfo().essGanho||{}).map(Number));
+const faseSaberes=()=>{sincronizaEss();return Math.max(0,...Object.keys(campanhaInfo().essGanho||{}).map(Number));};
+// fase vencida sem Essência registrada (venceu antes da Fogueira existir, ou saiu antes da tela da Fogueira): a Essência dela entra agora
+function sincronizaEss(){const g={...(campanhaInfo().essGanho||{})};let mudou=false;
+  for(const f of CAMPANHA){const i=f.info();if(i.venceu&&!g[f.n]){g[f.n]=essDaFase(i.estrelas||1);mudou=true;}}
+  if(mudou)salvaCampanha({essGanho:g});}
+function cartaoSaberes(){const l=essLivre();
+  return `<button class="cartaoSaberes" onclick="abreSaberes()" style="--arte:url(${ABA_IMG.planta})">
+    <b>Saberes da Mata</b>${l?`<em>✨ ${l}</em>`:''}</button>`;}
 function abreSaberes(){const f=document.getElementById('fim');f.style.zIndex=50;f.style.display='flex';
   fogueiraTela(faseSaberes(),[],[],()=>{f.style.zIndex='';telaFases();},1,true);}
 function jogarFase1(){fecharSaves();novoJogo({...prefs(),modo:'1x1',f1:true});}
