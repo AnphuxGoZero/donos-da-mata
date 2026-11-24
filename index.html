@@ -2581,7 +2581,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.40'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.41'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -2973,13 +2973,13 @@ async function agirSelvagem(u){
 }
 // os 8 camponeses da tela de batalha (folha 4×2, figuras de pé na base; olha = para onde a figura está virada)
 // figurinhas de quem fala nos avisos: tiras de 8 rostos (camponeses e soldados)
-// expressões: o camponês fica com medo (padrão), feliz ou furioso; o guarda, furioso (padrão) ou feliz. Na fala: 'feliz|texto' ou {quem,cara,txt}
+// expressões: o camponês fica com medo (padrão), feliz ou furioso; o guarda, furioso (padrão), feliz ou com medo. Na fala: 'feliz|texto' ou {quem,cara,txt}
 const ROSTOS_F1={campones:{img:'img/f1-rostos.png',n:8,caras:{medo:'img/f1-rostos.png',feliz:'img/f1-rostos-feliz.png',furia:'img/f1-rostos-furia.png'}},
-  soldado:{img:'img/f1-soldados.png',n:8,caras:{furia:'img/f1-soldados.png',feliz:'img/f1-soldados-feliz.png'}},caipora:{img:'img/f2-caipora.png',n:1}};
+  soldado:{img:'img/f1-soldados.png',n:8,caras:{furia:'img/f1-soldados.png',feliz:'img/f1-soldados-feliz.png',medo:'img/f1-soldados-medo.png'}},caipora:{img:'img/f2-caipora.png',n:1}};
 const imgsRostos=()=>Object.values(ROSTOS_F1).flatMap(r=>[r.img,...Object.values(r.caras||{})]);
 const imgCara=(R,cara)=>R.caras?.[cara]||R.img;
 const leFala=f=>{if(typeof f!=='string')return f;const m=f.match(/^(feliz|furia|medo)\|(.*)$/s);return m?{quem:'campones',cara:m[1],txt:m[2]}:{quem:'campones',txt:f};};
-const CAMPONESES={img:'img/f1-camponeses.png?v=2',olha:[1,1,1,1,1,1,1,1]}; // a folha nova tem todos virados para a direita
+const CAMPONESES={img:'img/f1-camponeses.png?v=3',olha:[1,1,1,1,1,1,1,1]}; // bichos furiosos (Scripts/folha_camponeses_luta.py), todos virados para a direita
 // um camponês sai para defender a casa: uma troca de golpes de verdade (o Filhote leva uns arranhões). Com sorte
 // (o Filhote erra golpes), o camponês aguenta e a casa fica de pé por mais um turno: na média do dia e da noite,
 // ~28% contra o Filhote e ~22% contra o Cão Infernal (o Fogo erra mais à noite). Devolve true se o camponês caiu.
