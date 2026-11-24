@@ -752,7 +752,7 @@ html.retrato,html.paisagem{touch-action:pan-x pan-y}
   #saves.tela.ini .tituloJogo .tlDa::before,#saves.tela.ini .tituloJogo .tlDa::after{width:min(28px,4vw)}
   #saves.tela .menuIni{gap:8px}
   #saves.tela .menuIni button.grande{min-height:44px;padding:6px 18px;font-size:22px}
-  #saves.tela.ini>.menuIni{margin-bottom:clamp(8px,6vh,40px)}
+  #saves.tela.ini>.menuIni{margin-bottom:52px} /* acima do rodapé (Como jogar, Compartilhar...) */
 }
 #saves.cfg .subt{display:none}
 #saves.cfg .mestres{flex:0 1 auto;min-height:0;width:100%;max-width:920px;display:grid;gap:6px;margin-top:8px;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));grid-auto-rows:1fr}
@@ -909,7 +909,7 @@ html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
       <p><b>Terrenos:</b> cada mapa tem um tema (vale, costa, terras áridas, caldeira vulcânica ou fiorde glacial). Passe o mouse num hexágono para ver como ele afeta a criatura selecionada: custo de movimento, evasão e ataque.</p>
       <p>Clique numa unidade sua e depois numa casa azul para movê-la. Inimigos em vermelho podem ser atacados: os de borda contínua estão ao lado; nos tracejados, a criatura anda sozinha até uma casa vizinha e ataca. Todo ataque é corpo a corpo.</p>
       <p>Clique no seu mestre para abrir o menu dele: Mover, Atacar, Magia ou Força Elemental.</p>
-      <p><b>Magia:</b> as magias do seu mestre são liberadas quando você conquista a sua segunda torre (o mestre inimigo segue a mesma regra). Cada mestre tem 9 magias comuns e 2 da sua ordem (escolhida em Preparar Batalha), e lança <b>uma magia por turno</b>, em qualquer momento, desde que tenha MP. Em Magia abre a lista das magias que têm algum alvo agora (Cura só aparece se houver criatura sua ferida, e assim por diante). Escolha uma e clique no alvo destacado em roxo; as que pegam uma área grande mostram a área e pedem confirmação. Esc volta à lista. Mestres nunca são afetados por magias. Marcas no mapa: <b>S</b> Sono, <b>P</b> Petrificada, <b>B</b> Barreira, <b>L</b> Passo Largo, <b>F</b> Fúria, <b>D</b> Dominada.</p>
+      <p><b>Magia:</b> as magias do seu mestre são liberadas quando você conquista a sua segunda torre (o mestre inimigo segue a mesma regra). Cada mestre tem 9 magias comuns e 2 da sua ordem (escolhida em Batalha Livre), e lança <b>uma magia por turno</b>, em qualquer momento, desde que tenha MP. Em Magia abre a lista das magias que têm algum alvo agora (Cura só aparece se houver criatura sua ferida, e assim por diante). Escolha uma e clique no alvo destacado em roxo; as que pegam uma área grande mostram a área e pedem confirmação. Esc volta à lista. Mestres nunca são afetados por magias. Marcas no mapa: <b>S</b> Sono, <b>P</b> Petrificada, <b>B</b> Barreira, <b>L</b> Passo Largo, <b>F</b> Fúria, <b>D</b> Dominada.</p>
       <p><b>Força Elemental:</b> é liberada quando você conquista a sua terceira torre (o mestre inimigo segue a mesma regra). Depois disso, uma vez por turno, por 40 MP, um elemental da sua ordem ataca qualquer criatura inimiga do mapa e enfrenta o revide. O elemental é feito para derrubar gigantes: contra nível 0 causa metade do dano, contra nível 1 três quartos, e contra nível 2, 3 e mestres o dano é cheio. Ele começa com 100 de vida, não se cura durante a partida e, se morrer, não volta. A Força Elemental não gasta a magia do turno.</p>
       <p>Para invocar, clique numa construção sua (castelo, fortaleza ou torre) que esteja livre e ao lado do seu mestre. Elas ficam com borda dourada tracejada.</p>
       <p>Seu exército pode ter até 2 criaturas + 1 por torre que você controla. Ganhe torres (e MP) terminando o movimento sobre elas.</p>
@@ -2176,10 +2176,28 @@ function desenhaIntro(now){
 // Dois espaços no navegador (localStorage): 'manual' (botão Salvar) e 'auto' (início de cada turno seu).
 const SAVE_VER=1,SAVE_CHAVE='senhoresDoVeu.save.';
 function lerSave(slot){try{const s=JSON.parse(localStorage.getItem(SAVE_CHAVE+slot));return s&&s.v===SAVE_VER?s:null;}catch(e){return null;}}
-function podeSalvar(){return J&&!J.f1&&J.vez===0&&!J.ocupado&&!J.fim&&!J.invocando&&!J.mg&&!J.fz;}
+// Campanha: um espaço por fase ('campanha1', 'campanha2'...), que o Salvar e o automático usam; os de Batalha Livre ficam intactos.
+// Não salva durante a abertura da fase nem com uma cena/fala segurando o jogo.
+const slotCamp=n=>'campanha'+n;
+const f1Livre=()=>!J.f1||!(J.f1.abrindo||J.f1.chegando||J.f1.solta||J.f1.forcar||J.f1.sobreCena||J.f1.sobreEvo||J.f1.semTour);
+function podeSalvar(){return J&&J.vez===0&&!J.ocupado&&!J.fim&&!J.invocando&&!J.mg&&!J.fz&&!J.evo&&f1Livre();}
+// o estado da fase sem o que é só animação: os horários (performance.now) não valem depois de recarregar a página
+function f1ParaSalvar(f){
+  const c=JSON.parse(JSON.stringify(f,(k,v)=>v===Infinity?0:v));
+  for(const k of ['chegando','abrindo','forcar','podePular'])c[k]=false;
+  for(const k of ['solta','caiporaAnim','caiporaGolpe','sobreCena','fumacaK','semTour'])c[k]=null;
+  c.sobreEvo=false;c.fogoNasce=0;c.inunda={};
+  for(const o of ['formT','cheia'])if(c[o])for(const k in c[o])c[o][k]=0;
+  if(c.plantio)for(const p of Object.values(c.plantio)){p.t0=0;p.r0=0;}
+  return c;
+}
 function gravar(slot){
   if(!podeSalvar())return false;
+  if(J.f1)slot=slotCamp(J.f1.n);
   const s={v:SAVE_VER,quando:Date.now(),nid,
+    ...(J.f1?{f1:f1ParaSalvar(J.f1),vilas:J.vilas,op:J.op,estLib:J.estLib,arvore:J.arvore||[],tut:J.tut||null,
+      chuva:document.getElementById('chuvaCampo')?.classList.contains('forte')?'forte':document.getElementById('chuvaCampo')?'fraca':null}:{}),
+    iaraUsada:!!J.iaraUsada,ultEclipse:J.ultEclipse??null,evoAvisado:!!J.evoAvisado,
     ter:J.ter,dono:J.dono,tema:J.tema,turno:J.turno,vez:J.vez,mp:J.mp,deficit:J.deficit,
     logs:J.logs.slice(0,30),avisoCerco:J.avisoCerco||null,ultInv:J.ultInv||{},np:J.np||2,fora:J.fora||[],
     invocou:J.invocou||[false,false],ordem:J.ordem,manaBase:J.manaBase,magiaUsada:J.magiaUsada,forcaUsada:J.forcaUsada,magiaLib:J.magiaLib,forcaLib:J.forcaLib,conq:J.conq,elem:J.elem,ciclo:J.ciclo,cicloDir:J.cicloDir,cristal:J.cristal||null,cabo:J.cabo||null,evoFixa:J.evoFixa||[],hj:J.hj||[],
@@ -2193,6 +2211,7 @@ function carregar(slot){
   RITMO_IA=1;
   defineLinhas(s.ter.length/COLS); // 13 linhas no 1x1, 17 com 3 ou 4 mestres
   document.getElementById('fim').style.display='none';
+  if(J&&J.intro)fimIntro();tiraChuva();
   for(const u of s.un){delete u.anim;delete u.hit;} // saves antigos podem trazer esses horários
   J={ter:s.ter,dono:s.dono,tema:s.tema,un:s.un,turno:s.turno,vez:0,mp:s.mp,sel:null,alc:null,alvosSet:new Set(),alvosMove:new Map(),
      deficit:s.deficit,invocando:null,invocHex:null,invHex:null,menuInv:false,hover:null,ocupado:false,fim:false,logs:s.logs,
@@ -2207,18 +2226,28 @@ function carregar(slot){
   J.conq=s.conq||[0,0];
   J.invocou=s.invocou||[true,true]; // saves antigos: Magia já liberada
   J.ciclo=s.ciclo??(s.turno-1)%CICLO.length;J.cicloDir=s.cicloDir||1;
+  J.iaraUsada=!!s.iaraUsada;J.ultEclipse=s.ultEclipse??undefined;J.evoAvisado=!!s.evoAvisado;
+  J.arvore=s.arvore||[];J.estLib=s.estLib??campanhaInfo().estagioLib??1;
+  if(s.f1){ // campanha: a fase volta como estava (vilas, fogo, brotos, saúvas, falas já vistas) e a arte dela começa a carregar
+    J.f1=s.f1;J.vilas=s.vilas||{};J.op=s.op||{...prefs(),modo:'1x1',f1:true,fase:s.f1.n};J.tut=s.tut||null;
+    for(const a of Object.values(ARTE_F1)){imgF1(a.mapa);imgF1(a.luta);}imgF1(CAMPONESES.img);imgF1('img/f1-cao-cara.png');for(const r of imgsRostos())imgF1(r);
+    if(s.chuva)chuvaCampo(s.chuva==='forte');
+  }
   nid=Math.max(s.nid,...J.un.map(u=>u.id+1));
   zoomInicio();
   const m=mestreDe(0);if(m){const [x,y]=centro(m.c,m.r);CAM.x=x;CAM.y=y;CAM.alvo=null;limitaCam();}
   log(`Jogo carregado (turno ${J.turno}).`);
   fecharSaves();atualiza();return true;
 }
-const descSave=s=>`${s.np>2?NOME_MODO[s.np]+' · ':''}Turno ${s.turno} · ${s.tema} · ${new Date(s.quando).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`;
+const apagaSaveCamp=n=>{try{localStorage.removeItem(SAVE_CHAVE+slotCamp(n));}catch(e){}};
+// a fase n da campanha salva no meio (null se não há)
+const saveCamp=n=>{const s=lerSave(slotCamp(n));return s&&s.f1&&s.f1.n===n?s:null;};
+const descSave=s=>`${s.f1?`Fase ${s.f1.n} · `:s.np>2?NOME_MODO[s.np]+' · ':''}Turno ${s.turno} · ${s.tema} · ${new Date(s.quando).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`;
 function salvarJogo(){
   const el=document.getElementById('saves');el.classList.remove('cfg','tela','ini','arte');
-  const ok=gravar('manual');
+  const ok=gravar('manual'),slot=J&&J.f1?slotCamp(J.f1.n):'manual';
   el.innerHTML=`<div><strong>${ok?'Jogo salvo.':'Não foi possível salvar agora.'}</strong></div>
-    <div class="vez">${ok?descSave(lerSave('manual')):J&&J.f1?'A Fase 1 é curta e não fica salva.':'Só dá para salvar no seu turno, sem ação em andamento.'}</div>
+    <div class="vez">${ok?descSave(lerSave(slot))+(J.f1?'<br>Para voltar, toque em Continuar na tela inicial.':''):'Só dá para salvar no seu turno, sem ação ou fala em andamento.'}</div>
     <div class="linha"><button class="pri" onclick="fecharSaves()">OK</button></div>`;
   el.style.display='block';
 }
@@ -2251,12 +2280,16 @@ async function lerArquivoSave(f,daConfig=false){
 function abrirCarregar(daConfig=false,aviso=''){
   const el=document.getElementById('saves'),man=lerSave('manual'),aut=lerSave('auto');
   el.classList.remove('cfg','ini','arte');el.classList.toggle('tela',!!daConfig);if(daConfig)poeArte(el,'carregar'); // vindo da tela inicial, continua em tela cheia
-  let h=`${daConfig?'<div class="tituloJogo">Carregar Jogo</div>':'<div><strong>Carregar jogo</strong></div><div class="vez">O jogo atual será substituído.</div>'}<div class="col">`;
-  h+=man?`<button onclick="carregar('manual')"><b>Salvo</b><small>${descSave(man)}</small></button>`:'<div class="vez">Nenhum jogo salvo manualmente.</div>';
+  // vindo da tela inicial é a tela da Batalha Livre: começar uma nova ou continuar uma salva (a campanha continua pelo Continuar)
+  let h=daConfig?`<div class="tituloJogo">Batalha Livre</div><div class="vez">Você e seu mestre contra outros mestres, num mapa sorteado.</div>
+    <div class="menuIni" style="margin:10px auto 4px"><button class="pri grande" onclick="desenhaConfig()">Nova batalha</button></div>
+    ${man||aut?'<div class="passo">Continuar uma batalha salva</div>':''}<div class="col">`
+    :'<div><strong>Carregar jogo</strong></div><div class="vez">O jogo atual será substituído.</div><div class="col">';
+  h+=man?`<button onclick="carregar('manual')"><b>Salvo</b><small>${descSave(man)}</small></button>`:daConfig?'':'<div class="vez">Nenhum jogo salvo manualmente.</div>';
   if(aut)h+=`<button onclick="carregar('auto')"><b>Automático</b><small>${descSave(aut)}</small></button>`;
   h+=`</div>${aviso?`<div class="vez" style="margin-top:8px;color:var(--acc)">${aviso}</div>`:''}
     <div class="linha"><button onclick="exportarSaves()" ${man||aut?'':'disabled'} title="Baixa um arquivo com os jogos salvos, para guardar ou levar a outro aparelho">⇪ Exportar arquivo</button><button onclick="importarSaves(${daConfig})" title="Lê um arquivo exportado; substitui os jogos salvos neste aparelho">⇩ Importar arquivo</button></div>
-    <div class="vez" style="margin-top:6px">Os jogos ficam salvos neste navegador. Exporte para guardar uma cópia ou continuar em outro aparelho.</div><div class="linha"><button onclick="${daConfig?'desenhaInicio()':'fecharSaves()'}">${daConfig?'Voltar':'Cancelar'}</button></div>`;
+    <div class="vez" style="margin-top:6px">As batalhas ficam salvas neste navegador. Exporte para guardar uma cópia ou continuar em outro aparelho.</div><div class="linha"><button onclick="${daConfig?'desenhaInicio()':'fecharSaves()'}">${daConfig?'Voltar':'Cancelar'}</button></div>`;
   el.innerHTML=h;el.style.display='block';
 }
 function fecharSaves(){const el=document.getElementById('saves');el.style.display='none';el.classList.remove('cfg','tela','ini','arte');}
@@ -2544,8 +2577,8 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.38'; // aumentar 0.01 a cada atualização publicada
-// tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
+const VERSAO='2.39'; // aumentar 0.01 a cada atualização publicada
+// tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
   if(J&&J.intro)fimIntro(); // a abertura nunca fica rodando atrás (ou por cima) da tela inicial
@@ -2553,13 +2586,12 @@ function abreConfig(inicio=false){
   cfgSel={...prefs()};cfgInicio=inicio||!J||J.fim;desenhaInicio();
 }
 function desenhaInicio(){
-  const el=document.getElementById('saves'),temSave=!!(lerSave('manual')||lerSave('auto'));
+  const el=document.getElementById('saves');
   el.innerHTML=`<div class="tituloJogo" aria-label="A Mata Tem Dono: Guerra dos Encantados"><span class="tl1">A Mata</span><span class="tl2">Tem Dono</span><span class="tlDa">Guerra dos Encantados</span></div>
     <div class="menuIni">
       <button class="pri grande" onclick="${cfgInicio?'jogarRapido()':'fecharSaves()'}">${botaoJogar()}</button>
-      ${fase1Info().venceu?'<button class="grande" onclick="telaFases()">Fases</button>':''}
-      <button class="grande" onclick="desenhaConfig()">Preparar Batalha</button>
-      <button class="grande" onclick="abrirCarregar(true)" ${temSave?'':'disabled'}>Carregar Jogo</button>
+      <button class="grande" onclick="telaFases()">Fases</button>
+      <button class="grande" onclick="abrirCarregar(true)">Batalha Livre</button>
     </div>
     <div class="rodIni"><button onclick="abreCompart()" title="Mostra um QR code com o link do jogo">▦ Compartilhar</button>${podeInstalar()?'<button onclick="botaoInstalar()" title="Coloca o jogo na tela inicial do celular, em tela cheia e jogável sem internet">📲 Instalar app</button>':''}</div>
     <div class="versaoJogo" onclick="contaDiag()">v${VERSAO}</div>`;
@@ -2568,7 +2600,9 @@ function desenhaInicio(){
 }
 // Jogar: partida 1x1 clássica, com o último mestre escolhido (as opções salvas não mudam)
 // Jogar segue a campanha: Fase 1, 2, 3 e, vencidas as três, a tela de "em construção" (convite para o Discord)
-function jogarRapido(){const f=proxFase();if(f)f.jogar();else telaEmObras();}
+function jogarRapido(){const f=proxFase();if(f)entraFase(f.n);else telaEmObras();}
+// entrar numa fase: se ela ficou salva no meio, continua de onde parou (para começar do zero: ☰ › Reiniciar partida)
+function entraFase(n){if(saveCamp(n)&&carregar(slotCamp(n)))return;CAMPANHA[n-1].jogar();}
 // as fases da campanha, em ordem; cada uma abre quando a anterior é vencida. Fase nova: acrescentar aqui.
 const CAMPANHA=[
   {n:1,nome:'O Bando Infernal',desc:'O tutorial: a Água contra os Filhotes Infernais',img:'img/f1-cao-cara.png',info:()=>fase1Info(),jogar:()=>jogarFase1()},
@@ -2581,21 +2615,22 @@ const faseAberta=f=>f.n===1||!!CAMPANHA[f.n-2].info().venceu;
 function botaoJogar(){
   if(!cfgInicio)return `<span>Continuar</span><small class="subBt">Voltar à partida · ${J.f1?`Fase ${J.f1.n||1} · `:''}turno ${J.turno}</small>`;
   const f=proxFase();
-  const [t,sub]=!f?['Jogar','Próximas fases em breve']:f.n===1?['Jogar',`Fase 1 · ${f.nome}`]:['Continuar',`Fase ${f.n} · ${f.nome}`];
+  const sv=f&&saveCamp(f.n);
+  const [t,sub]=!f?['Jogar','Próximas fases em breve']:sv?['Continuar',`Fase ${f.n} · ${f.nome} · turno ${sv.turno}`]:f.n===1?['Jogar',`Fase 1 · ${f.nome}`]:['Continuar',`Fase ${f.n} · ${f.nome}`];
   return `<span>${t}</span><small class="subBt">${sub}</small>`;}
 // tela de escolha de fase: um cartão por fase (retrato, nome, estrelas); as fechadas aparecem com cadeado; no fim, "Em breve"
 function telaFases(){
   const el=document.getElementById('saves');
-  const cartao=f=>{const i=f.info(),aberta=faseAberta(f);
-    return `<button class="cartaoFase${aberta?'':' fechada'}" ${aberta?`onclick="CAMPANHA[${f.n-1}].jogar()"`:'disabled'}>
+  const cartao=f=>{const i=f.info(),aberta=faseAberta(f),sv=aberta&&saveCamp(f.n);
+    return `<button class="cartaoFase${aberta?'':' fechada'}" ${aberta?`onclick="entraFase(${f.n})"`:'disabled'}>
       <span class="retrato" ${aberta?`style="background-image:url(${f.img})"`:''}>${aberta?'':'<i>🔒</i>'}</span>
       <span class="txt"><small>Fase ${f.n}</small><b>${aberta?f.nome:'???'}</b><span class="desc">${aberta?f.desc:`Vença a Fase ${f.n-1} para abrir`}</span></span>
-      <span class="est">${i.venceu?estrelasTxt(i.estrelas):aberta?'<em>Nova!</em>':''}</span></button>`;};
+      <span class="est">${sv?`<em>Turno ${sv.turno}</em>`:i.venceu?estrelasTxt(i.estrelas):aberta?'<em>Nova!</em>':''}</span></button>`;};
   el.innerHTML=`<div class="tituloJogo" style="font-family:'Pirata One',serif;font-weight:400;font-size:min(46px,10vw);text-align:center">Fases</div>
     <div class="fasesGrade">${CAMPANHA.map(cartao).join('')}
       <button class="cartaoFase emBreve" onclick="telaEmObras()"><span class="retrato"><i>…</i></span>
         <span class="txt"><small>Fase ${CAMPANHA.length+1}</small><b>Em breve</b><span class="desc">Dê sua opinião no Discord</span></span><span class="est"></span></button></div>
-    <div class="menuIni"><button onclick="testeArvore()">🌿 Saberes da Mata (teste)</button><button onclick="desenhaInicio()">Voltar</button></div>
+    <div class="menuIni">${/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'<button onclick="testeArvore()">🌿 Saberes da Mata (teste)</button>':''}<button onclick="desenhaInicio()">Voltar</button></div>
     <div class="versaoJogo" onclick="contaDiag()">v${VERSAO}</div>`;
   poeArte(el,'inicio');
   el.classList.remove('cfg','ini');el.classList.add('tela');el.style.display='block';
@@ -4505,7 +4540,7 @@ function desenhaConfig(){
   const modo=(id,n,nome,pts)=>`<button class="${cfgSel.modo===id?'pri':''}" onclick="cfgSel.modo='${id}';desenhaConfig()" aria-pressed="${cfgSel.modo===id}">
       <svg viewBox="0 0 38 30" aria-hidden="true"><rect x="1" y="1" width="36" height="28" rx="4" fill="#0d0f14" stroke="#ffffff55"/>${pts.map(([x,y],l)=>`<circle cx="${x}" cy="${y}" r="3.6" fill="${COR[l]}" stroke="#000" stroke-width=".8"/>`).join('')}</svg>
       <span class="mTxt"><b>${nome}</b><small>${n} mestres</small></span></button>`;
-  let h=`<div class="tituloJogo">Preparar Batalha</div><div class="subt"><strong>Preparar Batalha</strong></div>
+  let h=`<div class="tituloJogo">Nova Batalha</div><div class="subt"><strong>Nova Batalha</strong></div>
     <div class="passo">1 · Tipo de batalha</div>
     <div class="modos">${modo('1x1',2,'Duelo',[[8,15],[30,15]])}${modo('1x1x1',3,'Tríade',[[10,7],[10,23],[29,15]])}${modo('1x1x1x1',4,'Guerra Total',[[8,7],[30,7],[30,23],[8,23]])}</div>
     <div class="vez">${np>2?`Todos contra todos, num mapa maior com ${np===3?'três':'quatro'} castelos. Vence o último mestre de pé.`:'Você contra um mestre.'}</div>
@@ -4514,7 +4549,7 @@ function desenhaConfig(){
   for(const [id,o] of Object.entries(ORDENS))
     h+=`<button class="${id===cfgSel.ordem?'pri':''}" onclick="cfgSel.ordem='${id}';desenhaConfig()">${iconeSpr(o.esp,TOQUE()?64:84,'cor')}<span class="txt"><b>${o.nome}</b><small>Força Elemental: ${o.forca.map(e=>`<span style="color:${EL[e]}">${ELN[e]}</span>`).join(', ')}</small><small class="desc">${o.desc}</small></span></button>`;
   h+=`</div>
-    <div class="linha"><button onclick="desenhaInicio()">Voltar</button><button class="pri" onclick="comecarJogo()">Começar</button></div>`;
+    <div class="linha"><button onclick="abrirCarregar(true)">Voltar</button><button class="pri" onclick="comecarJogo()">Começar</button></div>`;
   el.innerHTML=h;el.classList.remove('ini');el.classList.add('cfg','tela');poeArte(el,'batalha');el.style.display='block';
 }
 function comecarJogo(){gravaPrefs(cfgSel);fecharSaves();novoJogo(cfgSel);}
@@ -5347,6 +5382,7 @@ function porqueDerrota(v,motivo,por){
 }
 function fimDeJogo(v,motivo='mestre',por=null){
   J.fim=true;J.motivoFim=motivo;
+  if(J.f1)apagaSaveCamp(J.f1.n); // a fase acabou (vitória ou derrota): não há mais o que continuar
   const jogo=J;
   const mostra=()=>{
     if(J!==jogo)return; // um novo jogo já começou
@@ -8270,7 +8306,7 @@ function reiniciarPartida(ev){
   if(!J.confReinicio){J.confReinicio=true;atualiza();return;}
   const f1=J.f1,op=J.op||{...prefs(),modo:Object.keys(MODOS).find(k=>MODOS[k]===NP())||'1x1'};
   fechaMenuJogo();fecharSaves();
-  if(f1)(f1.n===3?jogarFase3:f1.n===2?jogarFase2:jogarFase1)();else novoJogo(op);
+  if(f1){apagaSaveCamp(f1.n);(f1.n===3?jogarFase3:f1.n===2?jogarFase2:jogarFase1)();}else novoJogo(op);
 }
 addEventListener('click',ev=>{if(!ev.target.closest('#menuJogo'))fechaMenuJogo();});
 let PLACAR_TORRE=null; // ícone de torre do placar (pixel art gerada uma vez)
