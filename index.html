@@ -2588,7 +2588,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.46'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.47'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -3881,7 +3881,7 @@ const AVISOS_F3={
   vilaVerde:{falas:['feliz|Minha família voltou pra vila!']},
   inunda:{falas:['Os rios estão inundando!'],bt:'Continuar'},
   caiporaLonge:{falas:[{quem:'caipora',txt:'Essa mata ficou longe de tudo.'},{quem:'caipora',txt:'Deixo uma Semente aqui pra você.'}],bt:'Continuar'},
-  mataSozinha:{falas:[{quem:'caipora',txt:'As saúvas se foram.'},{quem:'caipora',txt:'Agora a mata se cura sozinha.'}],bt:'Continuar'},
+  mataSozinha:{falas:[{quem:'caipora',txt:'Sem as saúvas, a mata poderá se recuperar sozinha.'}],bt:'Continuar'},
   vitoria:{falas:[{quem:'soldado',txt:'Primeiro os Cães Infernais...<br>Agora essa chuva que não para...'},
     {quem:'caipora',txt:'Nada disso é normal.'},{quem:'caipora',txt:'Quem será que está por trás disso?'}],bt:'Continuar'},
 };
