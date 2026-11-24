@@ -259,7 +259,7 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 .segueG .nm{font-weight:700;font-size:13.5px}.segueG small{color:var(--dim);font-size:12px}.segueG .vai{color:var(--acc)}
 .bencTag{display:inline-block;padding:0 5px;border:1px solid;border-radius:4px;font-size:11px;font-family:Georgia,serif;line-height:15px;vertical-align:1px;white-space:nowrap}
 .essP{display:inline-block;padding:4px 12px;border-radius:99px;background:#3a3016;color:#ffd77a;font-weight:700;font-size:14px}
-.fogTopo{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:6px;margin:0 0 10px}.fogTopo .essP,.fogTopo .arvReset{white-space:nowrap;margin:0}.essMais{margin-left:6px;color:#9dffb8;font-size:12.5px}.arvReset.ic{width:34px;height:34px;padding:0;font-size:17px;display:inline-flex;align-items:center;justify-content:center}
+.fogTopo{display:flex;justify-content:space-between;align-items:center;flex-wrap:nowrap;gap:6px;margin:0 0 12px}.fogTopo .lado{flex:0 0 58px;display:flex;justify-content:flex-start}.fogTopo .lado.dir{justify-content:flex-end}.fogTit{flex:1;min-width:0;margin:0;text-align:center;font-size:clamp(17px,5.4vw,26px);white-space:nowrap;line-height:1.2;text-transform:none;letter-spacing:0;color:var(--txt);font-weight:800}#fim .fogCx #fimTxt,#fim .fogCx #fimSub{display:none}.fogTopo .essP{position:relative;padding:4px 10px}.fogTopo .essMais{position:absolute;top:-9px;right:-8px;margin:0;font-size:11px;background:#1d3a26;border-radius:99px;padding:0 5px}.fogTopo .arvReset.ic{color:var(--dim);background:transparent;border-color:#3a3f4a}.fogTopo .essP,.fogTopo .arvReset{white-space:nowrap;margin:0}.essMais{margin-left:6px;color:#9dffb8;font-size:12.5px}.arvReset.ic{width:34px;height:34px;padding:0;font-size:17px;display:inline-flex;align-items:center;justify-content:center}
 .fogG{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
 .fogG button{position:relative}.fogG .ic{font-size:26px;line-height:1}.fogG .ef{font-weight:700;font-size:15px}.fogG .ef.off{color:var(--dim);opacity:.7}
 .fogG .rom{position:absolute;top:5px;right:8px;font-family:Georgia,serif;font-size:13px;letter-spacing:1px}
@@ -282,7 +282,7 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 .arvNo:not(.aceso) .arte{filter:grayscale(1) brightness(.75)}.arvNo .arte.foto{background-size:cover;background-position:center 40%;image-rendering:auto}.arvNo.aceso{border-color:var(--c)}.arvVert .arvNo{min-height:104px}.arvCruzG .arvNo{min-height:90px}
 .arvNo .pips{position:absolute!important;top:6px;left:6px;display:flex;gap:3px}.arvNo .pips i{width:8px;height:8px;border-radius:50%;border:1.5px solid #fff9;background:#0008}.arvNo .pips i.on{background:var(--c);border-color:#fff}
 .arvNo small,.arvNo .desp{position:absolute!important;top:5px;right:5px;padding:1px 7px;border-radius:99px;background:#000b;font-size:10.5px}.arvNo .desp{background:#f2c14e;color:#2a2008;font-weight:700;font-size:11px;margin:0}
-.nivL{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 4px}.nivL span{font-size:11.5px;padding:1px 7px;border-radius:99px;border:1px solid var(--line);color:var(--dim)}.nivL span.on{border-color:#f2c14e;color:#ffd77a}.nivL span.prox{border-style:dashed;color:#e8e8e8}.nivB{font-size:12px;color:#ffd77a;font-weight:400;margin-left:4px}
+.nivL{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 4px}.nivL span{font-size:11.5px;padding:1px 7px;border-radius:99px;border:1px solid var(--line);color:var(--dim)}.nivL span.on{border-color:#f2c14e;color:#ffd77a}.nivL span.prox{border-style:dashed;color:#e8e8e8}.nivL .nivSeta{font-style:normal;color:var(--dim);align-self:center;font-size:13px}.nivB{font-size:12px;color:#ffd77a;font-weight:400;margin-left:4px}
 
 .arvNo .desp{margin-top:2px;padding:2px 10px;border-radius:99px;background:#f2c14e;color:#2a2008;font-weight:700;font-size:11.5px;white-space:nowrap}.arvNo .desp.falta{background:#5a2a2a;color:#ffb0a8}
 .arvNo.oculto,.arvNo.trancado{opacity:.5}.arvNo.fechado{opacity:.35}.arvNo.fechado .nm{text-decoration:line-through}.arvNo.sel{outline:2px solid var(--acc);outline-offset:-1px}
@@ -299,8 +299,7 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 .fogJArte{position:relative;height:150px;border-bottom:1px solid var(--line)}.fogJArte .arte{position:absolute;inset:0;background-size:cover;background-position:center 40%}.fogJArte:not(.aceso) .arte{filter:grayscale(1) brightness(.75)}
 .fogJX{position:absolute;top:8px;right:8px;width:34px;height:34px;padding:0;border-radius:50%;background:#000b;border:1px solid #fff4;font-size:15px}
 .fogJCorpo{padding:12px 14px 14px}.fogJCorpo b{font-size:16px}.fogJCorpo p{margin:4px 0 10px;color:var(--dim);font-size:13.5px;line-height:1.4}.fogJCorpo .dica{color:#ffd77a;font-size:12.5px;margin:0 0 10px}
-.fogJBt{width:100%;padding:12px;border-radius:9px}.fogJBt,.fogJBt:hover:not(:disabled){background:linear-gradient(#ffe27a,#f5b028);color:#2a1a00;font-weight:800;font-size:15.5px;border:1px solid #fff3b0;box-shadow:0 0 14px #f5b02899,inset 0 1px 0 #fff8;animation:fogJBrilho 1.6s ease-in-out infinite}.fogJBt.falta,.fogJBt.falta:hover{background:#5a2a2a;color:#ffb0a8;border-color:#7a3a3a;box-shadow:none;animation:none}
-@keyframes fogJBrilho{50%{box-shadow:0 0 22px #ffcf4acc,inset 0 1px 0 #fff8}}
+.fogJBt{width:100%;box-sizing:border-box;padding:12px;border-radius:9px;margin:14px 0 0}.fogJBt,.fogJBt:hover:not(:disabled){background:linear-gradient(#f4cf68,#e0a634);color:#2a1a00;font-weight:800;font-size:15.5px;border:0;box-shadow:none}.fogJBt.falta,.fogJBt.falta:hover{background:#5a2a2a;color:#ffb0a8;border-color:#7a3a3a;box-shadow:none;animation:none}
 @keyframes fogJS{from{transform:translate(-50%,-50%) scale(.94);opacity:0}}@keyframes fogJF{from{opacity:0}}
 .ajuda{font-size:12px;color:var(--dim)}
 /* coluna da direita na altura do mapa: informações e registro rolam por dentro */
@@ -2545,7 +2544,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.37'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.38'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -2601,8 +2600,8 @@ function telaFases(){
   poeArte(el,'inicio');
   el.classList.remove('cfg','ini');el.classList.add('tela');el.style.display='block';
 }
-// TESTE (tirar depois): abre a Árvore da Fogueira pela tela de fases, com os 3 ramos e botões de Essência de teste.
-// Não mexe no exército nem na Essência ganha nas fases; a Essência de teste fica em campanhaInfo().essTeste.
+// TESTE (tirar depois): abre a Árvore da Fogueira pela tela de fases, com os 3 ramos e 40 ✨ fixos (ESS_TESTE).
+// Usa uma árvore própria (campanhaInfo().arvoreTeste): não mexe no exército, na Essência nem na árvore da campanha.
 function testeArvore(){const f=document.getElementById('fim');f.style.zIndex=50;f.style.display='flex';
   fogueiraTela(3,[],[],()=>{f.style.zIndex='';telaFases();},3,true);}
 function jogarFase1(){fecharSaves();novoJogo({...prefs(),modo:'1x1',f1:true});}
@@ -4331,8 +4330,10 @@ function bencaoTag(u){if(u.lado!==0)return '';const el=elU(u),R=ARVORE[el];if(!R
   const nos=[...new Set(J.arvore||[])].map(id=>NO_ARV[id]).filter(n=>n&&(n.el===el||(n.els&&n.els.includes(el))));if(!nos.length)return '';
   return ` <span class="bencTag" style="color:${R.cor};border-color:${R.cor}88" title="Saberes da Mata: ${nos.map(n=>n.nome+(maxNo(n.id)>1?' '+ROM[nivNo(n.id)]:'')).join(', ')}">${R.ic} ${nos.length}</span>`;}
 const ROM=['','I','II','III'];
-function essLivre(){const cp=campanhaInfo(),g=Object.values(cp.essGanho||{}).reduce((s,v)=>s+Math.min(ESS_MAX,v||0),0);
-  return Math.max(0,g+(cp.essTeste||0)-(cp.arvore||[]).filter(id=>NO_ARV[id]).reduce((s,id)=>s+custoNo(id),0));}
+const ESS_TESTE=40; // TESTE: Essência fixa da tela de teste, com uma árvore própria (arvoreTeste), separada da campanha
+const chaveArv=teste=>teste?'arvoreTeste':'arvore';
+function essLivre(teste){const cp=campanhaInfo(),g=teste?ESS_TESTE:Object.values(cp.essGanho||{}).reduce((s,v)=>s+Math.min(ESS_MAX,v||0),0);
+  return Math.max(0,g-(cp[chaveArv(teste)]||[]).filter(id=>NO_ARV[id]).reduce((s,id)=>s+custoNo(id),0));}
 // estado de um nó: 'tem' (nível máximo) | 'sobe' (já tem, pode subir) | 'pode' | 'fechado' (o outro lado do garfo) | 'trancado' | 'oculto'
 function estadoNo(id,tem,els){const n=NO_ARV[id],k=nivEm(id,tem);if(k>=maxNo(id))return 'tem';if(k>0)return 'sobe';
   const temP=(el,p)=>ARVORE[el].nos.some(x=>x.p===p&&tem.includes(x.id));
@@ -4415,12 +4416,12 @@ function fogueiraTela(n,segue,ficam,prox,est,teste){
   const janela=()=>matchMedia('(max-width:600px)').matches; // no celular, o texto da habilidade abre numa janela por cima
   const b=document.getElementById('fimBt'),b2=document.getElementById('fimBt2');b2.style.display='none';
   const desenha=()=>{
-    const tem=(campanhaInfo().arvore||[]).filter(id=>NO_ARV[id]),livre=essLivre(),st=id=>estadoNo(id,tem,els),niv=id=>nivEm(id,tem);
+    const tem=(campanhaInfo()[chaveArv(teste)]||[]).filter(id=>NO_ARV[id]),livre=essLivre(teste),st=id=>estadoNo(id,tem,els),niv=id=>nivEm(id,tem);
     const compravel=s=>s==='pode'||s==='sobe';
     const no=id=>{const x=NO_ARV[id],s=st(id),R=ARVORE[x.el]||ARVORE[x.els[0]],k=niv(id),m=maxNo(id),c=custoNo(id);
       const pips=m>1?`<span class="pips">${Array.from({length:m},(_,i)=>`<i class="${i<k?'on':''}"></i>`).join('')}</span>`:'';
       const rod=compravel(s)&&id===sel&&!janela()?(livre>=c?`<span class="desp">${k?'Fortalecer':'Despertar'} · ${c} ✨</span>`:`<span class="desp falta">Falta ✨ · ${c}</span>`)
-        :`<small>${s==='tem'?(m>1?'✓ máximo':'✓ desperto'):s==='fechado'?'fechado':c+' ✨'}</small>`;
+        :`<small>${s==='tem'?'✓':s==='fechado'?'fechado':c+' ✨'}</small>`;
       return `<button class="arvNo ${s}${k?' aceso':''}${id===sel&&(!janela()||aberto)?' sel':''}" style="--c:${R.cor}" onclick="fogueiraTela.pick('${id}')">${arteNo(id)}<span class="nm">${x.nome}</span><span class="cu">${x.ef[Math.max(0,k-1)]}</span>${pips}${rod}</button>`;};
     // setas na cor do ramo; num garfo já escolhido, o lado que não foi escolhido fica apagado
     const ramo=(up,esq,dir)=>{const tr=(d,on)=>`<path d="${d}" stroke="${on?'currentColor':'#3a3f4a'}" stroke-width="3" stroke-linecap="round" fill="none" vector-effect="non-scaling-stroke"/>`;
@@ -4437,11 +4438,12 @@ function fogueiraTela(n,segue,ficam,prox,est,teste){
     const cruz=ARV_CRUZ.filter(x=>x.els.every(e=>els.includes(e))),cruzV=cruz.some(x=>vis(x.id)); // os segredos possíveis nesta fase guardam lugar
     const x=NO_ARV[sel],s=st(sel),k=niv(sel),m=maxNo(sel),custo=custoNo(sel);
     let dica='';
-    if(s==='tem')dica=m>1?'✓ Nível máximo.':'✓ Já desperto.';
-    else if(s==='fechado'){const o=ARVORE[x.el].nos.find(y=>y.p===2&&tem.includes(y.id));dica=`Caminho fechado: você escolheu ${o.nome}. ↺ Recomeçar desfaz.`;}
-    else if(compravel(s)){dica=x.p===2&&!k?`Escolher este fecha ${ARVORE[x.el].nos.find(y=>y.p===2&&y.id!==sel).nome}. `:'';dica+=livre<custo?`Precisa de ${custo} ✨.`:janela()?'':`Toque em ${k?'Fortalecer':'Despertar'} para confirmar.`;}
-    const niveis=m>1?`<div class="nivL">${x.ef.map((e,i)=>`<span class="${i<k?'on':''}${i===k&&s!=='tem'?' prox':''}">${ROM[i+1]} ${e}</span>`).join('')}</div>`:'';
-    const cab=`<b>${x.nome}${m>1?` <span class="nivB">${k?`nível ${ROM[k]} de ${ROM[m]}`:`${m} níveis`}</span>`:''}</b>`;
+    if(s==='fechado')dica='Fechado · ↺ para reabrir';
+    else if(compravel(s)){dica=x.p===2&&!k?`Fecha ${ARVORE[x.el].nos.find(y=>y.p===2&&y.id!==sel).nome}`:'';if(!janela()&&livre>=custo)dica+=(dica?' · ':'')+'toque de novo para confirmar';}
+    // só o nível atual e, se ainda dá para subir, o próximo (o que o botão vai dar)
+    const prx=k<m&&s!=='fechado'?`<span class="prox">${x.ef[k]}</span>`:'';
+    const niveis=m>1?`<div class="nivL">${k?`<span class="on">${x.ef[k-1]}</span>`:''}${k&&prx?'<i class="nivSeta">→</i>':''}${prx}</div>`:'';
+    const cab=`<b>${x.nome}${m>1&&k?` <span class="nivB">nível ${ROM[k]}</span>`:''}</b>`;
     const det=`<div class="fogDet">${cab}<p>${x.txt}</p>${niveis}<p class="dica">${dica||'&nbsp;'}</p></div>`;
     const btJ=compravel(s)?`<button class="fogJBt${livre<custo?' falta':''}" ${livre<custo?'disabled':''} onclick="fogueiraTela.compra()">${livre<custo?`Falta ✨ · ${custo}`:`${k?'Fortalecer':'Despertar'} · ${custo} ✨`}</button>`:'';
     const jan=janela()&&aberto?`<div class="fogJFundo${anima?' anima':''}" onclick="fogueiraTela.fecha()"></div><div class="fogJ${anima?' anima':''}" style="--c:${(ARVORE[x.el]||ARVORE[x.els[0]]).cor}">
@@ -4449,7 +4451,7 @@ function fogueiraTela(n,segue,ficam,prox,est,teste){
       <div class="fogJCorpo">${cab}<p>${x.txt}</p>${niveis}${dica?`<p class="dica">${dica}</p>`:''}${btJ}</div></div>`:'';
     anima=false;document.getElementById('fimTxt').textContent='Saberes da Mata';
     document.getElementById('fimSub').textContent='';
-    document.getElementById('fimPorque').innerHTML=`<div class="fogTopo"><span class="essP">✨ ${livre} Essência${ganho?`<span class="essMais">+${ganho}</span>`:''}</span>${teste?`<button class="arvReset" onclick="fogueiraTela.ess(1)">+1 ✨</button><button class="arvReset" onclick="fogueiraTela.ess(-1)">−1 ✨</button>`:''}${tem.length?`<button class="arvReset ic" title="Recomeçar a árvore" aria-label="Recomeçar a árvore" onclick="fogueiraTela.reset()">↺</button>`:''}</div>
+    document.getElementById('fimPorque').innerHTML=`<div class="fogTopo"><span class="lado"><span class="essP" title="Essência">✨ ${livre}${ganho?`<span class="essMais">+${ganho}</span>`:''}</span></span><h2 class="fogTit">Saberes da Mata</h2><span class="lado dir"><button class="arvReset ic${tem.length?'':' arvVazio'}" title="Recomeçar a árvore" aria-label="Recomeçar a árvore" onclick="fogueiraTela.reset()">↺</button></span></div>
       ${abas}${col(aba)}
       ${janela()?'':det}
       ${cruz.length?`<div class="arvCruz${cruzV?'':' arvVazio'}"><div class="arvCab">✦ Segredos</div><div class="arvCruzG">${cruz.map(y=>noV(y.id)).join('')}</div></div>`:''}${jan}`;
@@ -4460,11 +4462,10 @@ function fogueiraTela(n,segue,ficam,prox,est,teste){
     if(id===sel){fogueiraTela.compra();return;}sel=id;if(NO_ARV[id].el)aba=NO_ARV[id].el;desenha();}; // tocar de novo no nó selecionado confirma
   fogueiraTela.fecha=()=>{aberto=false;desenha();};
   fogueiraTela.aba=el=>{aba=el;sel=ARVORE[el].nos[0].id;aberto=false;desenha();};
-  fogueiraTela.compra=()=>{const tem=(campanhaInfo().arvore||[]).filter(id=>NO_ARV[id]),s=estadoNo(sel,tem,els);if(s!=='pode'&&s!=='sobe')return;
-    if(essLivre()<custoNo(sel))return;
-    salvaCampanha({arvore:[...tem,sel]});desenha();};
-  fogueiraTela.reset=()=>{salvaCampanha({arvore:[]});aberto=false;desenha();};
-  fogueiraTela.ess=d=>{const t=campanhaInfo().essTeste||0;salvaCampanha({essTeste:Math.max(0,t+d)});desenha();}; // TESTE
+  fogueiraTela.compra=()=>{const tem=(campanhaInfo()[chaveArv(teste)]||[]).filter(id=>NO_ARV[id]),s=estadoNo(sel,tem,els);if(s!=='pode'&&s!=='sobe')return;
+    if(essLivre(teste)<custoNo(sel))return;
+    salvaCampanha({[chaveArv(teste)]:[...tem,sel]});desenha();};
+  fogueiraTela.reset=()=>{salvaCampanha({[chaveArv(teste)]:[]});aberto=false;desenha();};
   b.onclick=()=>{document.querySelector('#fim .cx').classList.remove('fogCx');document.getElementById('fim').style.display='none';prox();};
   desenha();
 }
