@@ -293,10 +293,14 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 #fimPorque .placarFim b{text-align:center}
 #fimPorque .placarFim span:not(:first-child){text-align:center}
 #fimPorque .dicaFim{margin:0;color:#f2c14e}
+#fim .cx.fogCx.larga{width:min(1000px,calc(100vw - 40px));max-width:none}.arvLado{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:14px}
+.arvColCab{position:relative;overflow:hidden;height:46px;border-radius:8px;border:1px solid color-mix(in srgb,var(--c) 55%,var(--line));margin:0 0 8px;display:flex;align-items:center;justify-content:center;color:var(--c);font-size:15px}.arvColCab .abaArte{filter:brightness(.7)}.arvColCab b{position:relative;z-index:1;text-shadow:0 1px 3px #000,0 0 6px #000}
+.larga .arvVert>.arvNo{width:62%}.larga .fogTopo{max-width:520px;margin-left:auto;margin-right:auto}.larga .arvCruzG{grid-template-columns:repeat(3,minmax(0,220px));justify-content:center}
 .arvVazio{visibility:hidden}
 .fogJFundo{position:fixed;inset:0;background:#000a;z-index:20}.fogJFundo.anima{animation:fogJF .15s}
 .fogJ{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(400px,calc(100vw - 24px));max-height:calc(100vh - 40px);overflow-y:auto;z-index:21;background:#14161b;border:1px solid var(--c);border-radius:12px;text-align:left;box-shadow:0 10px 40px #000c}.fogJ.anima{animation:fogJS .18s ease-out}
 .fogJArte{position:relative;height:150px;border-bottom:1px solid var(--line)}.fogJArte .arte{position:absolute;inset:0;background-size:cover;background-position:center 40%}.fogJArte:not(.aceso) .arte{filter:grayscale(1) brightness(.75)}
+@media (min-width:601px){.fogJ{width:440px}.fogJArte{height:200px}}.arvNo:not(.sel):hover{filter:brightness(1.12)}
 .fogJX{position:absolute;top:8px;right:8px;width:34px;height:34px;padding:0;border-radius:50%;background:#000b;border:1px solid #fff4;font-size:15px}
 .fogJCorpo{padding:12px 14px 14px}.fogJCorpo b{font-size:16px}.fogJCorpo p{margin:4px 0 10px;color:var(--dim);font-size:13.5px;line-height:1.4}.fogJCorpo .dica{color:#ffd77a;font-size:12.5px;margin:0 0 10px}
 .fogJBt{width:100%;box-sizing:border-box;padding:12px;border-radius:9px;margin:14px 0 0}.fogJBt,.fogJBt:hover:not(:disabled){background:linear-gradient(#f4cf68,#e0a634);color:#2a1a00;font-weight:800;font-size:15.5px;border:0;box-shadow:none}.fogJBt.falta,.fogJBt.falta:hover{background:#5a2a2a;color:#ffb0a8;border-color:#7a3a3a;box-shadow:none;animation:none}
@@ -2577,7 +2581,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.39'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.40'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -4448,16 +4452,14 @@ function fogueiraTela(n,segue,ficam,prox,est,teste){
   const cp=campanhaInfo(),antes=Math.min(ESS_MAX,(cp.essGanho||{})[n]||0),agora=essDaFase(est||1),ganho=teste?0:Math.max(0,agora-antes); // refazer a fase só completa o que faltou
   if(!teste)salvaCampanha({['f'+n+'Exercito']:segue,essGanho:{...(cp.essGanho||{}),[n]:Math.max(antes,agora)},...(cp.bencaos?{bencaos:undefined}:{})}); // as bênçãos antigas viram Essência de volta
   const els=bencaosAte(n);let aba=els[0],sel=ARVORE[aba].nos[0].id,aberto=false,anima=false;
-  const janela=()=>matchMedia('(max-width:600px)').matches; // no celular, o texto da habilidade abre numa janela por cima
   const b=document.getElementById('fimBt'),b2=document.getElementById('fimBt2');b2.style.display='none';
   const desenha=()=>{
     const tem=(campanhaInfo()[chaveArv(teste)]||[]).filter(id=>NO_ARV[id]),livre=essLivre(teste),st=id=>estadoNo(id,tem,els),niv=id=>nivEm(id,tem);
     const compravel=s=>s==='pode'||s==='sobe';
     const no=id=>{const x=NO_ARV[id],s=st(id),R=ARVORE[x.el]||ARVORE[x.els[0]],k=niv(id),m=maxNo(id),c=custoNo(id);
       const pips=m>1?`<span class="pips">${Array.from({length:m},(_,i)=>`<i class="${i<k?'on':''}"></i>`).join('')}</span>`:'';
-      const rod=compravel(s)&&id===sel&&!janela()?(livre>=c?`<span class="desp">${k?'Fortalecer':'Despertar'} · ${c} ✨</span>`:`<span class="desp falta">Falta ✨ · ${c}</span>`)
-        :`<small>${s==='tem'?'✓':s==='fechado'?'fechado':c+' ✨'}</small>`;
-      return `<button class="arvNo ${s}${k?' aceso':''}${id===sel&&(!janela()||aberto)?' sel':''}" style="--c:${R.cor}" onclick="fogueiraTela.pick('${id}')">${arteNo(id)}<span class="nm">${x.nome}</span><span class="cu">${x.ef[Math.max(0,k-1)]}</span>${pips}${rod}</button>`;};
+      const rod=`<small>${s==='tem'?'✓':s==='fechado'?'fechado':c+' ✨'}</small>`;
+      return `<button class="arvNo ${s}${k?' aceso':''}${id===sel&&aberto?' sel':''}" style="--c:${R.cor}" onclick="fogueiraTela.pick('${id}')">${arteNo(id)}<span class="nm">${x.nome}</span><span class="cu">${x.ef[Math.max(0,k-1)]}</span>${pips}${rod}</button>`;};
     // setas na cor do ramo; num garfo já escolhido, o lado que não foi escolhido fica apagado
     const ramo=(up,esq,dir)=>{const tr=(d,on)=>`<path d="${d}" stroke="${on?'currentColor':'#3a3f4a'}" stroke-width="3" stroke-linecap="round" fill="none" vector-effect="non-scaling-stroke"/>`;
       const p=up?tr('M50 0V12',1)+tr('M50 12H25V21',esq)+tr('M50 12H75V21',dir):tr('M25 0V12H50',esq)+tr('M75 0V12H50',dir)+tr('M50 12V21',1);
@@ -4469,39 +4471,43 @@ function fogueiraTela(n,segue,ficam,prox,est,teste){
       const e1=niv(f1)>0,e2=niv(f2)>0,algum=e1||e2; // antes de escolher, as duas setas ficam acesas
       const gv=vis(f1)||vis(f2),esc=(on,h)=>on?h:h.replace(/^<div class="/,'<div class="arvVazio ');
       return `<div class="arvVert" style="--c:${R.cor}">${no(a)}${esc(gv,ramo(1,!algum||e1,!algum||e2))}<div class="arvGarfo">${[f1,f2].map(noV).join('')}</div>${esc(vis(z),ramo(0,e1,e2))}${noV(z)}</div>`;};
+    const larga=els.length>1&&matchMedia('(min-width:900px)').matches; // tela larga (computador): os ramos lado a lado, sem abas
+    const cabCol=el=>{const R=ARVORE[el];return `<div class="arvColCab" style="--c:${R.cor}">${ABA_IMG[el]?`<span class="abaArte" style="background-image:url(${ABA_IMG[el]})"></span>`:''}<b>${R.nome}</b></div>`;};
     const abas=els.length>1?`<div class="arvAbas">${els.map(el=>{const R=ARVORE[el],k=tem.filter(id=>NO_ARV[id].el===el).length;return `<button class="${el===aba?'sel':''}" style="--c:${R.cor}" onclick="fogueiraTela.aba('${el}')">${ABA_IMG[el]?`<span class="abaArte" style="background-image:url(${ABA_IMG[el]})"></span>`:''}<b>${R.nome}</b></button>`;}).join('')}</div>`:'';
     const cruz=ARV_CRUZ.filter(x=>x.els.every(e=>els.includes(e))),cruzV=cruz.some(x=>vis(x.id)); // os segredos possíveis nesta fase guardam lugar
     const x=NO_ARV[sel],s=st(sel),k=niv(sel),m=maxNo(sel),custo=custoNo(sel);
     let dica='';
     if(s==='fechado')dica='Fechado · ↺ para reabrir';
-    else if(compravel(s)){dica=x.p===2&&!k?`Fecha ${ARVORE[x.el].nos.find(y=>y.p===2&&y.id!==sel).nome}`:'';if(!janela()&&livre>=custo)dica+=(dica?' · ':'')+'toque de novo para confirmar';}
+    else if(compravel(s)){dica=x.p===2&&!k?`Fecha ${ARVORE[x.el].nos.find(y=>y.p===2&&y.id!==sel).nome}`:'';}
     // só o nível atual e, se ainda dá para subir, o próximo (o que o botão vai dar)
     const prx=k<m&&s!=='fechado'?`<span class="prox">${x.ef[k]}</span>`:'';
     const niveis=m>1?`<div class="nivL">${k?`<span class="on">${x.ef[k-1]}</span>`:''}${k&&prx?'<i class="nivSeta">→</i>':''}${prx}</div>`:'';
     const cab=`<b>${x.nome}${m>1&&k?` <span class="nivB">nível ${ROM[k]}</span>`:''}</b>`;
-    const det=`<div class="fogDet">${cab}<p>${x.txt}</p>${niveis}<p class="dica">${dica||'&nbsp;'}</p></div>`;
     const btJ=compravel(s)?`<button class="fogJBt${livre<custo?' falta':''}" ${livre<custo?'disabled':''} onclick="fogueiraTela.compra()">${livre<custo?`Falta ✨ · ${custo}`:`${k?'Fortalecer':'Despertar'} · ${custo} ✨`}</button>`:'';
-    const jan=janela()&&aberto?`<div class="fogJFundo${anima?' anima':''}" onclick="fogueiraTela.fecha()"></div><div class="fogJ${anima?' anima':''}" style="--c:${(ARVORE[x.el]||ARVORE[x.els[0]]).cor}">
+    const jan=aberto?`<div class="fogJFundo${anima?' anima':''}" onclick="fogueiraTela.fecha()"></div><div class="fogJ${anima?' anima':''}" style="--c:${(ARVORE[x.el]||ARVORE[x.els[0]]).cor}">
       <div class="fogJArte${k?' aceso':''}">${arteNo(sel)}<button class="fogJX" aria-label="Fechar" onclick="fogueiraTela.fecha()">✕</button></div>
       <div class="fogJCorpo">${cab}<p>${x.txt}</p>${niveis}${dica?`<p class="dica">${dica}</p>`:''}${btJ}</div></div>`:'';
     anima=false;document.getElementById('fimTxt').textContent='Saberes da Mata';
     document.getElementById('fimSub').textContent='';
     document.getElementById('fimPorque').innerHTML=`<div class="fogTopo"><span class="lado"><span class="essP" title="Essência">✨ ${livre}${ganho?`<span class="essMais">+${ganho}</span>`:''}</span></span><h2 class="fogTit">Saberes da Mata</h2><span class="lado dir"><button class="arvReset ic${tem.length?'':' arvVazio'}" title="Recomeçar a árvore" aria-label="Recomeçar a árvore" onclick="fogueiraTela.reset()">↺</button></span></div>
-      ${abas}${col(aba)}
-      ${janela()?'':det}
+      ${larga?`<div class="arvLado" style="--n:${els.length}">${els.map(el=>`<div>${cabCol(el)}${col(el)}</div>`).join('')}</div>`:abas+col(aba)}
       ${cruz.length?`<div class="arvCruz${cruzV?'':' arvVazio'}"><div class="arvCab">✦ Segredos</div><div class="arvCruzG">${cruz.map(y=>noV(y.id)).join('')}</div></div>`:''}${jan}`;
-    document.querySelector('#fim .cx').classList.add('fogCx');
+    document.querySelector('#fim .cx').classList.add('fogCx');document.querySelector('#fim .cx').classList.toggle('larga',larga);
     b.textContent=teste?'Fechar':'Continuar';b.disabled=false;
   };
-  fogueiraTela.pick=id=>{if(janela()){sel=id;aberto=anima=true;desenha();return;} // celular: abre a janela da habilidade
-    if(id===sel){fogueiraTela.compra();return;}sel=id;if(NO_ARV[id].el)aba=NO_ARV[id].el;desenha();}; // tocar de novo no nó selecionado confirma
+  fogueiraTela.pick=id=>{sel=id;aberto=anima=true;desenha();}; // tocar numa habilidade abre a janela dela por cima
   fogueiraTela.fecha=()=>{aberto=false;desenha();};
   fogueiraTela.aba=el=>{aba=el;sel=ARVORE[el].nos[0].id;aberto=false;desenha();};
   fogueiraTela.compra=()=>{const tem=(campanhaInfo()[chaveArv(teste)]||[]).filter(id=>NO_ARV[id]),s=estadoNo(sel,tem,els);if(s!=='pode'&&s!=='sobe')return;
     if(essLivre(teste)<custoNo(sel))return;
     salvaCampanha({[chaveArv(teste)]:[...tem,sel]});desenha();};
   fogueiraTela.reset=()=>{salvaCampanha({[chaveArv(teste)]:[]});aberto=false;desenha();};
-  b.onclick=()=>{document.querySelector('#fim .cx').classList.remove('fogCx');document.getElementById('fim').style.display='none';prox();};
+  fogueiraTela.redesenha=desenha; // ao mudar o tamanho da janela (lado a lado ↔ abas)
+  // no computador: Esc fecha a janela da habilidade, Enter desperta/fortalece
+  fogueiraTela.tecla=ev=>{if(!aberto)return false;
+    if(ev.key==='Escape'){ev.preventDefault();fogueiraTela.fecha();return true;}
+    if(ev.key==='Enter'){ev.preventDefault();fogueiraTela.compra();return true;}return false;};
+  b.onclick=()=>{fogueiraTela.tecla=fogueiraTela.redesenha=null;document.querySelector('#fim .cx').classList.remove('fogCx','larga');document.getElementById('fim').style.display='none';prox();};
   desenha();
 }
 // o exército que segue para a próxima fase (sem mestre, figurantes, elementais e dominados)
@@ -8816,6 +8822,7 @@ cv.addEventListener('wheel',ev=>{ev.preventDefault();mudaZoom(ev.deltaY<0?1:-1);
 // botão direito cancela; no toque, o menu de contexto do toque longo só é suprimido (quem cancela é o botão ✕ da tela)
 cv.addEventListener('contextmenu',ev=>{ev.preventDefault();if(ultTipo==='mouse')cancelar();});
 addEventListener('keydown',ev=>{
+  if(fogueiraTela.tecla&&fogueiraTela.tecla(ev))return; // janela da habilidade aberta (Saberes da Mata)
   if(J&&J.intro){ev.preventDefault();if(ev.key==='Escape')fimIntro();else if(ev.key===' '||ev.key==='Enter')toqueIntro();return;}
   if(CENA&&(ev.key==='Escape'||ev.key===' '||ev.key==='Enter')){ev.preventDefault();toqueCena();return;}
   if(cenaCerco&&(ev.key==='Escape'||ev.key===' '||ev.key==='Enter')){ev.preventDefault();cenaCerco.fecha();return;}
@@ -8826,7 +8833,7 @@ addEventListener('keydown',ev=>{
   if((ev.key==='m'||ev.key==='M')&&!ev.ctrlKey&&!ev.metaKey&&!ev.altKey&&J)magiaDoBotao();
   if((ev.key==='n'||ev.key==='N')&&!ev.ctrlKey&&!ev.metaKey&&!ev.altKey&&J)proximaCriatura();
 });
-addEventListener('resize',()=>{if(J)menus();});
+addEventListener('resize',()=>{if(J)menus();if(fogueiraTela.redesenha)fogueiraTela.redesenha();});
 // No toque não existe "parar o mouse em cima": tocar num item com explicação (title) mostra o texto num balão.
 {const dica=document.getElementById('dica');
  addEventListener('click',ev=>{
