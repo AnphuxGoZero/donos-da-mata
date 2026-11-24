@@ -2588,7 +2588,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.45'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.46'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -2782,7 +2782,7 @@ function avisoF1(id){if(!id||!J.f1||J.f1.vistos[id])return;J.f1.vistos[id]=true;
 // da outra sem uma ação no meio (andar, atacar, invocar, um saque do Bando). Uma fala que não pôde sair espera a próxima
 // ação; se passarem 2 ações sem ela sair, perdeu o contexto e é descartada. As da abertura, do alerta do camponês, da
 // evolução do Cão e da vitória saem sempre. A da torre é conferida de novo na hora de aparecer.
-const PRIOR_F1=new Set(['inunda','ninhoCaiu','renasce','raiz','ninho','ninhos','plantar','caiporaBroto','vilasSem','comeu','vilaVerde','plantando','formig','intro1','intro1b','intro2','vitoria','semente','campones','evoluiu','cao','caipora','caiporaChega','sapinho','vilaQueima','incendiou','cinza','alimentou','cacaCaes']);
+const PRIOR_F1=new Set(['inunda','ninhoCaiu','renasce','raiz','ninho','ninhos','plantar','caiporaBroto','vilasSem','comeu','vilaVerde','plantando','formig','intro1','intro1b','intro2','caiporaLonge','mataSozinha','vitoria','semente','campones','evoluiu','cao','caipora','caiporaChega','sapinho','vilaQueima','incendiou','cinza','alimentou','cacaCaes']);
 const acaoF1=()=>{if(J&&J.f1)J.f1.acao=(J.f1.acao||0)+1;};
 const podeFalarF1=id=>PRIOR_F1.has(id)||(J.f1.acao||0)>(J.f1.ultFala??-1);
 function proxAvisoF1(){
@@ -2834,7 +2834,7 @@ async function chegadaF1(){
 // o saque junto da vila atacada. Sem lugar definido, ela fica no meio do mapa (como antes).
 const ANCORA_F1={
   plantar:()=>J.f1.sementeK,plantando:()=>J.f1.plantK,raiz:()=>J.f1.raizK,caiporaBroto:()=>J.f1.caiporaFala,vilasSem:()=>J.f1.vilasSemK,comeu:()=>J.f1.comeuK,vilaVerde:()=>J.f1.vilaK,formig:()=>J.f1.formK,ninho:()=>J.f1.ninhoK,ninhos:()=>J.f1.ninhosK,ninhoCaiu:()=>J.f1.ninhoCaiuK,renasce:()=>J.f1.renasceK,inunda:()=>J.f1.inundaK,
-  intro1b:()=>J.f1.intro1bK,
+  intro1b:()=>J.f1.intro1bK,caiporaLonge:()=>J.f1.caiporaLongeK,mataSozinha:()=>J.f1.caiporaFala,
   intro1:()=>ehF3()?J.f1.intro1K:ehF2()?(J.f1.foco2??J.f1.foco0):+Object.keys(J.vilas).find(k=>J.vilas[k].estrela===false),
   incendiou:()=>J.f1.vilaK,cacaCaes:()=>J.f1.cacaK,caiporaChega:()=>J.f1.caiporaK,caipora:()=>J.f1.caiporaK,semente:()=>ehF2()?J.f1.caiporaK:null,vilaQueima:()=>J.f1.vilaK,cinza:()=>J.f1.cinzaK,apagou:()=>J.f1.apagouK,alimentou:()=>J.f1.alimK,cao:()=>J.f1.caoK,
   torreMagica:()=>J.f1.torreK,torre:()=>J.f1.torreFrenteK,
@@ -3880,6 +3880,8 @@ const AVISOS_F3={
   renasce:{falas:['furia|Olha lá! Outro formigueiro!'],bt:'Continuar',volta:true},
   vilaVerde:{falas:['feliz|Minha família voltou pra vila!']},
   inunda:{falas:['Os rios estão inundando!'],bt:'Continuar'},
+  caiporaLonge:{falas:[{quem:'caipora',txt:'Essa mata ficou longe de tudo.'},{quem:'caipora',txt:'Deixo uma Semente aqui pra você.'}],bt:'Continuar'},
+  mataSozinha:{falas:[{quem:'caipora',txt:'As saúvas se foram.'},{quem:'caipora',txt:'Agora a mata se cura sozinha.'}],bt:'Continuar'},
   vitoria:{falas:[{quem:'soldado',txt:'Primeiro os Cães Infernais...<br>Agora essa chuva que não para...'},
     {quem:'caipora',txt:'Nada disso é normal.'},{quem:'caipora',txt:'Quem será que está por trás disso?'}],bt:'Continuar'},
 };
@@ -4001,6 +4003,7 @@ async function brotaF3(u,k){
   atualiza();if(anima)await dorme(900);
   await vilasVerdesF3();if(J.fim)return;
   // a Caipora vem pelo 1º broto, mas nunca no mesmo turno em que as tanajuras chegam: espera a sua próxima vez
+  agendaMataSozinhaF3(); // sem formigas e com metade da mata: o resto brota sozinho
   if(J.f1.brotos.length===1&&!J.f1.vistos.caiporaBroto){if(J.f1.ninho1==null||J.f1.ninho1>=J.turno)J.f1.caiporaPend=k;else{await caiporaBrotoF3(k);if(J.fim)return;}}
   checaVitoriaF3();
 }
@@ -4063,6 +4066,82 @@ function pertoDeF3(k0){
     const fl=vizinhos(c,r).filter(([a,bb])=>J.ter[K(a,bb)]==='flor'&&!unidadeEm(a,bb))[0];
     const sc=d*2+(fl?0:3);if(sc<bs){bs=sc;b=[k,fl?K(...fl):null];}}
   return b;
+}
+// Fase 3: a mata queimada que ficou longe de tudo (das suas Sementes, das vilas com Semente e da clareira) não vira
+// maratona: no começo da sua vez, a Caipora aparece lá e deixa uma Semente pronta para jogar (uma de cada vez, a cada 2 turnos)
+const F3_LONGE=5,F3_LONGE_CADA=2;
+function alvoLongeF3(){
+  if(!J.f1.vilaSem||!J.f1.queim.length)return null;
+  if(J.un.some(u=>u.lado===0&&u.esp==='semente'&&u.caip))return null;
+  if(J.turno<(J.f1.caipLongeT??-99)+F3_LONGE_CADA)return null;
+  const fontes=[...J.un.filter(u=>u.lado===0&&u.esp==='semente').map(u=>[u.c,u.r]),
+    ...(J.f1.vilaSemOk||[]).filter(v=>J.vilas[v]&&J.vilas[v].n>0).map(DK),J.f1.castelo];
+  let b=null,bd=-1;
+  for(const k of J.f1.queim){const d=Math.min(...fontes.map(([c,r])=>d6c(c,r,...DK(k))));if(d>bd){bd=d;b=k;}}
+  return bd>=F3_LONGE?b:null;
+}
+async function caiporaLongeF3(){
+  const k=alvoLongeF3();if(k==null)return;
+  const ok=j=>{const [c,r]=DK(j);return dentro(c,r)&&!unidadeEm(c,r)&&isFinite(custoMov('semente',J.ter[j]))&&!['mont','rio'].includes(J.ter[j])&&!J.f1.formig.includes(j);};
+  const casa=ok(k)?k:vizinhos(...DK(k)).map(([c,r])=>K(c,r)).filter(ok)[0];if(casa==null)return;
+  J.f1.caipLongeT=J.turno;
+  const jogo=J,anima=VEL&&!document.hidden,p=pertoDeF3(casa);
+  const nasce=()=>{const u=criaUnidade('semente',0,...DK(casa));u.caip=true;u.movido=u.agiu=false;
+    const [x,y]=centro(...DK(casa));for(let i=0;i<8;i++)fx.push({folha:true,x:x+(i%4-1.5)*R*.3,y:y+R*.3,dx:(Math.random()-.5)*R*1.2,t0:performance.now()+i*50,dur:1000,cor:i%2?'#7fe08a':'#4f9a3e'});
+    flutua(u,'Presente da Caipora!','#6ee08a');piscaHex(casa,'#6ee08a',900);log('🌿 A Caipora deixou uma Semente perto de uma mata queimada distante.');return u;};
+  if(!anima||!p){nasce();if(!J.f1.vistos.caiporaLonge){J.f1.caiporaLongeK=casa;avisoF1('caiporaLonge');}atualiza();return;}
+  const [ck,fl]=p,[x,y]=centro(...DK(ck)),[ox,oy]=fl!=null?centro(...DK(fl)):[x,y];
+  J.ocupado=true;J.f1.chegando=true;
+  try{
+    J.f1.caiporaK=ck;J.f1.caiporaAnim={x0:ox,y0:oy,t0:performance.now(),dur:1e9,some:true};
+    CAM.alvo={fixo:true,px:x,py:y};CAM.centrar=true;CAM.mao=false;
+    await dorme(900);if(J!==jogo)return;
+    J.f1.caiporaAnim={x0:ox,y0:oy,t0:performance.now(),dur:1100,some:true};await dorme(1200);if(J!==jogo)return;
+    J.f1.caiporaAnim=null;atualiza();await dorme(250);if(J!==jogo)return;
+    const u=nasce();atualiza();await dorme(700);if(J!==jogo)return;
+    if(!J.f1.vistos.caiporaLonge){J.f1.chegando=false;J.f1.caiporaLongeK=casa;await avisoJaF1('caiporaLonge');if(J!==jogo)return;J.f1.chegando=true;}
+    J.f1.caiporaAnim={x0:x,y0:y,x1:ox,y1:oy,t0:performance.now(),dur:900,sai:true};await dorme(950);if(J!==jogo)return;
+    J.f1.caiporaAnim=null;J.f1.caiporaK=null;seguir(u);
+  }finally{if(J===jogo){J.f1.chegando=false;J.ocupado=false;atualiza();}}
+}
+// Fase 3: sem formigueiros e sem saúvas, e com pelo menos metade da mata já recuperada, a mata termina sozinha
+const semFormigasF3=()=>J.f1.ninho1!=null&&!J.f1.formigPlan.length&&!J.f1.formig.length&&!(J.f1.renasce>0)&&!J.un.some(u=>u.selvagem&&['sauva','sauvaSoldado','formigueiro'].includes(u.esp));
+const mataSozinhaPodeF3=()=>ehF3()&&!J.fim&&!J.f1.mataSozinha&&J.f1.queim.length>0&&semFormigasF3()&&J.f1.brotos.length>=Math.ceil(J.f1.queim0/2);
+function agendaMataSozinhaF3(){ // chamada quando cai uma saúva/formigueiro ou a mata brota: espera a sua vez ficar livre
+  if(!mataSozinhaPodeF3()||agendaMataSozinhaF3.t)return;const jogo=J;
+  agendaMataSozinhaF3.t=setInterval(()=>{
+    if(J!==jogo||!mataSozinhaPodeF3()){clearInterval(agendaMataSozinhaF3.t);agendaMataSozinhaF3.t=null;return;}
+    if(J.vez!==0||J.ocupado||CENA||proxAvisoF1())return;
+    clearInterval(agendaMataSozinhaF3.t);agendaMataSozinhaF3.t=null;mataSozinhaF3();},300);
+}
+async function mataSozinhaF3(){
+  if(!mataSozinhaPodeF3())return;J.f1.mataSozinha=true;
+  const jogo=J,anima=VEL&&!document.hidden,resto=[...J.f1.queim];
+  const brota=k=>{J.f1.queim=J.f1.queim.filter(j=>j!==k);if(!J.f1.brotos.includes(k))J.f1.brotos.push(k);delete J.f1.plantio[k];J.terV=(J.terV||0)+1;
+    const [x,y]=centro(...DK(k));for(let i=0;i<6;i++)fx.push({folha:true,x:x+(i%3-1)*R*.4,y:y+R*.2,dx:(Math.random()-.5)*R*1.4,t0:performance.now()+i*60,dur:1000,cor:i%3?'#7fe08a':'#4f9a3e'});
+    piscaHex(k,'#6ee08a',900);};
+  desseleciona();J.ocupado=true;
+  try{
+    if(anima){
+      const m=mestreDe(0),p=m?pertoDeF3(K(m.c,m.r)):null;
+      if(p){const [ck,fl]=p,[x,y]=centro(...DK(ck)),[ox,oy]=fl!=null?centro(...DK(fl)):[x,y];
+        J.f1.chegando=true;J.f1.caiporaK=ck;J.f1.caiporaAnim={x0:ox,y0:oy,t0:performance.now(),dur:1e9,some:true};
+        zoomCena();CAM.alvo={fixo:true,px:x,py:y};CAM.centrar=true;CAM.mao=false;await dorme(900);if(J!==jogo)return;
+        J.f1.caiporaAnim={x0:ox,y0:oy,t0:performance.now(),dur:1100,some:true};await dorme(1200);if(J!==jogo)return;
+        J.f1.caiporaAnim=null;J.f1.chegando=false;J.f1.caiporaFala=ck;atualiza();
+        await avisoJaF1('mataSozinha');if(J!==jogo)return;
+        J.f1.caiporaAnim={x0:x,y0:y,x1:ox,y1:oy,t0:performance.now(),dur:900,sai:true};await dorme(950);if(J!==jogo)return;
+        J.f1.caiporaAnim=null;J.f1.caiporaK=null;}
+      // a câmera se afasta e as queimadas que faltam brotam em onda, das mais perto da clareira para as mais longe
+      J.f1.chegando=true;CAM.zAlvo=zBase();CAM.enq=true;CAM.alvo={fixo:true,px:VW/2,py:VH/2};CAM.centrar=true;CAM.mao=false;
+      await dorme(900);if(J!==jogo)return;
+      resto.sort((a,b)=>d6c(...DK(a),...J.f1.castelo)-d6c(...DK(b),...J.f1.castelo));
+      for(const k of resto){brota(k);atualiza();await dorme(260);if(J!==jogo)return;}
+      await dorme(900);if(J!==jogo)return;J.f1.chegando=false;
+    }else{avisoF1('mataSozinha');resto.forEach(brota);}
+    log(`🌱 Sem as saúvas, a mata se curou sozinha (${J.f1.brotos.length} de ${J.f1.queim0}).`);
+  }finally{if(J===jogo){J.ocupado=false;atualiza();}}
+  if(J===jogo)checaVitoriaF3();
 }
 // Fase 3, depois da Caipora: cada vila de pé chama uma Semente (uma por vila de cada vez; a Semente não conta no limite)
 const vilaSemF3=k=>ehF3()&&J.f1.vilaSem&&J.vilas[k]&&J.vilas[k].n>0&&(!J.f1.vilaSemOk||J.f1.vilaSemOk.includes(k));
@@ -4728,7 +4807,7 @@ function inicioTurno(l){
     // Barreira dura até o próximo turno do dono; Sono e Petrificar prendem a criatura durante este turno
     u.barreira=false;
     if(u.sono||u.petra){u.movido=u.agiu=true;u.preso=true;flutua(u,u.sono?'Dormindo':'Petrificado','#b9c6ff');}
-    if(l===0&&ehF3()&&u.esp==='semente'&&plantandoU(u)){u.movido=true;flutua(u,'Enraizada','#9dffb8');} // Fase 3: plantando, não anda (ainda pode atacar)
+    if(l===0&&ehF3()&&u.esp==='semente'&&plantandoU(u)){u.movido=u.agiu=true;flutua(u,'Enraizada','#9dffb8');} // Fase 3: plantando, não anda nem ataca (só revida)
     const e=ESP[u.esp],t=terDe(u);
     let cura=0;
     // construção própria cura 20% (40% na Fase 1, para a torre valer a pena contra o Bando); a Torre do Cristal não:
@@ -5364,7 +5443,7 @@ function morre(u,por){
   if(J.sel===u)desseleciona();
   if(ESP[u.esp].mestre)eliminar(u.lado,null,'mestre');
   else if(ehF2()&&u.selvagem&&!J.fim)caiuF2(u);
-  else if(ehF3()&&u.selvagem){if(u.esp==='formigueiro')caiuNinhoF3(u);} // Fase 3: as saúvas não acabam a fase (quem vence é a mata)
+  else if(ehF3()&&u.selvagem){if(u.esp==='formigueiro')caiuNinhoF3(u);agendaMataSozinhaF3();} // Fase 3: as saúvas não acabam a fase (quem vence é a mata)
   else if(J.f1&&u.selvagem&&!J.fim){if(!J.un.some(x=>x.selvagem))fimDeJogo(0,'f1');else avisoF1('caiuUm');} // Fase 1: o Bando caiu (ou só um dos dois)
 }
 // um lado perde (mestre derrotado ou castelo cercado). No 1x1 a partida acaba; no 1x1x1 o lado sai:
@@ -5856,7 +5935,7 @@ function magiaDoBotao(){
 // ----- Botão 👣: próxima criatura que ainda não agiu -----
 // conta quem ainda não tem o ✓ (inclui quem andou e ainda pode atacar). O mestre fica de fora, e quem está
 // sob Sono/Petrificar também (começa o turno já marcado como "agiu").
-const criaturasPendentes=()=>J.un.filter(u=>u.lado===0&&!ESP[u.esp].mestre&&!u.agiu&&!(ehF3()&&u.esp==='semente'&&plantandoU(u)&&!J.un.some(e=>e.lado!==0&&d6(u,e)<=ESP[u.esp].alc))); // Fase 3: a Semente enraizada só conta se tiver quem atacar ao lado
+const criaturasPendentes=()=>J.un.filter(u=>u.lado===0&&!ESP[u.esp].mestre&&!u.agiu&&!(ehF3()&&u.esp==='semente'&&plantandoU(u))); // Fase 3: a Semente enraizada não anda nem ataca
 // Fase 3: vilas que já podem chamar uma Semente agora (contam como coisa a fazer no turno)
 // (vila com alguém em cima fica de fora: o toque ali seleciona quem está na casa, não abre a vila)
 const vilasSemProntas=()=>ehF3()&&J.f1?.vilaSem&&J.vilas?Object.keys(J.vilas).map(Number).filter(v=>vilaSemF3(v)&&semProntaF3(v)&&!unidadeEm(...DK(v))):[];
@@ -6184,6 +6263,7 @@ async function fimTurnoJogo(){
   if(!J.fim)mostraSuaVez();
   if(ehF3()&&J.f1.caiporaPend!=null&&!J.fim){const k=J.f1.caiporaPend;J.f1.caiporaPend=null; // Fase 3: a Caipora que esperou as tanajuras chega agora
     if(!J.f1.vistos.caiporaBroto){J.ocupado=true;try{await caiporaBrotoF3(k);}finally{J.ocupado=false;atualiza();}}}
+  if(ehF3()&&!J.fim){agendaMataSozinhaF3();if(!mataSozinhaPodeF3())await caiporaLongeF3();} // Fase 3: a Caipora ajuda com a mata distante
 }
 
 // ---------- IA ----------
