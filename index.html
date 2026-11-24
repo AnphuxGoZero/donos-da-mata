@@ -293,6 +293,7 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 #fimPorque .placarFim b{text-align:center}
 #fimPorque .placarFim span:not(:first-child){text-align:center}
 #fimPorque .dicaFim{margin:0;color:#f2c14e}
+.fogGanho{margin:-4px 0 10px;text-align:center;color:#9dffb8;font-size:13px}
 #fim .cx.fogCx.larga{width:min(1000px,calc(100vw - 40px));max-width:none}.arvLado{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:14px}
 .arvColCab{position:relative;overflow:hidden;height:46px;border-radius:8px;border:1px solid color-mix(in srgb,var(--c) 55%,var(--line));margin:0 0 8px;display:flex;align-items:center;justify-content:center;color:var(--c);font-size:15px}.arvColCab .abaArte{filter:brightness(.7)}.arvColCab b{position:relative;z-index:1;text-shadow:0 1px 3px #000,0 0 6px #000}
 .larga .arvVert>.arvNo{width:62%}.larga .fogTopo{max-width:520px;margin-left:auto;margin-right:auto}.larga .arvCruzG{grid-template-columns:repeat(3,minmax(0,220px));justify-content:center}
@@ -2035,6 +2036,7 @@ function novoJogo(op=prefs(),semIntro=false){ // semIntro: a partida de fundo, a
   m.f.forEach((f,l)=>criaUnidade(f1&&l===0?'fogueira':ORDENS[ordens[l]].esp,l,...f)); // campanha: a Fogueira da clareira no lugar do mestre
   J.op=op; // para Reiniciar partida
   J.estLib=campanhaInfo().estagioLib??1; // estágio de evolução que a história já liberou (xpMeta)
+  if(f1&&fase>1)conferirArvore();
   J.arvore=f1&&fase>1?[...(campanhaInfo().arvore||[])]:[]; // Árvore da Fogueira: os nós despertos no fim das fases anteriores
   if(f1){if(fase===3)iniciaF3(m);else if(fase===2)iniciaF2(m);else iniciaF1(m);if(fase===3){const cp=campanhaInfo();if(cp.evoFixa)J.evoFixa[0]={...cp.evoFixa};}}
   J.tut=!semIntro&&(f1?fase===1:tutorialPendente())?{n:0}:null;
@@ -2581,7 +2583,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.41'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.42'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -2622,7 +2624,7 @@ function botaoJogar(){
   const sv=f&&saveCamp(f.n);
   const [t,sub]=!f?['Jogar','Próximas fases em breve']:sv?['Continuar',`Fase ${f.n} · ${f.nome} · turno ${sv.turno}`]:f.n===1?['Jogar',`Fase 1 · ${f.nome}`]:['Continuar',`Fase ${f.n} · ${f.nome}`];
   return `<span>${t}</span><small class="subBt">${sub}</small>`;}
-// tela de escolha de fase: um cartão por fase (retrato, nome, estrelas); as fechadas aparecem com cadeado; no fim, "Em breve"
+// tela de escolha de fase: um cartão por fase já liberada (retrato, nome, estrelas); "Em breve" só depois de vencer a última
 function telaFases(){
   const el=document.getElementById('saves');
   const cartao=f=>{const i=f.info(),aberta=faseAberta(f),sv=aberta&&saveCamp(f.n);
@@ -2631,18 +2633,19 @@ function telaFases(){
       <span class="txt"><small>Fase ${f.n}</small><b>${aberta?f.nome:'???'}</b><span class="desc">${aberta?f.desc:`Vença a Fase ${f.n-1} para abrir`}</span></span>
       <span class="est">${sv?`<em>Turno ${sv.turno}</em>`:i.venceu?estrelasTxt(i.estrelas):aberta?'<em>Nova!</em>':''}</span></button>`;};
   el.innerHTML=`<div class="tituloJogo" style="font-family:'Pirata One',serif;font-weight:400;font-size:min(46px,10vw);text-align:center">Fases</div>
-    <div class="fasesGrade">${CAMPANHA.map(cartao).join('')}
-      <button class="cartaoFase emBreve" onclick="telaEmObras()"><span class="retrato"><i>…</i></span>
-        <span class="txt"><small>Fase ${CAMPANHA.length+1}</small><b>Em breve</b><span class="desc">Dê sua opinião no Discord</span></span><span class="est"></span></button></div>
-    <div class="menuIni">${/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?'<button onclick="testeArvore()">🌿 Saberes da Mata (teste)</button>':''}<button onclick="desenhaInicio()">Voltar</button></div>
+    <div class="fasesGrade">${CAMPANHA.filter(faseAberta).map(cartao).join('') /* as fases aparecem conforme o jogador avança */}
+      ${CAMPANHA[CAMPANHA.length-1].info().venceu?`<button class="cartaoFase emBreve" onclick="telaEmObras()"><span class="retrato"><i>…</i></span>
+        <span class="txt"><small>Fase ${CAMPANHA.length+1}</small><b>Em breve</b><span class="desc">Dê sua opinião no Discord</span></span><span class="est"></span></button>`:'' /* só depois de vencer a última fase que existe */}</div>
+    <div class="menuIni">${faseSaberes()?'<button onclick="abreSaberes()">🌿 Saberes da Mata</button>':''}<button onclick="desenhaInicio()">Voltar</button></div>
     <div class="versaoJogo" onclick="contaDiag()">v${VERSAO}</div>`;
   poeArte(el,'inicio');
   el.classList.remove('cfg','ini');el.classList.add('tela');el.style.display='block';
 }
-// TESTE (tirar depois): abre a Árvore da Fogueira pela tela de fases, com os 3 ramos e 40 ✨ fixos (ESS_TESTE).
-// Usa uma árvore própria (campanhaInfo().arvoreTeste): não mexe no exército, na Essência nem na árvore da campanha.
-function testeArvore(){const f=document.getElementById('fim');f.style.zIndex=50;f.style.display='flex';
-  fogueiraTela(3,[],[],()=>{f.style.zIndex='';telaFases();},3,true);}
+// Saberes da Mata pela tela de fases: o jogador consulta (e pode usar) a árvore da campanha fora do fim de fase.
+// Só aparece depois da primeira Essência; os ramos são os da última fase vencida (Planta a partir da Fase 3).
+const faseSaberes=()=>Math.max(0,...Object.keys(campanhaInfo().essGanho||{}).map(Number));
+function abreSaberes(){const f=document.getElementById('fim');f.style.zIndex=50;f.style.display='flex';
+  fogueiraTela(faseSaberes(),[],[],()=>{f.style.zIndex='';telaFases();},1,true);}
 function jogarFase1(){fecharSaves();novoJogo({...prefs(),modo:'1x1',f1:true});}
 function jogarFase2(){fecharSaves();novoJogo({...prefs(),modo:'1x1',f1:true,fase:2});}
 function jogarFase3(){fecharSaves();novoJogo({...prefs(),modo:'1x1',f1:true,fase:3});}
@@ -4369,10 +4372,12 @@ function bencaoTag(u){if(u.lado!==0)return '';const el=elU(u),R=ARVORE[el];if(!R
   const nos=[...new Set(J.arvore||[])].map(id=>NO_ARV[id]).filter(n=>n&&(n.el===el||(n.els&&n.els.includes(el))));if(!nos.length)return '';
   return ` <span class="bencTag" style="color:${R.cor};border-color:${R.cor}88" title="Saberes da Mata: ${nos.map(n=>n.nome+(maxNo(n.id)>1?' '+ROM[nivNo(n.id)]:'')).join(', ')}">${R.ic} ${nos.length}</span>`;}
 const ROM=['','I','II','III'];
-const ESS_TESTE=40; // TESTE: Essência fixa da tela de teste, com uma árvore própria (arvoreTeste), separada da campanha
-const chaveArv=teste=>teste?'arvoreTeste':'arvore';
-function essLivre(teste){const cp=campanhaInfo(),g=teste?ESS_TESTE:Object.values(cp.essGanho||{}).reduce((s,v)=>s+Math.min(ESS_MAX,v||0),0);
-  return Math.max(0,g-(cp[chaveArv(teste)]||[]).filter(id=>NO_ARV[id]).reduce((s,id)=>s+custoNo(id),0));}
+// a árvore real nunca pode custar mais do que a Essência ganha nas fases (antes da 2.38 a tela de teste gravava nela):
+// se custar, ela volta a zero e tudo vira Essência de novo
+function conferirArvore(){const cp=campanhaInfo(),g=Object.values(cp.essGanho||{}).reduce((s,v)=>s+Math.min(ESS_MAX,v||0),0),
+  gasto=(cp.arvore||[]).filter(id=>NO_ARV[id]).reduce((s,id)=>s+custoNo(id),0);if(gasto>g)salvaCampanha({arvore:[]});}
+function essLivre(){const cp=campanhaInfo(),g=Object.values(cp.essGanho||{}).reduce((s,v)=>s+Math.min(ESS_MAX,v||0),0);
+  return Math.max(0,g-(cp.arvore||[]).filter(id=>NO_ARV[id]).reduce((s,id)=>s+custoNo(id),0));}
 // estado de um nó: 'tem' (nível máximo) | 'sobe' (já tem, pode subir) | 'pode' | 'fechado' (o outro lado do garfo) | 'trancado' | 'oculto'
 function estadoNo(id,tem,els){const n=NO_ARV[id],k=nivEm(id,tem);if(k>=maxNo(id))return 'tem';if(k>0)return 'sobe';
   const temP=(el,p)=>ARVORE[el].nos.some(x=>x.p===p&&tem.includes(x.id));
@@ -4448,13 +4453,14 @@ function quemSegueTela(n,lista,prox,est){
   b.onclick=()=>{if(sel==null)return;b.disabled=false;fogueiraTela(n,[lista[sel]],lista.filter((x,i)=>i!==sel),prox,est);};
   desenha();
 }
-function fogueiraTela(n,segue,ficam,prox,est,teste){
-  const cp=campanhaInfo(),antes=Math.min(ESS_MAX,(cp.essGanho||{})[n]||0),agora=essDaFase(est||1),ganho=teste?0:Math.max(0,agora-antes); // refazer a fase só completa o que faltou
-  if(!teste)salvaCampanha({['f'+n+'Exercito']:segue,essGanho:{...(cp.essGanho||{}),[n]:Math.max(antes,agora)},...(cp.bencaos?{bencaos:undefined}:{})}); // as bênçãos antigas viram Essência de volta
+function fogueiraTela(n,segue,ficam,prox,est,consulta){ // consulta: aberta pela tela de fases (não é fim de fase)
+  const cp=campanhaInfo(),antes=Math.min(ESS_MAX,(cp.essGanho||{})[n]||0),agora=essDaFase(est||1),ganho=consulta?0:Math.max(0,agora-antes); // refazer a fase só completa o que faltou
+  if(!consulta)salvaCampanha({['f'+n+'Exercito']:segue,essGanho:{...(cp.essGanho||{}),[n]:Math.max(antes,agora)},...(cp.bencaos?{bencaos:undefined}:{})}); // as bênçãos antigas viram Essência de volta
+  conferirArvore();
   const els=bencaosAte(n);let aba=els[0],sel=ARVORE[aba].nos[0].id,aberto=false,anima=false;
   const b=document.getElementById('fimBt'),b2=document.getElementById('fimBt2');b2.style.display='none';
   const desenha=()=>{
-    const tem=(campanhaInfo()[chaveArv(teste)]||[]).filter(id=>NO_ARV[id]),livre=essLivre(teste),st=id=>estadoNo(id,tem,els),niv=id=>nivEm(id,tem);
+    const tem=(campanhaInfo().arvore||[]).filter(id=>NO_ARV[id]),livre=essLivre(),st=id=>estadoNo(id,tem,els),niv=id=>nivEm(id,tem);
     const compravel=s=>s==='pode'||s==='sobe';
     const no=id=>{const x=NO_ARV[id],s=st(id),R=ARVORE[x.el]||ARVORE[x.els[0]],k=niv(id),m=maxNo(id),c=custoNo(id);
       const pips=m>1?`<span class="pips">${Array.from({length:m},(_,i)=>`<i class="${i<k?'on':''}"></i>`).join('')}</span>`:'';
@@ -4489,19 +4495,19 @@ function fogueiraTela(n,segue,ficam,prox,est,teste){
       <div class="fogJCorpo">${cab}<p>${x.txt}</p>${niveis}${dica?`<p class="dica">${dica}</p>`:''}${btJ}</div></div>`:'';
     anima=false;document.getElementById('fimTxt').textContent='Saberes da Mata';
     document.getElementById('fimSub').textContent='';
-    document.getElementById('fimPorque').innerHTML=`<div class="fogTopo"><span class="lado"><span class="essP" title="Essência">✨ ${livre}${ganho?`<span class="essMais">+${ganho}</span>`:''}</span></span><h2 class="fogTit">Saberes da Mata</h2><span class="lado dir"><button class="arvReset ic${tem.length?'':' arvVazio'}" title="Recomeçar a árvore" aria-label="Recomeçar a árvore" onclick="fogueiraTela.reset()">↺</button></span></div>
+    document.getElementById('fimPorque').innerHTML=`<div class="fogTopo"><span class="lado"><span class="essP" title="Essência para gastar">✨ ${livre}</span></span><h2 class="fogTit">Saberes da Mata</h2><span class="lado dir"><button class="arvReset ic${tem.length?'':' arvVazio'}" title="Recomeçar a árvore" aria-label="Recomeçar a árvore" onclick="fogueiraTela.reset()">↺</button></span></div>${ganho?`<p class="fogGanho">Fase ${n} · +${ganho} ✨${agora<ESS_MAX?' · 3 estrelas dão +1':''}</p>`:''}
       ${larga?`<div class="arvLado" style="--n:${els.length}">${els.map(el=>`<div>${cabCol(el)}${col(el)}</div>`).join('')}</div>`:abas+col(aba)}
       ${cruz.length?`<div class="arvCruz${cruzV?'':' arvVazio'}"><div class="arvCab">✦ Segredos</div><div class="arvCruzG">${cruz.map(y=>noV(y.id)).join('')}</div></div>`:''}${jan}`;
     document.querySelector('#fim .cx').classList.add('fogCx');document.querySelector('#fim .cx').classList.toggle('larga',larga);
-    b.textContent=teste?'Fechar':'Continuar';b.disabled=false;
+    b.textContent=consulta?'Fechar':'Continuar';b.disabled=false;
   };
   fogueiraTela.pick=id=>{sel=id;aberto=anima=true;desenha();}; // tocar numa habilidade abre a janela dela por cima
   fogueiraTela.fecha=()=>{aberto=false;desenha();};
   fogueiraTela.aba=el=>{aba=el;sel=ARVORE[el].nos[0].id;aberto=false;desenha();};
-  fogueiraTela.compra=()=>{const tem=(campanhaInfo()[chaveArv(teste)]||[]).filter(id=>NO_ARV[id]),s=estadoNo(sel,tem,els);if(s!=='pode'&&s!=='sobe')return;
-    if(essLivre(teste)<custoNo(sel))return;
-    salvaCampanha({[chaveArv(teste)]:[...tem,sel]});desenha();};
-  fogueiraTela.reset=()=>{salvaCampanha({[chaveArv(teste)]:[]});aberto=false;desenha();};
+  fogueiraTela.compra=()=>{const tem=(campanhaInfo().arvore||[]).filter(id=>NO_ARV[id]),s=estadoNo(sel,tem,els);if(s!=='pode'&&s!=='sobe')return;
+    if(essLivre()<custoNo(sel))return;
+    salvaCampanha({arvore:[...tem,sel]});desenha();};
+  fogueiraTela.reset=()=>{salvaCampanha({arvore:[]});aberto=false;desenha();};
   fogueiraTela.redesenha=desenha; // ao mudar o tamanho da janela (lado a lado ↔ abas)
   // no computador: Esc fecha a janela da habilidade, Enter desperta/fortalece
   fogueiraTela.tecla=ev=>{if(!aberto)return false;
