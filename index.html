@@ -2588,7 +2588,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.44'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.45'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -4146,7 +4146,7 @@ function invocaVilaF3(){
   const v=J.vilaInv;J.vilaInv=null;
   if(v==null||J.vez!==0||J.ocupado||!vilaSemF3(v)||vilaTemSemF3(v)||J.mp[0]<ESP.semente.custo){atualiza();return;}
   const k=casaSemVilaF3(v);if(k==null){atualiza();return;}
-  invocar(0,'semente',...DK(k));const u=J.un[J.un.length-1];if(u&&u.esp==='semente')u.vila=v;
+  invocar(0,'semente',...DK(k));const u=J.un[J.un.length-1];if(u&&u.esp==='semente'){u.vila=v;u.movido=u.agiu=false;} // a Semente da vila já joga neste turno
   piscaHex(v,'#6ee08a',900);atualiza();
 }
 // ----- vez das saúvas -----
