@@ -293,6 +293,7 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 #fimPorque .placarFim b{text-align:center}
 #fimPorque .placarFim span:not(:first-child){text-align:center}
 #fimPorque .dicaFim{margin:0;color:#f2c14e}
+.arvVazio{visibility:hidden}
 .fogJFundo{position:fixed;inset:0;background:#000a;z-index:20}.fogJFundo.anima{animation:fogJF .15s}
 .fogJ{position:fixed;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(400px,calc(100vw - 24px));max-height:calc(100vh - 40px);overflow-y:auto;z-index:21;background:#14161b;border:1px solid var(--c);border-radius:12px;text-align:left;box-shadow:0 10px 40px #000c}.fogJ.anima{animation:fogJS .18s ease-out}
 .fogJArte{position:relative;height:150px;border-bottom:1px solid var(--line)}.fogJArte .arte{position:absolute;inset:0;background-size:cover;background-position:center 40%}.fogJArte:not(.aceso) .arte{filter:grayscale(1) brightness(.75)}
@@ -2543,7 +2544,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.34'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.35'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal com três botões (Jogar, Preparar Batalha, Carregar jogo)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -2594,7 +2595,7 @@ function telaFases(){
     <div class="fasesGrade">${CAMPANHA.map(cartao).join('')}
       <button class="cartaoFase emBreve" onclick="telaEmObras()"><span class="retrato"><i>…</i></span>
         <span class="txt"><small>Fase ${CAMPANHA.length+1}</small><b>Em breve</b><span class="desc">Dê sua opinião no Discord</span></span><span class="est"></span></button></div>
-    <div class="menuIni"><button onclick="testeArvore()">🔥 Trilha de habilidades (teste)</button><button onclick="desenhaInicio()">Voltar</button></div>
+    <div class="menuIni"><button onclick="testeArvore()">🌿 Saberes da Mata (teste)</button><button onclick="desenhaInicio()">Voltar</button></div>
     <div class="versaoJogo" onclick="contaDiag()">v${VERSAO}</div>`;
   poeArte(el,'inicio');
   el.classList.remove('cfg','ini');el.classList.add('tela');el.style.display='block';
@@ -4327,7 +4328,7 @@ function curaArvore(u,t){if(u.lado!==0)return 0;let c=0;
 // na ficha: os nós da árvore que valem para esta criatura
 function bencaoTag(u){if(u.lado!==0)return '';const el=elU(u),R=ARVORE[el];if(!R)return '';
   const nos=[...new Set(J.arvore||[])].map(id=>NO_ARV[id]).filter(n=>n&&(n.el===el||(n.els&&n.els.includes(el))));if(!nos.length)return '';
-  return ` <span class="bencTag" style="color:${R.cor};border-color:${R.cor}88" title="Árvore da Fogueira: ${nos.map(n=>n.nome+(maxNo(n.id)>1?' '+ROM[nivNo(n.id)]:'')).join(', ')}">${R.ic} ${nos.length}</span>`;}
+  return ` <span class="bencTag" style="color:${R.cor};border-color:${R.cor}88" title="Saberes da Mata: ${nos.map(n=>n.nome+(maxNo(n.id)>1?' '+ROM[nivNo(n.id)]:'')).join(', ')}">${R.ic} ${nos.length}</span>`;}
 const ROM=['','I','II','III'];
 function essLivre(){const cp=campanhaInfo(),g=Object.values(cp.essGanho||{}).reduce((s,v)=>s+Math.min(ESS_MAX,v||0),0);
   return Math.max(0,g+(cp.essTeste||0)-(cp.arvore||[]).filter(id=>NO_ARV[id]).reduce((s,id)=>s+custoNo(id),0));}
@@ -4425,12 +4426,14 @@ function fogueiraTela(n,segue,ficam,prox,est,teste){
       const p=up?tr('M50 0V12',1)+tr('M50 12H25V21',esq)+tr('M50 12H75V21',dir):tr('M25 0V12H50',esq)+tr('M75 0V12H50',dir)+tr('M50 12V21',1);
       return `<div class="arvRamo"><svg viewBox="0 0 100 28" preserveAspectRatio="none">${p}</svg>${(up?[[25,esq],[75,dir]]:[[50,1]]).map(([x,on])=>`<i class="${on?'':'off'}" style="left:${x}%"></i>`).join('')}</div>`;};
     const vis=id=>{const s=st(id);return s!=='oculto'&&s!=='trancado';}; // nós ainda indisponíveis não aparecem
+    const noV=id=>vis(id)?no(id):'<div class="arvNo arvVazio"></div>'; // lugar guardado
     const col=el=>{const R=ARVORE[el],[a,f1,f2,z]=R.nos.map(x=>x.id);
-      const g=[f1,f2].filter(vis); // só aparece o que já pode ser usado (o lado fechado do garfo continua à vista)
+      // o que ainda não pode ser usado não aparece, mas guarda o lugar: a caixa fica sempre do mesmo tamanho
       const e1=niv(f1)>0,e2=niv(f2)>0,algum=e1||e2; // antes de escolher, as duas setas ficam acesas
-      return `<div class="arvVert" style="--c:${R.cor}">${no(a)}${g.length?ramo(1,!algum||e1,!algum||e2)+`<div class="arvGarfo">${g.map(no).join('')}</div>`:''}${vis(z)?ramo(0,e1,e2)+no(z):''}</div>`;};
+      const gv=vis(f1)||vis(f2),esc=(on,h)=>on?h:h.replace(/^<div class="/,'<div class="arvVazio ');
+      return `<div class="arvVert" style="--c:${R.cor}">${no(a)}${esc(gv,ramo(1,!algum||e1,!algum||e2))}<div class="arvGarfo">${[f1,f2].map(noV).join('')}</div>${esc(vis(z),ramo(0,e1,e2))}${noV(z)}</div>`;};
     const abas=els.length>1?`<div class="arvAbas">${els.map(el=>{const R=ARVORE[el],k=tem.filter(id=>NO_ARV[id].el===el).length;return `<button class="${el===aba?'sel':''}" style="--c:${R.cor}" onclick="fogueiraTela.aba('${el}')">${ABA_IMG[el]?`<span class="abaArte" style="background-image:url(${ABA_IMG[el]})"></span>`:''}<b>${R.nome}</b></button>`;}).join('')}</div>`:'';
-    const cruz=ARV_CRUZ.filter(x=>vis(x.id));
+    const cruz=ARV_CRUZ.filter(x=>x.els.every(e=>els.includes(e))),cruzV=cruz.some(x=>vis(x.id)); // os segredos possíveis nesta fase guardam lugar
     const x=NO_ARV[sel],s=st(sel),k=niv(sel),m=maxNo(sel),custo=custoNo(sel);
     let dica='';
     if(s==='tem')dica=m>1?'✓ Nível máximo.':'✓ Já desperto.';
@@ -4443,12 +4446,12 @@ function fogueiraTela(n,segue,ficam,prox,est,teste){
     const jan=janela()&&aberto?`<div class="fogJFundo${anima?' anima':''}" onclick="fogueiraTela.fecha()"></div><div class="fogJ${anima?' anima':''}" style="--c:${(ARVORE[x.el]||ARVORE[x.els[0]]).cor}">
       <div class="fogJArte${k?' aceso':''}">${arteNo(sel)}<button class="fogJX" aria-label="Fechar" onclick="fogueiraTela.fecha()">✕</button></div>
       <div class="fogJCorpo">${cab}<p>${x.txt}</p>${niveis}${dica?`<p class="dica">${dica}</p>`:''}${btJ}</div></div>`:'';
-    anima=false;document.getElementById('fimTxt').textContent='Fogueira';
+    anima=false;document.getElementById('fimTxt').textContent='Saberes da Mata';
     document.getElementById('fimSub').textContent='';
     document.getElementById('fimPorque').innerHTML=`<div class="fogTopo"><span class="essP">✨ ${livre} Essência${ganho?`<span class="essMais">+${ganho}</span>`:''}</span>${teste?`<button class="arvReset" onclick="fogueiraTela.ess(1)">+1 ✨</button><button class="arvReset" onclick="fogueiraTela.ess(-1)">−1 ✨</button>`:''}${tem.length?`<button class="arvReset ic" title="Recomeçar a árvore" aria-label="Recomeçar a árvore" onclick="fogueiraTela.reset()">↺</button>`:''}</div>
       ${abas}${col(aba)}
       ${janela()?'':det}
-      ${cruz.length?`<div class="arvCruz"><div class="arvCab">✦ Segredos</div><div class="arvCruzG">${cruz.map(y=>no(y.id)).join('')}</div></div>`:''}${jan}`;
+      ${cruz.length?`<div class="arvCruz${cruzV?'':' arvVazio'}"><div class="arvCab">✦ Segredos</div><div class="arvCruzG">${cruz.map(y=>noV(y.id)).join('')}</div></div>`:''}${jan}`;
     document.querySelector('#fim .cx').classList.add('fogCx');
     b.textContent=teste?'Fechar':'Continuar';b.disabled=false;
   };
