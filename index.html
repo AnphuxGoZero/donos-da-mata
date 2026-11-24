@@ -2588,7 +2588,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.43'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.44'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -2782,7 +2782,7 @@ function avisoF1(id){if(!id||!J.f1||J.f1.vistos[id])return;J.f1.vistos[id]=true;
 // da outra sem uma ação no meio (andar, atacar, invocar, um saque do Bando). Uma fala que não pôde sair espera a próxima
 // ação; se passarem 2 ações sem ela sair, perdeu o contexto e é descartada. As da abertura, do alerta do camponês, da
 // evolução do Cão e da vitória saem sempre. A da torre é conferida de novo na hora de aparecer.
-const PRIOR_F1=new Set(['inunda','ninhoCaiu','renasce','raiz','ninho','ninhos','plantar','caiporaBroto','vilasSem','comeu','vilaVerde','plantando','formig','intro1','intro2','vitoria','semente','campones','evoluiu','cao','caipora','caiporaChega','sapinho','vilaQueima','incendiou','cinza','alimentou','cacaCaes']);
+const PRIOR_F1=new Set(['inunda','ninhoCaiu','renasce','raiz','ninho','ninhos','plantar','caiporaBroto','vilasSem','comeu','vilaVerde','plantando','formig','intro1','intro1b','intro2','vitoria','semente','campones','evoluiu','cao','caipora','caiporaChega','sapinho','vilaQueima','incendiou','cinza','alimentou','cacaCaes']);
 const acaoF1=()=>{if(J&&J.f1)J.f1.acao=(J.f1.acao||0)+1;};
 const podeFalarF1=id=>PRIOR_F1.has(id)||(J.f1.acao||0)>(J.f1.ultFala??-1);
 function proxAvisoF1(){
@@ -2834,6 +2834,7 @@ async function chegadaF1(){
 // o saque junto da vila atacada. Sem lugar definido, ela fica no meio do mapa (como antes).
 const ANCORA_F1={
   plantar:()=>J.f1.sementeK,plantando:()=>J.f1.plantK,raiz:()=>J.f1.raizK,caiporaBroto:()=>J.f1.caiporaFala,vilasSem:()=>J.f1.vilasSemK,comeu:()=>J.f1.comeuK,vilaVerde:()=>J.f1.vilaK,formig:()=>J.f1.formK,ninho:()=>J.f1.ninhoK,ninhos:()=>J.f1.ninhosK,ninhoCaiu:()=>J.f1.ninhoCaiuK,renasce:()=>J.f1.renasceK,inunda:()=>J.f1.inundaK,
+  intro1b:()=>J.f1.intro1bK,
   intro1:()=>ehF3()?J.f1.intro1K:ehF2()?(J.f1.foco2??J.f1.foco0):+Object.keys(J.vilas).find(k=>J.vilas[k].estrela===false),
   incendiou:()=>J.f1.vilaK,cacaCaes:()=>J.f1.cacaK,caiporaChega:()=>J.f1.caiporaK,caipora:()=>J.f1.caiporaK,semente:()=>ehF2()?J.f1.caiporaK:null,vilaQueima:()=>J.f1.vilaK,cinza:()=>J.f1.cinzaK,apagou:()=>J.f1.apagouK,alimentou:()=>J.f1.alimK,cao:()=>J.f1.caoK,
   torreMagica:()=>J.f1.torreK,torre:()=>J.f1.torreFrenteK,
@@ -2858,7 +2859,8 @@ function posAvisoF1(){
     // e para o lado oposto ao dos Filhotes, para não cobri-los
     const tela=(ux,uy)=>[rc.left-rm.left+(TW/2+(ux-CAM.x)*CAM.z)*rc.width/TW,rc.top-rm.top+(TH/2+(uy-CAM.y)*CAM.z)*rc.height/TH];
     // o que a caixa não pode cobrir: a casa de que fala e os Filhotes (área de uma casa em volta de cada um)
-    const evita=[[sx,sy],...J.un.filter(u=>u.selvagem).map(u=>tela(...centro(u.c,u.r)))];
+    // (as saúvas, os formigueiros e as chamas são muitos e se mexem: desviar deles fazia a caixa pular de lugar a cada quadro)
+    const evita=[[sx,sy],...J.un.filter(u=>u.selvagem&&!u.chama&&!['sauva','sauvaSoldado','formigueiro'].includes(u.esp)).map(u=>tela(...centro(u.c,u.r)))];
     const cobre=(l,t)=>evita.reduce((s,[ex,ey])=>s+Math.max(0,Math.min(l+w,ex+hex)-Math.max(l,ex-hex))*Math.max(0,Math.min(t+h,ey+hex)-Math.max(t,ey-hex)),0);
     // a ficha do terreno (#info, celular) fica por cima do pé do mapa: a caixa não desce até ela
     // (vale também quando ela ainda está escondida: aparece ao tocar numa casa, e a de terreno tem ~40px)
@@ -2869,11 +2871,15 @@ function posAvisoF1(){
     const cx=v=>Math.max(m,Math.min(rm.width-w-m,v)),cy=v=>Math.max(m,Math.min(baixo-h-m,v));
     // várias posições possíveis (embaixo/em cima da casa, nas bordas da tela); fica a que cobre menos,
     // e entre as que não cobrem nada, a mais perto da casa
-    let best=null;
-    for(const t of [sy<rm.height/2?sy+hex+6:sy-hex-6-h,sy<rm.height/2?sy-hex-6-h:sy+hex+6,m,baixo-h-m])
-      for(const l of [sx-w/2,sx+hex*.6-w,sx-hex*.6,m,rm.width-w-m]){
-        const L=cx(l),T=cy(t),c=cobre(L,T),d=Math.hypot(L+w/2-sx,T+h/2-sy);
-        if(!best||c<best.c-1||(Math.abs(c-best.c)<=1&&d<best.d))best={L,T,c,d};}
+    // a opção escolhida antes continua enquanto não ficar claramente pior (sem trocar de lado a cada quadro)
+    let best=null,ant=null;const op0=ps.dataset.ancOp||'';
+    [sy<rm.height/2?sy+hex+6:sy-hex-6-h,sy<rm.height/2?sy-hex-6-h:sy+hex+6,m,baixo-h-m].forEach((t,ti)=>
+      [sx-w/2,sx+hex*.6-w,sx-hex*.6,m,rm.width-w-m].forEach((l,li)=>{
+        const L=cx(l),T=cy(t),c=cobre(L,T),d=Math.hypot(L+w/2-sx,T+h/2-sy),op=ti+'.'+li;
+        if(op===op0)ant={L,T,c,d,op};
+        if(!best||c<best.c-1||(Math.abs(c-best.c)<=1&&d<best.d))best={L,T,c,d,op};}));
+    if(ant&&ant.c<=best.c+hex*hex*.5)best=ant;
+    ps.dataset.ancOp=best.op;
     ps.style.left=Math.round(best.L)+'px';ps.style.top=Math.round(best.T)+'px';
   }
   requestAnimationFrame(posAvisoF1);
@@ -3862,13 +3868,14 @@ function animaChuva(d){
 function tiraChuva(){document.getElementById('chuvaCampo')?.remove();}
 const AVISOS_F3={
   intro1:{tit:'Fase 3 · Raízes do Vale',falas:['Tanta mata queimada...'],bt:'Continuar'},
-  plantar:{falas:[{quem:'img',esp:'semente'},{quem:'soldado',cara:'feliz',txt:'Leve a Semente até uma mata queimada.'},'feliz|Plante ela, que o broto pega!'],bt:'Começar'},
+  intro1b:{falas:['Minhas roupas queimaram no varal...'],bt:'Continuar'},
+  plantar:{falas:[{quem:'img',esp:'semente'},{quem:'caipora',txt:'Leve a Semente até uma mata queimada.'},'feliz|Plante ela, que o broto pega!'],bt:'Começar'},
   plantando:{falas:['feliz|O broto está pegando!','feliz|Depois de plantar, logo a mata renascerá.']},
   raiz:{falas:['feliz|A Semente criou raízes!',{quem:'soldado',cara:'feliz',txt:'Logo vai recuperar a mata.'}]},
-  caiporaBroto:{falas:[{quem:'caipora',txt:'A mata precisa de ajuda.'},{quem:'caipora',txt:'Vou levar as sementes para as vilas.'}],bt:'Continuar'},
+  caiporaBroto:{falas:[{quem:'caipora',txt:'A mata precisa de mais ajuda.'},{quem:'caipora',txt:'Vou levar as sementes para as vilas.'}],bt:'Continuar'},
   comeu:{falas:['furia|As saúvas comeram o broto!',{quem:'soldado',txt:'Proteja as Sementes enquanto elas plantam!'}]},
   ninho:{falas:['Tanajura! O cheiro das sementes atraiu elas...',{quem:'soldado',txt:'Saúva corta folha nova.<br>E a gente vai plantar justamente isso.'}],bt:'Continuar',volta:true},
-  ninhos:{falas:['Tem mais... tem ninho por todo lado!'],bt:'Continuar',volta:true},
+  ninhos:{falas:['Mais um?! Tem ninho por todo lado!'],bt:'Continuar',volta:true},
   ninhoCaiu:{falas:['feliz|Derrubamos o formigueiro!']},
   renasce:{falas:['furia|Olha lá! Outro formigueiro!'],bt:'Continuar',volta:true},
   vilaVerde:{falas:['feliz|Minha família voltou pra vila!']},
@@ -3887,7 +3894,8 @@ async function aberturaF3(semAnim){
   const ks=vis.slice(-3).reverse();
   for(let i=0;i<ks.length;i++){const k=ks[i],[x,y]=centro(...DK(k));CAM.alvo={fixo:true,px:x,py:y};CAM.centrar=true;CAM.mao=false;
     J.f1.fumacaK=k;await dorme(1100);if(J!==jogo)return;piscaHex(k,'#b8b0a8',900);await dorme(700);if(J!==jogo)return;
-    if(i===0){J.f1.intro1K=k;J.f1.chegando=false;await avisoJaF1('intro1');if(J!==jogo)return;J.f1.chegando=true;}}
+    if(i===0){J.f1.intro1K=k;J.f1.chegando=false;await avisoJaF1('intro1');if(J!==jogo)return;J.f1.chegando=true;}
+    else if(i===ks.length-1){J.f1.intro1bK=k;J.f1.chegando=false;await avisoJaF1('intro1b');if(J!==jogo)return;J.f1.chegando=true;}} // na última mata do passeio, outro camponês lamenta
   J.f1.fumacaK=null;J.f1.chegando=false;J.ocupado=false;atualiza();
   voltaMestreF1(); // a câmera vai ao mestre e a Semente nasce
 }
@@ -8682,7 +8690,7 @@ function menus(){
     poeHTML(ps,`${corpo}${sobre?'':`<div class="linha${espera?' seqBt':''}"${espera?` style="animation-delay:${espera.toFixed(1)}s"`:''}><button class="btEvo" onclick="fechaAvisoF1()">${(A.bt||A[2])||'Entendi'}</button></div>`}`);
     ps.className='flut evo f1'+(id.startsWith('intro')?' intro':'')+''+(id==='vitoria'?' vitoria':'')+(J.f1.sobreEvo&&id==='evoluiu'?' sobreEvo':'')+(J.f1.sobreCena===id?' sobreCena':'');ps.style.display='block';
     {const anc=ANCORA_F1[id]&&!(J.f1.sobreEvo&&id==='evoluiu')&&J.f1.sobreCena!==id;ps.classList.toggle('ancora',!!anc);
-     if(anc&&ps.dataset.ancora!==id){ps.dataset.ancora=id;mostraAncoraF1(id);requestAnimationFrame(posAvisoF1);}else if(!anc){ps.dataset.ancora='';ps.style.left=ps.style.top='';}} // a caixa perto do evento // o alarme fica embaixo, para não cobrir os Filhotes
+     if(anc&&ps.dataset.ancora!==id){ps.dataset.ancora=id;ps.dataset.ancOp='';mostraAncoraF1(id);requestAnimationFrame(posAvisoF1);}else if(!anc){ps.dataset.ancora='';ps.style.left=ps.style.top='';}} // a caixa perto do evento // o alarme fica embaixo, para não cobrir os Filhotes
   }else if(evoAviso){
     poeHTML(ps,`<div class="evoTit">▲ Evolução disponível</div><div class="evoTx">Sua reserva chegou a ${EVO_CUSTO} MP. Escolha uma criatura para evoluir permanentemente.</div><div class="linha"><button onclick="fechaAvisoEvo()">Agora não</button><button class="btEvo" onclick="avisoEvoluir()">▲ Evoluir</button></div>`);
     ps.className='flut evo';ps.style.display='block';
