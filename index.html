@@ -177,6 +177,8 @@ h1 .bt{font-size:14px;padding:1px 7px;margin-left:6px;vertical-align:2px;line-he
 #menuJogo{display:none;position:absolute;left:10px;top:44px;z-index:6;background:var(--panel);border:1px solid #3c4356;border-radius:8px;padding:6px;box-shadow:0 6px 20px #0009;flex-direction:column;gap:5px;min-width:160px}
 #menuJogo.aberto{display:flex}
 #menuJogo button{text-align:left}
+#menuJogo .volSom{display:flex;align-items:center;gap:8px;padding:2px 8px;font-size:.9em;opacity:.9}
+#menuJogo .volSom input{flex:1;min-width:80px;accent-color:#f2c14e}
 
 #relogio{--q:60px;flex:none;position:relative;padding:calc(var(--q)*.24) calc(var(--q)*.22) 0}
 #relogio .quadros{position:relative;display:block;width:var(--q);height:var(--q)}
@@ -965,6 +967,147 @@ html:not(.paisagem) #rodape .alaD{grid-area:1/3;justify-content:flex-start}
 
 <script>
 "use strict";
+// ---------- Som: efeitos sintetizados na hora (Web Audio), sem nenhum arquivo ----------
+// Uso: Som.toca('golpe',{el:'fogo',forte:true}). O áudio só liga no primeiro toque/tecla (regra dos navegadores),
+// pausa quando o app vai para segundo plano e fica calado enquanto a vez do rival é pulada (VEL=0).
+// Volume e mudo ficam guardados no navegador.
+const SOM_CHAVE='senhoresDoVeu.som';
+const Som=(()=>{
+  let ctx=null,saida=null,ruido=null;
+  const cfg={vol:.7,mudo:false,musVol:.5,musMudo:false};
+  try{Object.assign(cfg,JSON.parse(localStorage.getItem(SOM_CHAVE))||{});}catch(e){}
+  const grava=()=>{try{localStorage.setItem(SOM_CHAVE,JSON.stringify(cfg));}catch(e){}};
+  const ganho=()=>cfg.mudo?0:cfg.vol*cfg.vol; // curva quadrática: o meio do volume soa como meio
+  const ganhoMus=()=>cfg.musMudo?0:cfg.musVol*cfg.musVol;
+  let musSaida=null;
+  function liga(){
+    if(ctx){if(ctx.state==='suspended'&&!document.hidden)ctx.resume().catch(()=>{});return;}
+    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+    try{ctx=new AC();}catch(e){return;}
+    saida=ctx.createGain();saida.gain.value=ganho();
+    const comp=ctx.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=4;
+    saida.connect(comp);comp.connect(ctx.destination);
+    musSaida=ctx.createGain();musSaida.gain.value=ganhoMus();musSaida.connect(ctx.destination); // a música não passa pelo compressor dos efeitos
+    if(querMus)tocaMus(querMus);
+    ruido=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate);
+    const d=ruido.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  }
+  for(const t of ['pointerdown','touchend','keydown'])addEventListener(t,liga,{capture:true,passive:true});
+  document.addEventListener('visibilitychange',()=>{if(!ctx)return;
+    if(document.hidden){ctx.suspend().catch(()=>{});for(const d of decks)if(d.el)d.el.pause();}
+    else{ctx.resume().catch(()=>{});for(const d of decks)if(d.el&&d.vivo)d.el.play().catch(()=>{});}});
+  // ----- Música: arquivos em musicas/, baixados só quando vão tocar (e guardados pelo sw.js para jogar sem internet) -----
+  // Dois "decks" para emendar: perto do fim da faixa, a mesma faixa recomeça no outro deck e as duas se cruzam,
+  // então o loop não precisa de ponto de corte perfeito. Trocar de faixa também é um cruzamento curto.
+  const MUS_VER=1,CRUZA=3; // MUS_VER: subir quando trocar algum arquivo de música; CRUZA: segundos do cruzamento do loop
+  const blobs={},decks=[{},{}];let querMus=null,musAtual=null,deckAt=0;
+  const urlMus=n=>blobs[n]||(blobs[n]=fetch(`musicas/${n}.m4a?v=${MUS_VER}`).then(r=>{if(!r.ok)throw new Error(r.status);return r.blob();}).then(b=>URL.createObjectURL(b)).catch(e=>{delete blobs[n];throw e;}));
+  function rampa(g,v,seg){const t=ctx.currentTime;g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(g.gain.value,t);g.gain.linearRampToValueAtTime(v,t+seg);}
+  function soltaDeck(d,seg){if(!d.el)return;d.vivo=false;rampa(d.g,0,seg);const el=d.el;setTimeout(()=>{if(!d.vivo&&d.el===el)el.pause();},seg*1000+60);}
+  async function poeNoDeck(i,nome,seg,loop=true){
+    const d=decks[i];let url;try{url=await urlMus(nome);}catch(e){console.warn('Música',nome,e);return;}
+    if((loop?musAtual:nome)!==nome)return; // mudou de ideia enquanto baixava
+    if(!d.el){d.el=new Audio();d.el.preload='auto';d.src=ctx.createMediaElementSource(d.el);d.g=ctx.createGain();d.g.gain.value=0;d.src.connect(d.g);d.g.connect(musSaida);
+      d.el.addEventListener('timeupdate',()=>{ // perto do fim: emenda no outro deck
+        if(!d.vivo||!d.loop||d.emendou||!d.el.duration)return;
+        if(d.el.duration-d.el.currentTime<=CRUZA){d.emendou=true;const o=1-decks.indexOf(d);deckAt=o;soltaDeck(d,CRUZA);poeNoDeck(o,d.nome,CRUZA);}});
+      d.el.addEventListener('ended',()=>{d.vivo=false;});}
+    d.nome=nome;d.loop=loop;d.emendou=false;d.vivo=true;
+    if(d.el.src!==url)d.el.src=url;d.el.currentTime=0;
+    d.g.gain.cancelScheduledValues(ctx.currentTime);d.g.gain.setValueAtTime(0,ctx.currentTime);rampa(d.g,1,seg);
+    if(!document.hidden)d.el.play().catch(()=>{});
+  }
+  function tocaMus(nome){
+    if(!ctx||nome===musAtual)return;musAtual=nome;
+    for(const d of decks)if(d.vivo)soltaDeck(d,1.2);
+    if(nome){deckAt=1-deckAt;poeNoDeck(deckAt,nome,1.5);}
+  }
+  // vinheta (vitória): a música sai, a vinheta toca uma vez e o silêncio fica até a próxima música pedida
+  function vinheta(nome){if(!ctx||cfg.musMudo)return false;querMus=musAtual=null;for(const d of decks)if(d.vivo)soltaDeck(d,.4);
+    deckAt=1-deckAt;poeNoDeck(deckAt,nome,.05,false);return true;}
+  // envelope: sobe em atk, cai até zero no fim
+  function env(g,t,dur,vol,atk=.005){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+atk);g.gain.exponentialRampToValueAtTime(.0001,t+dur);}
+  // um tom: forma, frequência inicial e final, duração (s), volume, atraso (s)
+  function tom(tipo,f0,f1,dur,vol,at=0,o={}){
+    const t=ctx.currentTime+at,os=ctx.createOscillator(),g=ctx.createGain();
+    os.type=tipo;os.frequency.setValueAtTime(f0,t);if(f1&&f1!==f0)os.frequency.exponentialRampToValueAtTime(f1,t+dur);
+    if(o.det)os.detune.value=o.det;
+    if(o.vib){const l=ctx.createOscillator(),lg=ctx.createGain();l.frequency.value=o.vib;lg.gain.value=o.vibA||f0*.03;l.connect(lg);lg.connect(os.frequency);l.start(t);l.stop(t+dur+.05);}
+    env(g,t,dur,vol,o.atk);os.connect(g);g.connect(saida);os.start(t);os.stop(t+dur+.05);
+  }
+  // ruído filtrado: tipo do filtro, frequência inicial e final do filtro, duração, volume, atraso
+  function chiado(filtro,f0,f1,dur,vol,at=0,q=1,atk){
+    const t=ctx.currentTime+at,s=ctx.createBufferSource(),f=ctx.createBiquadFilter(),g=ctx.createGain();
+    s.buffer=ruido;s.loop=true;s.playbackRate.value=.8+Math.random()*.4;
+    f.type=filtro;f.Q.value=q;f.frequency.setValueAtTime(f0,t);if(f1&&f1!==f0)f.frequency.exponentialRampToValueAtTime(f1,t+dur);
+    env(g,t,dur,vol,atk);s.connect(f);f.connect(g);g.connect(saida);s.start(t,Math.random()*.5);s.stop(t+dur+.05);
+  }
+  const nota=n=>440*Math.pow(2,(n-69)/12); // nota MIDI → Hz
+  const var_=(f,p=.06)=>f*(1+(Math.random()*2-1)*p); // pequena variação para não soar repetido
+  // impacto de cada elemento (o "corpo" do golpe)
+  const IMPACTO={
+    fogo(v){chiado('lowpass',3000,500,.32,.5*v);tom('sawtooth',var_(180),60,.22,.22*v);for(let i=0;i<4;i++)chiado('bandpass',var_(2500,.3),1500,.04,.25*v,.04+i*.05+Math.random()*.03,6);},
+    agua(v){tom('sine',var_(700),180,.18,.45*v);tom('sine',var_(1100),400,.1,.2*v,.07);chiado('bandpass',1800,600,.22,.35*v,0,2);},
+    planta(v){tom('triangle',var_(220),90,.14,.45*v);chiado('lowpass',1600,300,.12,.4*v);chiado('bandpass',var_(3200),2000,.05,.2*v,.03,4);},
+    terra(v){tom('sine',var_(110),40,.3,.7*v);chiado('lowpass',700,120,.28,.55*v);},
+    ar(v){chiado('bandpass',800,3500,.25,.45*v,0,1.5,.04);tom('sine',var_(500),900,.15,.12*v);},
+    arcano(v){tom('triangle',var_(880),1320,.25,.25*v,0,{vib:18,vibA:30});tom('sine',var_(1320),1760,.3,.15*v,.04);chiado('highpass',4000,4000,.15,.12*v);},
+    humano(v){chiado('lowpass',2200,400,.12,.5*v);tom('square',var_(160),80,.08,.15*v);},
+  };
+  const SONS={
+    clique(){tom('square',var_(950,.03),650,.045,.07);},
+    passo(){chiado('lowpass',var_(500,.25),200,.06,.12);},
+    golpe(o={}){const v=o.forte?1.25:o.fraco?.75:1;chiado('bandpass',2600,500,.09,.25*v,0,1.2,.02); // o vento do golpe
+      (IMPACTO[o.el]||IMPACTO.humano)(v);},
+    erro(){chiado('bandpass',2400,500,.2,.28,0,1.4,.05);tom('sine',var_(420),300,.08,.05,.05);},
+    queda(){tom('square',300,50,.55,.16);chiado('lowpass',1200,100,.5,.35,.05);tom('sine',90,35,.4,.4,.08);},
+    desfaz(){tom('triangle',900,200,.5,.18,0,{vib:25,vibA:60});chiado('highpass',3000,800,.45,.15);},
+    invoca(){tom('triangle',nota(60),nota(84),.45,.18,0,{atk:.05});chiado('bandpass',800,4000,.45,.14,0,3,.08);
+      [76,79,84].forEach((n,i)=>tom('sine',nota(n),0,.25,.1,.3+i*.06));},
+    magia(){[0,4,7,12,16].forEach((n,i)=>tom('triangle',nota(72+n),0,.35,.12,i*.05,{det:(i%2?8:-8)}));chiado('highpass',5000,2500,.5,.08,.05);},
+    cura(){[67,71,74,79].forEach((n,i)=>tom('sine',nota(n),0,.4,.14,i*.08,{atk:.02}));},
+    barreira(){tom('square',nota(76),0,.12,.08);tom('square',nota(83),0,.25,.08,.08);},
+    torre(){[[60,.12],[64,.12],[67,.12],[72,.45]].reduce((at,[n,d])=>{tom('square',nota(n),0,d+.05,.09,at);tom('triangle',nota(n-12),0,d+.05,.12,at);return at+d;},0);},
+    suaVez(){tom('sine',nota(79),0,.35,.16);tom('sine',nota(84),0,.5,.16,.13);},
+    evoSobe(o={}){const d=o.dur||2.3;tom('sawtooth',120,900,d,.05,0,{vib:6,vibA:8,atk:d*.6});tom('sine',240,1800,d,.12,0,{vib:9,vibA:20,atk:d*.5});chiado('bandpass',300,5000,d,.1,0,4,d*.7);},
+    evoRevela(){chiado('highpass',2000,6000,.6,.3,0,1,.005);[60,64,67,72,76,79,84].forEach((n,i)=>{tom('triangle',nota(n),0,.9,.1,i*.05);tom('square',nota(n+12),0,.3,.03,i*.05);});},
+    vitoria(){[[67,.15],[67,.1],[67,.1],[72,.3],[67,.15],[72,.15],[76,.6]].reduce((at,[n,d])=>{tom('square',nota(n),0,d+.08,.09,at);tom('triangle',nota(n-12),0,d+.08,.14,at);return at+d;},0);},
+    derrota(){[[67,.35],[63,.35],[60,.35],[55,1]].reduce((at,[n,d])=>{tom('triangle',nota(n),0,d+.1,.16,at);tom('sine',nota(n-12),0,d+.1,.12,at);return at+d;},0);},
+    fala(){tom('sine',var_(620,.1),520,.06,.07);},
+  };
+  const ultimo={};
+  function toca(nome,o){
+    if(!ctx||cfg.mudo||document.hidden||!SONS[nome])return;
+    if(typeof VEL!=='undefined'&&!VEL&&!(o&&o.sempre))return; // pulando a vez do rival: silêncio
+    if(ctx.state==='suspended')ctx.resume().catch(()=>{});
+    const t=performance.now();if(t-(ultimo[nome]||0)<45)return;ultimo[nome]=t; // o mesmo som várias vezes no mesmo instante: toca uma
+    try{SONS[nome](o);}catch(e){console.warn('Som',nome,e);}
+  }
+  function aplica(){if(saida)saida.gain.setTargetAtTime(ganho(),ctx.currentTime,.03);if(musSaida)musSaida.gain.setTargetAtTime(ganhoMus(),ctx.currentTime,.08);grava();}
+  return{toca,liga,
+    musica(nome){querMus=nome;tocaMus(nome);},
+    vinheta(nome,somReserva){if(!vinheta(nome))toca(somReserva,{sempre:true});},
+    get estado(){return{ctx:ctx?ctx.state:'desligado',musica:musAtual,decks:decks.map(d=>d.el?{nome:d.nome,vivo:!!d.vivo,t:+d.el.currentTime.toFixed(1),dur:+(d.el.duration||0).toFixed(1),pausado:d.el.paused,ganho:+d.g.gain.value.toFixed(2)}:null)};}, // diagnóstico
+    get musMudo(){return cfg.musMudo;},get musVol(){return cfg.musVol;},
+    alternaMusica(){cfg.musMudo=!cfg.musMudo;aplica();liga();},
+    volumeMusica(v){cfg.musVol=Math.max(0,Math.min(1,v));if(cfg.musVol>0)cfg.musMudo=false;aplica();},
+    get mudo(){return cfg.mudo;},get vol(){return cfg.vol;},
+    alternaMudo(){cfg.mudo=!cfg.mudo;aplica();if(!cfg.mudo){liga();toca('clique');}},
+    volume(v){cfg.vol=Math.max(0,Math.min(1,v));if(cfg.vol>0)cfg.mudo=false;aplica();}};
+})();
+// qual música cabe agora (conferido a cada instante: as telas mudam por muitos caminhos)
+const MUSICA_FASE={2:'fogo',4:'enchente'}; // as outras fases da campanha usam 'mapa'
+function musicaAgora(){
+  const sv=document.getElementById('saves');
+  if(sv&&sv.style.display==='block')return 'menu';
+  if(typeof J==='undefined'||!J)return null;
+  if(J.fim)return undefined; // fim de partida: a música segue até a vinheta da vitória (ou a derrota a calar)
+  if(J.f1)return MUSICA_FASE[J.f1.n]||'mapa';
+  return 'combate'; // Batalha Livre
+}
+setInterval(()=>{const m=musicaAgora();if(m!==undefined)Som.musica(m);},600);
+// clique dos botões do jogo (qualquer <button> habilitado)
+addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('button');if(b&&!b.disabled)Som.toca('clique');},true);
 // ---------- Tela de toque ----------
 // A classe "toque" no <html> liga o que só faz sentido para dedo (botões maiores, botão ✕ Cancelar, textos de ajuda).
 // Entra de início em celular/tablet e, num PC com tela de toque, no primeiro toque na tela.
@@ -1359,7 +1502,7 @@ function mostraSuaVez(){
   d.innerHTML='<b>Sua vez</b>';
   const m=document.getElementById('mapa'),r=m&&m.getBoundingClientRect(); // centraliza no mapa (no celular em pé o mapa fica no alto)
   d.style.top=r&&r.height>60?Math.max(0,Math.round(r.top+r.height/2-d.offsetHeight/2))+'px':'';
-  d.classList.remove('on');void d.offsetWidth;d.classList.add('on'); // reinicia a animação
+  d.classList.remove('on');void d.offsetWidth;d.classList.add('on');Som.toca('suaVez'); // reinicia a animação
 }
 function modHora(esp){
   const e=ESP[esp];if(e.mestre)return 0; // mestres ficam fora do efeito do horário
@@ -2589,7 +2732,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.50'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.51'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -2605,7 +2748,7 @@ function desenhaInicio(){
       <button class="grande" onclick="telaFases()">Fases</button>
       <button class="grande" onclick="abrirCarregar(true)">Batalha Livre</button>
     </div>
-    <div class="rodIni"><button onclick="abreCompart()" title="Mostra um QR code com o link do jogo">▦ Compartilhar</button>${podeInstalar()?'<button onclick="botaoInstalar()" title="Coloca o jogo na tela inicial do celular, em tela cheia e jogável sem internet">📲 Instalar app</button>':''}</div>
+    <div class="rodIni"><button onclick="abreCompart()" title="Mostra um QR code com o link do jogo">▦ Compartilhar</button><button onclick="Som.alternaMusica();desenhaInicio()" title="Liga ou desliga a música">${Som.musMudo?'🎵 Música: desligada':'🎵 Música: ligada'}</button>${podeInstalar()?'<button onclick="botaoInstalar()" title="Coloca o jogo na tela inicial do celular, em tela cheia e jogável sem internet">📲 Instalar app</button>':''}</div>
     <div class="versaoJogo" onclick="contaDiag()">v${VERSAO}</div>`;
   poeArte(el,'inicio');
   el.classList.remove('cfg');el.classList.add('tela','ini');el.style.display='block';
@@ -4618,7 +4761,7 @@ function fogueiraTela(n,segue,ficam,prox,est,consulta){ // consulta: aberta pela
 }
 // o exército que segue para a próxima fase (sem mestre, figurantes, elementais e dominados)
 const exercitoCampanha=()=>J.un.filter(u=>u.lado===0&&!ESP[u.esp].mestre&&!u.figurante&&!u.elemental&&u.dominado==null).map(u=>({esp:u.esp,xp:u.xp||0,c:u.c,r:u.r}));
-function mostraFimFase(v,motivo){if(ehF3())mostraFimF3(v,motivo);else if(ehF2())mostraFimF2(v,motivo);else mostraFimF1(v,motivo);}
+function mostraFimFase(v,motivo){if(v===0)Som.vinheta('vitoria','vitoria');else{Som.musica(null);Som.toca('derrota',{sempre:true});}if(ehF3())mostraFimF3(v,motivo);else if(ehF2())mostraFimF2(v,motivo);else mostraFimF1(v,motivo);}
 // fim da Fase 1: estrelas pelas vilas salvas; vencer leva à Fase 2
 function mostraFimF1(v,motivo){
   const vs=Object.values(J.vilas).filter(x=>x.estrela!==false),salvas=vs.filter(x=>x.n>0).length,camp=vs.reduce((s,x)=>s+x.n,0),tot=vs.reduce((s,x)=>s+x.max,0); // a vila da entrada não conta
@@ -4855,14 +4998,14 @@ async function moverPara(u,k,prev){
     for(const s of p){
       const [x0,y0]=centro(u.c,u.r),[c,r]=DK(s);
       viraPara(u,centro(c,r)[0]);
-      u.c=c;u.r=r;u.anim={x0,y0,t0:performance.now(),dur:85*RITMO_IA};
+      u.c=c;u.r=r;u.anim={x0,y0,t0:performance.now(),dur:85*RITMO_IA};Som.toca('passo');
       await dorme(85);
     }
     u.anim=null;
   }
   u.movido=true;acaoF1();
   const tomou=captura(u);
-  if(tomou){hist(u).torre++;if(contaHj(u))hj(u.lado).torre++;atualiza();await mostraTorre(u,tomou.antes,tomou.liberou,tomou.primeira);if(u.lado===0)tomouTorreF1(K(u.c,u.r));} // cena da torre conquistada (o jogo espera ela fechar)
+  if(tomou){Som.toca('torre');hist(u).torre++;if(contaHj(u))hj(u.lado).torre++;atualiza();await mostraTorre(u,tomou.antes,tomou.liberou,tomou.primeira);if(u.lado===0)tomouTorreF1(K(u.c,u.r));} // cena da torre conquistada (o jogo espera ela fechar)
   avisaCerco(u.lado);
 }
 // a vitória só vale se a ocupação aguentar até o início do próximo turno de quem cercou
@@ -5392,17 +5535,17 @@ async function golpear(a,d,mult,contra){
       if(!d.figurante)ganhaXp(a,dano); // o saque já rende a XP do camponês
       if(d.hp>0&&meuEl(a,'fogo')&&temNo('f2a')&&!d.elemental&&!d.figurante&&!d.chama&&!d.brasa){d.brasa=2*nivNo('f2a');flutua(d,'Em brasa','#ff9a5a',260);} // Faísca
       if(d.hp<=0&&meuEl(d,'agua')&&temNo('a3')&&!J.iaraUsada&&!d.elemental&&!d.figurante){d.hp=1;J.iaraUsada=true;flutua(d,'A Iara te salvou!','#6ec3ff',300);log(`A Iara segurou ${nome(d)} de pé com 1 de vida.`);} // Iara: uma vez por fase
-      if(CENA)await cenaGolpe(a,d,true,dano,i);
+      if(CENA)await cenaGolpe(a,d,true,dano,i);else somGolpe(a,d,true,contra);
       if(d.hp<=0){
         if(!d.figurante)ganhaXp(a,20);if(!a.elemental)hist(a).abates=(hist(a).abates||0)+1;if(contaHj(a))hj(a.lado).abates++;registraGolpes(a,d,acertos,i+1,total,contra,ch);
         if(meuEl(a,'fogo')&&temNo('f3')){const c=Math.ceil((ESP[a.esp].hp-a.hp)/2);if(c>0){a.hp+=c;flutua(a,'+'+c,'#6ee08a',200);}} // Coivara
-        if(CENA)await cenaQueda(d);
+        if(CENA)await cenaQueda(d);else Som.toca(d.elemental?'desfaz':'queda');
         if(d.figurante)d.hp=0;
         else if(d.elemental){d.hp=0;flutua(d,'Elemental desfeito','#ffb070',300);log(`${nome(d)} se desfez e não volta nesta partida.`);}
         else morre(d,a);
         return;
       }
-    }else{flutua(d,'Errou!','#cfd8e3',d.elemental?150:0);if(CENA)await cenaGolpe(a,d,false,0,i);}
+    }else{flutua(d,'Errou!','#cfd8e3',d.elemental?150:0);if(CENA)await cenaGolpe(a,d,false,0,i);else somGolpe(a,d,false,contra);}
     if(!CENA)await dorme(170);
   }
   registraGolpes(a,d,acertos,n,total,contra,ch);
@@ -5505,7 +5648,7 @@ function fimDeJogo(v,motivo='mestre',por=null){
       if(v===0&&VEL&&!document.hidden&&!J.f1.vistos.vitoria){(ehF3()?finalF3():ehF2()?finalF2():avisoJaF1('vitoria')).then(()=>{if(J===jogo)mostraFimFase(v,motivo);});return;}
       mostraFimFase(v,motivo);return;}
     {const b=document.getElementById('fimBt');b.textContent='Jogar de novo';b.onclick=()=>abreConfig();document.getElementById('fimBt2').style.display='none';}
-    document.getElementById('fimTxt').textContent=v===0?'Vitória!':'Você perdeu';
+    document.getElementById('fimTxt').textContent=v===0?'Vitória!':'Você perdeu';if(v===0)Som.vinheta('vitoria','vitoria');else{Som.musica(null);Som.toca('derrota',{sempre:true});}
     document.getElementById('fimPorque').innerHTML=v===0?'':porqueDerrota(v,motivo,por);
     document.getElementById('fimSub').textContent=motivo==='cabo'
       ?(v===0?`Suas torres venceram o cabo de guerra no turno ${J.turno}.`:`${OM(v)} venceu o cabo de guerra no turno ${J.turno}.`)
@@ -5533,7 +5676,7 @@ function hexesInvocacao(l){
 }
 function invocar(l,esp,c,r){
   J.mp[l]-=ESP[esp].custo;
-  const u=criaUnidade(esp,l,c,r);u.movido=true;u.agiu=true;seguir(u);acaoF1();
+  const u=criaUnidade(esp,l,c,r);u.movido=true;u.agiu=true;seguir(u);acaoF1();Som.toca('invoca');
   (J.invocou||(J.invocou=[]))[l]=true; // a Magia do menu do mestre só aparece depois da primeira invocação
   if(l===0&&J.tut&&J.turno===1)J.tut.n++;
   flutua(u,'Invocado','#f2c14e');
@@ -5590,13 +5733,13 @@ function piscaHex(k,cor,dur=600){fxHex.push({k,cor,t0:performance.now(),dur});}
 function tocaMagia(u,txt,cor){flutua(u,txt,cor);piscaHex(K(u.c,u.r),cor);}
 function curar(u,n){
   n=Math.min(n,falta(u));if(n<=0)return 0;
-  u.hp+=n;tocaMagia(u,'+'+n,'#6ee08a');return n;
+  u.hp+=n;tocaMagia(u,'+'+n,'#6ee08a');Som.toca('cura');return n;
 }
 function danoMagia(l,u,min,max,cor='#c58cff'){
   if(!J.un.includes(u)||!ehCriatura(u))return 0;
-  if(protegido(l,u)){tocaMagia(u,'Barreira!','#f2c14e');return 0;}
+  if(protegido(l,u)){tocaMagia(u,'Barreira!','#f2c14e');Som.toca('barreira');return 0;}
   const d=sorteia(min,max);u.hp-=d;u.hit=performance.now();flutua(u,'-'+d,cor);piscaHex(K(u.c,u.r),cor);
-  if(u.hp<=0)morre(u);
+  if(u.hp<=0){Som.toca('queda');morre(u);}
   return d;
 }
 // melhor alvo entre vários: f devolve uma pontuação (ou −Infinity)
@@ -5789,7 +5932,7 @@ async function lancarMagia(l,id,alvo){
   if(!alvoMagia(l,id,m.alvo==='global'?null:alvo.k))return false;
   if(m.destinos&&!m.destinos(l,alvo.u).includes(alvo.destino))return false;
   const era=J.ocupado;J.ocupado=true;
-  const mestre=mestreDe(l);if(mestre)flutua(mestre,m.nome,'#c58cff');
+  const mestre=mestreDe(l);if(mestre)flutua(mestre,m.nome,'#c58cff');Som.toca('magia');
   log(`${quem(l)} lança ${m.nome}${alvo.u?` em ${nome(alvo.u)}`:''}.`);
   J.magiaUsada[l]=true;
   await m.executa(l,alvo);
@@ -6546,11 +6689,15 @@ async function abreCena(a,d,op={}){
   await esperaC(250);
 }
 const posCena=u=>[(u===CENA.esq?250:590)+CENA.pose.get(u).dx,CHAO+CENA.pose.get(u).dy];
+// som do golpe: o elemento de quem bate dá o timbre; com vantagem de elemento, soa mais forte
+function somGolpe(a,d,acertou,contra){
+  if(!acertou){Som.toca('erro');return;}
+  const m=multEl(ESP[a.esp].el,ESP[d.esp].el);Som.toca('golpe',{el:ESP[a.esp].el,forte:m>1,fraco:contra||m<1});}
 async function cenaGolpe(a,d,acertou,dano){
   const pa=CENA.pose.get(a),pd=CENA.pose.get(d);if(!pa||!pd)return;
   const lado=a===CENA.esq?1:-1;
   await tweenC(150,t=>pa.dx=lado*80*t*t);                       // investida
-  const [x,y]=posCena(d),agora=performance.now();
+  const [x,y]=posCena(d),agora=performance.now();somGolpe(a,d,acertou);
   CENA.efe.push({x,y:y-90,t0:agora,cor:a.elemental?EL[ESP[a.esp].el]:'#ffffff',lado,elem:!!a.elemental,fogo:golpeDeFogo(a)});
   CENA.golpes.get(a)?.push(acertou); // acende a bolinha do golpe no painel
   if(acertou){
@@ -6572,7 +6719,7 @@ async function cenaAlimenta(a,d,ganho){
   const lado=a===CENA.esq?1:-1;
   await tweenC(150,t=>pa.dx=lado*80*t*t);
   const [x,y]=posCena(d),agora=performance.now();
-  CENA.efe.push({x,y:y-90,t0:agora,cor:'#ffb070',lado,elem:false,fogo:golpeDeFogo(a)});
+  CENA.efe.push({x,y:y-90,t0:agora,cor:'#ffb070',lado,elem:false,fogo:golpeDeFogo(a)});Som.toca('golpe',{el:'fogo',fraco:true});
   CENA.golpes.get(a)?.push(true);
   CENA.txt.push({txt:'+'+ganho,x,y:y-170,cor:'#ffb070',t0:agora,tam:46});
   const de=CENA.hp.get(d),para=d.hp;
@@ -6595,7 +6742,7 @@ function desenhaGolpeFogo(g,f,t){
   g.fillStyle='#ffd24a';for(let k=0;k<6;k++){const a=k/6*Math.PI*2+t*2,rr=30+t*50;g.fillRect(Math.round(f.x+Math.cos(a)*rr-3),Math.round(f.y+Math.sin(a)*rr-3-t*20),6,6);} // fagulhas
 }
 async function cenaQueda(u){
-  if(!CENA)return;const p=CENA.pose.get(u);if(!p)return;
+  if(!CENA)return;const p=CENA.pose.get(u);if(!p)return;Som.toca(u.elemental?'desfaz':'queda');
   await tweenC(520,t=>{p.al=1-t;p.dy=t*22;});
 }
 async function cenaAviso(u,txt){
@@ -6905,9 +7052,10 @@ async function cenaEvolucao(u,de,para,espPara){
   CV_CENA.style.display='block';requestAnimationFrame(desenhaCena);
   await tweenC(350,t=>E.al=t);                                   // entra
   await esperaC(500);
+  Som.toca('evoSobe',{dur:2.3});
   await tweenC(800,t=>{E.branco=t;E.raios=t*.6;});               // fica branca
   await tweenC(1500,t=>{E.morf=t;E.raios=.6+t*.4;});              // troca de forma, cada vez mais rápido
-  E.revelado=true;E.flash=1;
+  E.revelado=true;E.flash=1;Som.toca('evoRevela');
   for(let i=0;i<40;i++)E.part.push({a:Math.random()*Math.PI*2,v:120+Math.random()*260,t0:performance.now(),r:2+Math.random()*4});
   await tweenC(450,t=>{E.flash=1-t;});
   await tweenC(700,t=>{E.branco=1-t;E.raios=1-t*.7;});           // a cor volta, já na forma nova
@@ -8455,6 +8603,10 @@ function atualiza(){
     <button onclick="fechaMenuJogo();alternaLog(event)">📜 Registro</button>
     <button onclick="abreAjuda()">❓ Como jogar</button>
     <button onclick="abreCompart()" title="QR code com o link do jogo">▦ Compartilhar</button>
+    <button onclick="event.stopPropagation();Som.alternaMusica();atualiza()" title="Liga ou desliga a música">${Som.musMudo?'🎵 Música: desligada':'🎵 Música: ligada'}</button>
+    ${Som.musMudo?'':`<label class="volSom" onclick="event.stopPropagation()" title="Volume da música">Volume <input type="range" min="0" max="100" step="5" value="${Math.round(Som.musVol*100)}" oninput="Som.volumeMusica(this.value/100)"></label>`}
+    <button onclick="event.stopPropagation();Som.alternaMudo();atualiza()" title="Liga ou desliga os efeitos sonoros">${Som.mudo?'🔇 Efeitos: desligados':'🔊 Efeitos: ligados'}</button>
+    ${Som.mudo?'':`<label class="volSom" onclick="event.stopPropagation()" title="Volume dos efeitos">Volume <input type="range" min="0" max="100" step="5" value="${Math.round(Som.vol*100)}" oninput="Som.volume(this.value/100)" onchange="Som.toca('golpe',{el:'terra'})"></label>`}
     <button onclick="event.stopPropagation();mudaModoCena()" title="Tela que mostra cada combate">⚔ Tela de combate: ${MODOS_CENA[modoCena()]}</button>
     ${podeInstalar()?'<button onclick="fechaMenuJogo();botaoInstalar()" title="Coloca o jogo na tela inicial, em tela cheia e jogável sem internet">📲 Instalar como app</button>':''}`;
   // placar logo abaixo do topo (PC e celular): [sua mana (+saldo)] | placar dos jogadores
