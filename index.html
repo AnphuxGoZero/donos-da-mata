@@ -2588,7 +2588,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.48'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.49'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -2770,14 +2770,14 @@ function torreNaFrente(){ // alguma criatura sua alcança, neste turno, uma torr
 function checaTorreF1(){if(J.f1&&!J.f1.vistos.torre&&torreNaFrente())avisoF1('torre');}
 // aviso na hora, mesmo na vez do Bando: a vez dele fica parada até o jogador fechar (sem animação, entra na fila)
 async function avisoJaF1(id){
-  if(!J.f1||J.f1.vistos[id])return;
+  if(!J.f1||J.f1.vistos[id]||!avisosF()[id])return;
   if(PULA_AB&&id.startsWith('intro')){J.f1.vistos[id]=true;return;} // pulando a abertura: sem as falas dela
   if(!VEL||document.hidden||!podeFalarF1(id)){avisoF1(id);return;} // sem ação desde a última fala: vai para a fila (e pode caducar)
   J.f1.vistos[id]=true;J.f1.fila.unshift(id);(J.f1.nasceu||(J.f1.nasceu={}))[id]=J.f1.acao||0;J.f1.forcar=true;atualiza();
   await new Promise(r=>{J.f1.solta=r;});
   if(J&&J.f1)J.f1.forcar=false;
 }
-function avisoF1(id){if(!id||!J.f1||J.f1.vistos[id])return;J.f1.vistos[id]=true;J.f1.fila.push(id);(J.f1.nasceu||(J.f1.nasceu={}))[id]=J.f1.acao||0;}
+function avisoF1(id){if(!id||!J.f1||J.f1.vistos[id]||!avisosF()[id])return;J.f1.vistos[id]=true;J.f1.fila.push(id);(J.f1.nasceu||(J.f1.nasceu={}))[id]=J.f1.acao||0;}
 // Ritmo das falas: cada fala sai no momento do seu evento (pode haver várias no mesmo turno), mas nunca uma logo depois
 // da outra sem uma ação no meio (andar, atacar, invocar, um saque do Bando). Uma fala que não pôde sair espera a próxima
 // ação; se passarem 2 ações sem ela sair, perdeu o contexto e é descartada. As da abertura, do alerta do camponês, da
@@ -3678,7 +3678,7 @@ function desenhaVilas(now){
 // mata viva ou em outra Mata de brotos) a casa vira Mata de brotos (ainda não é floresta: crescer é o desafio da Fase 4).
 // Depois da 1ª Mata de brotos a Caipora aparece e, dali em diante, a Semente pode nascer ao lado das vilas.
 // As saúvas (Terra; a Planta vence Terra) saem dos formigueiros: a operária vai atrás das Sementes que estão plantando
-// (o ataque zera o broto daquela casa); a soldado fica de guarda no formigueiro. Sem evolução da Semente nesta fase.
+// (o ataque zera o broto daquela casa); a soldado fica de guarda no formigueiro. A Semente evolui com XP ×4 (F3_XP_SEMENTE); enraizada, não.
 // Vitória: todas as matas queimadas com brotos. Derrota: o mestre cair. Estrelas: vencer · nenhum broto comido · poucos turnos.
 const F3_CHAVE='senhoresDoVeu.fase3';
 const F3_PLANT_NINHO=1,F3_MIN_QUEIM=6,F3_NASCE=3,F3_MAX_OPER=4,F3_GUARDA=2,F3_RENASCE=0.3;
@@ -5415,14 +5415,17 @@ function registraGolpes(a,d,acertos,tent,total,contra,ch){
 // A história libera o estágio quando pede a primeira evolução até ele (como a Caipora pedindo o Girino → Sapinho,
 // que liberou o 1º estágio); aí a XP volta ao normal. Guardado em campanhaInfo().estagioLib (por enquanto, 1).
 const XP_TRAVA={2:4,3:6};
+// Fase 3: a Semente pode evoluir, mas custa caro (×4 da XP normal); evoluída, vira lutadora e deixa de plantar
+const F3_XP_SEMENTE=4;
 function xpMeta(u){const e=ESP[u.esp],alvo=(e.tier||0)+1;
+  if(ehF3()&&u.lado===0&&u.esp==='semente')return Math.round(e.xp*F3_XP_SEMENTE);
   return J&&J.f1&&u.lado===0&&alvo>(J.estLib??1)?Math.round(e.xp*(XP_TRAVA[alvo]||1)):e.xp;}
 function ganhaXp(u,v){if(u.selvagem&&u.esp!=='filhoteInf')return;if((ehF2()||ehF3())&&u.lado===0)v=Math.max(1,Math.round(v*F2_XP)); // Fases 2 e 3: suas criaturas aprendem devagar
   if(ESP[u.esp].evo)u.xp+=v;} // Fase 1: o Bando evolui uma vez só
 async function checaEvo(u){
   const e=ESP[u.esp];
   if(!J.un.includes(u)||!e.evo||u.xp<xpMeta(u))return;
-  if(ehF3()&&u.lado===0&&u.esp==='semente')return; // Fase 3: a Semente ainda não evolui
+  if(ehF3()&&u.lado===0&&u.esp==='semente'&&plantandoU(u))return; // Fase 3: enraizada, a Semente não evolui (vai virar mata)
   const para=ehF2()&&u.lado===0&&u.esp==='girino'?'sapinho':RAMOS[u.esp]?escolheRamo(u):e.evo,n=ESP[para]; // Fase 2: o Girino só vira Sapinho
   // a animação vem primeiro: no mapa a criatura só muda de forma depois dela
   await cenaEvolucao(u,e,n,para);
