@@ -2588,7 +2588,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.47'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.48'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -7910,7 +7910,7 @@ function pintaFogueira(g,x,y,S,frac,now){
   g.save();
   // brilho no chão
   const gl=g.createRadialGradient(x,y,0,x,y,S*.75);
-  gl.addColorStop(0,`rgba(255,170,70,${.18+.3*f})`);gl.addColorStop(1,'rgba(255,120,40,0)');
+  gl.addColorStop(0,`rgba(255,170,70,${.18+.3*f})`);gl.addColorStop(.55,`rgba(170,90,255,${.08+.16*f})`);gl.addColorStop(1,'rgba(140,60,230,0)'); // quente no meio, aura roxa em volta
   g.fillStyle=gl;g.beginPath();g.ellipse(x,y,S*.75,S*.3,0,0,Math.PI*2);g.fill();
   // pedras de trás
   const pedra=(a)=>{const px=x+Math.cos(a)*w*1.05,py=y+Math.sin(a)*w*.42,r=S*.075;
@@ -7926,21 +7926,28 @@ function pintaFogueira(g,x,y,S,frac,now){
   // brasas
   for(let i=0;i<7;i++){const bx=x+(hsh(i,1)-.5)*w*1.3,by=y-S*.02+(hsh(i,2)-.5)*S*.06,p=.5+.5*Math.sin(t*3+i*1.7);
     g.fillStyle=`rgba(255,${(90+90*p)|0},40,${.7+.3*p})`;g.beginPath();g.arc(bx,by,S*(.025+.015*p),0,Math.PI*2);g.fill();}
-  // chama: três línguas sobrepostas (vermelha, laranja, amarela), tremulando
+  // chama mágica: três línguas sobrepostas, laranja na lenha e roxas para cima (a Fogueira é arcana), tremulando.
+  // Com pouca vida a magia enfraquece: o roxo some e sobra um fogo comum, menor e mais escuro.
   if(f>0.04){
-    const lingua=(esc,cor,fase)=>{const hh=h*esc,ww=w*.8*esc,sw=Math.sin(t*6+fase)*ww*.25,ponta=Math.sin(t*4.3+fase)*ww*.35;
-      g.fillStyle=cor;g.beginPath();g.moveTo(x-ww,y-S*.04);
+    const mg=Math.min(1,f/.6); // força da magia
+    const lingua=(esc,baixo,topo,fase)=>{const hh=h*esc,ww=w*.8*esc,sw=Math.sin(t*6+fase)*ww*.25,ponta=Math.sin(t*4.3+fase)*ww*.35;
+      const gr=g.createLinearGradient(0,y,0,y-hh);gr.addColorStop(0,baixo);gr.addColorStop(.3,baixo);gr.addColorStop(1-.35*mg,topo);gr.addColorStop(1,topo);
+      g.fillStyle=mg>.05?gr:baixo;g.beginPath();g.moveTo(x-ww,y-S*.04);
       g.bezierCurveTo(x-ww*1.05,y-hh*.45,x-ww*.35+sw,y-hh*.6,x+ponta,y-hh);
       g.bezierCurveTo(x+ww*.4+sw,y-hh*.55,x+ww*1.05,y-hh*.4,x+ww,y-S*.04);
       g.quadraticCurveTo(x,y+S*.03,x-ww,y-S*.04);g.fill();};
+    const mix=(a,b)=>a.map((v,i)=>i<3?Math.round(v+(b[i]-v)*mg):v),rgba=c=>`rgba(${c.join(',')})`;
+    const ext=f>.35?[230,70,25,.85]:[170,45,20,.85],mei=f>.35?[255,140,30,.9]:[220,90,30,.85],nuc=[255,230,120,.95];
     g.globalCompositeOperation='lighter';
-    lingua(1,f>.35?'rgba(230,70,25,.85)':'rgba(170,45,20,.85)',0);
-    lingua(.72,f>.35?'rgba(255,140,30,.9)':'rgba(220,90,30,.85)',1.3);
-    if(f>.25)lingua(.42,'rgba(255,230,120,.95)',2.6);
+    lingua(1,rgba(ext),rgba(mix(ext,[140,40,220])),0);
+    lingua(.72,rgba(mei),rgba(mix(mei,[185,95,255])),1.3);
+    if(f>.25)lingua(.42,rgba(nuc),rgba(mix(nuc,[240,205,255])),2.6);
     g.globalCompositeOperation='source-over';
-    // fagulhas subindo (só com a chama forte)
-    if(f>.5)for(let i=0;i<6;i++){const c=(t*.55+i/6)%1,sx=x+Math.sin(i*2.1+t*2)*w*.5*(1+c),sy=y-h*.6-c*S*.7;
-      g.fillStyle=`rgba(255,${(200-100*c)|0},80,${1-c})`;g.fillRect(sx,sy,Math.max(1.5,S*.03),Math.max(1.5,S*.03));}
+    // fagulhas subindo (só com a chama forte): metade laranja, metade lilás
+    if(f>.5)for(let i=0;i<8;i++){const c=(t*.55+i/8)%1,sx=x+Math.sin(i*2.1+t*2)*w*.5*(1+c),sy=y-h*.6-c*S*.7,q=Math.max(1.5,S*.03);
+      g.fillStyle=i%2?`rgba(${(215-40*c)|0},150,255,${1-c})`:`rgba(255,${(200-100*c)|0},80,${1-c})`;
+      if(i%2){g.beginPath();g.moveTo(sx,sy-q);g.lineTo(sx+q*.7,sy);g.lineTo(sx,sy+q);g.lineTo(sx-q*.7,sy);g.fill();} // faísca mágica em losango
+      else g.fillRect(sx,sy,q,q);}
   }
   // fumaça quando está fraca
   if(f<.45)for(let i=0;i<3;i++){const c=(t*.35+i/3)%1;
