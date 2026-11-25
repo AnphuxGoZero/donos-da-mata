@@ -2238,7 +2238,8 @@ function carregar(slot){
   J.invocou=s.invocou||[true,true]; // saves antigos: Magia já liberada
   J.ciclo=s.ciclo??(s.turno-1)%CICLO.length;J.cicloDir=s.cicloDir||1;
   J.iaraUsada=!!s.iaraUsada;J.ultEclipse=s.ultEclipse??undefined;J.evoAvisado=!!s.evoAvisado;
-  J.arvore=s.arvore||[];J.estLib=s.estLib??campanhaInfo().estagioLib??1;
+  J.arvore=s.f1&&s.f1.n>1?[...(campanhaInfo().arvore||[])]:s.arvore||[]; // campanha: vale a árvore de agora (mudada depois de salvar também)
+  J.estLib=s.estLib??campanhaInfo().estagioLib??1;
   if(s.f1){ // campanha: a fase volta como estava (vilas, fogo, brotos, saúvas, falas já vistas) e a arte dela começa a carregar
     J.f1=s.f1;J.vilas=s.vilas||{};J.op=s.op||{...prefs(),modo:'1x1',f1:true,fase:s.f1.n};J.tut=s.tut||null;
     for(const a of Object.values(ARTE_F1)){imgF1(a.mapa);imgF1(a.luta);}imgF1(CAMPONESES.img);imgF1('img/f1-cao-cara.png');for(const r of imgsRostos())imgF1(r);
@@ -2588,7 +2589,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.49'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.50'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
