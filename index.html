@@ -988,6 +988,7 @@ const Som=(()=>{
     const comp=ctx.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=4;
     saida.connect(comp);comp.connect(ctx.destination);
     musSaida=ctx.createGain();musSaida.gain.value=ganhoMus();musSaida.connect(ctx.destination); // a música não passa pelo compressor dos efeitos
+    if(!querMus&&typeof musicaAgora==='function'){const m=musicaAgora();if(m)querMus=m;}
     if(querMus)tocaMus(querMus);
     carregaAmostras();
     ruido=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate);
@@ -1022,10 +1023,11 @@ const Som=(()=>{
   }
   function tocaMus(nome){
     if(!ctx||nome===musAtual)return;musAtual=nome;
+    const tocando=decks.some(d=>d.vivo);
     for(const d of decks)if(d.vivo){
       if(UMA_VEZ.has(d.nome)&&d.el.duration-d.el.currentTime<2){d.vivo=false;continue;} // já no finzinho: termina inteira, sem corte
       soltaDeck(d,1.2);}
-    if(nome){deckAt=1-deckAt;poeNoDeck(deckAt,nome,1.5);}
+    if(nome){deckAt=1-deckAt;poeNoDeck(deckAt,nome,tocando?1.5:.3);} // do silêncio, entra logo; trocando, cruza devagar
   }
   // vinheta (vitória): a música sai, a vinheta toca uma vez e o silêncio fica até a próxima música pedida
   function vinheta(nome){if(!ctx||cfg.musMudo)return false;querMus=musAtual=null;for(const d of decks)if(d.vivo)soltaDeck(d,.4);
@@ -1108,9 +1110,10 @@ const Som=(()=>{
   }
   function aplica(){if(saida)saida.gain.setTargetAtTime(ganho(),ctx.currentTime,.03);if(musSaida)musSaida.gain.setTargetAtTime(ganhoMus(),ctx.currentTime,.08);grava();}
   return{toca,liga,
+    preCarrega(...nomes){if(cfg.musMudo)return;for(const n of nomes)if(n)urlMus(n).catch(()=>{});},
     musica(nome,fim){if(nome!==querMus)aoAcabar=fim||null;querMus=nome;tocaMus(nome);},
     vinheta(nome,somReserva){if(!vinheta(nome))toca(somReserva,{sempre:true});},
-    get estado(){return{ctx:ctx?ctx.state:'desligado',musica:musAtual,decks:decks.map(d=>d.el?{nome:d.nome,vivo:!!d.vivo,t:+d.el.currentTime.toFixed(1),dur:+(d.el.duration||0).toFixed(1),pausado:d.el.paused,ganho:+d.g.gain.value.toFixed(2)}:null)};}, // diagnóstico
+    get estado(){return{ctx:ctx?ctx.state:'desligado',musica:musAtual,baixando:Object.keys(blobs),decks:decks.map(d=>d.el?{nome:d.nome,vivo:!!d.vivo,t:+d.el.currentTime.toFixed(1),dur:+(d.el.duration||0).toFixed(1),pausado:d.el.paused,ganho:+d.g.gain.value.toFixed(2)}:null)};}, // diagnóstico
     get musMudo(){return cfg.musMudo;},get musVol(){return cfg.musVol;},
     alternaMusica(){cfg.musMudo=!cfg.musMudo;aplica();liga();},
     volumeMusica(v){cfg.musVol=Math.max(0,Math.min(1,v));if(cfg.musVol>0)cfg.musMudo=false;aplica();},
@@ -1129,7 +1132,12 @@ function musicaAgora(){
     return MUSICA_FASE[J.f1.n]||'mapa';}
   return 'combate'; // Batalha Livre
 }
-setInterval(()=>{const m=musicaAgora();if(m===undefined)return;
+// ao abrir: já baixa a música do menu (quando o jogador tocar na tela, ela começa na hora)
+Som.preCarrega('menu');
+// no menu: adianta a música da próxima fase da campanha (a do botão Jogar)
+function preCarregaProxima(){const f=typeof proxFase==='function'&&proxFase();if(!f)return;
+  Som.preCarrega(...(f.n===1?['f1abertura','f1vila']:[MUSICA_FASE[f.n]||'mapa']));}
+setInterval(()=>{const m=musicaAgora();if(m===undefined)return;if(m==='menu')preCarregaProxima();
   const jogo=typeof J!=='undefined'?J:null;
   Som.musica(m,m==='f1abertura'?()=>{if(jogo&&jogo.f1)jogo.f1.musAb=false;if(J===jogo){const p=musicaAgora();if(p)Som.musica(p);}}:null);},600);
 // clique dos botões do jogo (qualquer <button> habilitado)
@@ -2758,7 +2766,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.54'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.55'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
