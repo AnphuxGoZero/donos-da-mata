@@ -1001,7 +1001,7 @@ const Som=(()=>{
   // ----- Música: arquivos em musicas/, baixados só quando vão tocar (e guardados pelo sw.js para jogar sem internet) -----
   // Dois "decks" para emendar: perto do fim da faixa, a mesma faixa recomeça no outro deck e as duas se cruzam,
   // então o loop não precisa de ponto de corte perfeito. Trocar de faixa também é um cruzamento curto.
-  const MUS_VER={menu:2},CRUZA=3; // MUS_VER: versão de cada música (subir a dela quando trocar o arquivo; sem entrada = 1); CRUZA: segundos do cruzamento do loop
+  const MUS_VER={menu:2,f1abertura:2},CRUZA=3; // MUS_VER: versão de cada música (subir a dela quando trocar o arquivo; sem entrada = 1); CRUZA: segundos do cruzamento do loop
   const UMA_VEZ=new Set(['f1abertura']); // tocam uma vez; perto do fim avisam (aoAcabar) para a próxima música entrar cruzando
   const blobs={},decks=[{},{}];let querMus=null,musAtual=null,deckAt=0,aoAcabar=null;
   const urlMus=n=>blobs[n]||(blobs[n]=fetch(`musicas/${n}.m4a?v=${MUS_VER[n]||1}`).then(r=>{if(!r.ok)throw new Error(r.status);return r.blob();}).then(b=>URL.createObjectURL(b)).catch(e=>{delete blobs[n];throw e;}));
@@ -2766,7 +2766,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.55'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.56'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
