@@ -991,6 +991,9 @@ const Som=(()=>{
     if(!querMus&&typeof musicaAgora==='function'){const m=musicaAgora();if(m)querMus=m;}
     if(querMus)tocaMus(querMus);
     carregaAmostras();
+    { const L=ctx.sampleRate*3;rosa=ctx.createBuffer(2,L,ctx.sampleRate); // ruído rosa (mais "macio" que o branco): base da chuva
+      for(let c=0;c<2;c++){const d=rosa.getChannelData(c);let b0=0,b1=0,b2=0;for(let i=0;i<L;i++){const w=Math.random()*2-1;b0=.99765*b0+w*.099046;b1=.963*b1+w*.2965164;b2=.57*b2+w*1.0526913;d[i]=(b0+b1+b2+w*.1848)*.2;}} }
+    if(querChuva)ajustaChuva();
     ruido=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate);
     const d=ruido.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
   }
@@ -1032,6 +1035,44 @@ const Som=(()=>{
   // vinheta (vitória): a música sai, a vinheta toca uma vez e o silêncio fica até a próxima música pedida
   function vinheta(nome){if(!ctx||cfg.musMudo)return false;querMus=musAtual=null;for(const d of decks)if(d.vivo)soltaDeck(d,.4);
     deckAt=1-deckAt;poeNoDeck(deckAt,nome,.05,false);return true;}
+  // ----- Chuva contínua (Fases 2 e 3): chiado de chuva com gotas soltas e, de vez em quando, um trovão rolando longe -----
+  // Som.chuva('forte'|'fina'|null). Passa pelo volume dos efeitos; fica calada nos menus (Som.chuvaPausa).
+  let rosa=null,querChuva=null,chuvaPausada=false,chuva=null;
+  function camadaChuva(dest,tipo,f,q,v){const s=ctx.createBufferSource(),fl=ctx.createBiquadFilter(),g=ctx.createGain();s.buffer=rosa;s.loop=true;
+    fl.type=tipo;fl.frequency.value=f;fl.Q.value=q;g.gain.value=v;s.connect(fl);fl.connect(g);g.connect(dest);s.start(0,Math.random()*3);return s;}
+  function gotaChuva(dest,f,v){const t=ctx.currentTime,s=ctx.createBufferSource(),fl=ctx.createBiquadFilter(),g=ctx.createGain();
+    s.buffer=rosa;fl.type='bandpass';fl.frequency.value=f;fl.Q.value=8;env(g,t,.03,v);s.connect(fl);fl.connect(g);
+    if(ctx.createStereoPanner){const p=ctx.createStereoPanner();p.pan.value=Math.random()*1.6-.8;g.connect(p);p.connect(dest);}else g.connect(dest);
+    s.start(t,Math.random()*2);s.stop(t+.08);}
+  function pingoFolha(dest,f,v){const t=ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain(); // pingo caindo numa folha
+    o.type='sine';o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f*1.6,t+.04);env(g,t,.05,v);o.connect(g);
+    if(ctx.createStereoPanner){const p=ctx.createStereoPanner();p.pan.value=Math.random()*1.6-.8;g.connect(p);p.connect(dest);}else g.connect(dest);
+    o.start(t);o.stop(t+.1);}
+  function roncoChuva(dest,k){const t=ctx.currentTime,s=ctx.createBufferSource(),fl=ctx.createBiquadFilter(),g=ctx.createGain();s.buffer=rosa;
+    fl.type='lowpass';fl.frequency.setValueAtTime(400,t);fl.frequency.exponentialRampToValueAtTime(80,t+3);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.9*k,t+.5);g.gain.exponentialRampToValueAtTime(.001,t+3.5);s.connect(fl);fl.connect(g);g.connect(dest);s.start(t,Math.random()*2);s.stop(t+3.6);}
+  function paraChuva(){if(!chuva)return;const c=chuva;chuva=null;rampa(c.m,0,.8);clearInterval(c.iv);
+    setTimeout(()=>{for(const s of c.fontes){try{s.stop();}catch(e){}}c.m.disconnect();},900);}
+  function ajustaChuva(){
+    const nivel=chuvaPausada?null:querChuva;
+    if(!ctx||!rosa){return;}
+    if(chuva&&chuva.nivel===nivel)return;
+    paraChuva();if(!nivel)return;
+    const m=ctx.createGain();m.gain.value=0;m.connect(saida);let fontes,iv;
+    if(nivel==='forte'){ // "chuva com ronco": chiado cheio, gotas batendo e um trovão rolando longe a cada 6 a 14 s
+      rampa(m,1,1.2);fontes=[camadaChuva(m,'bandpass',2800,.6,.55),camadaChuva(m,'lowpass',700,.5,.35)];
+      let prox=ctx.currentTime+2+Math.random()*3;
+      iv=setInterval(()=>{if(document.hidden||ctx.state!=='running')return; // em segundo plano não acumula gotas
+        if(Math.random()<.8)gotaChuva(m,2500+Math.random()*4000,.08+.1*Math.random());
+        if(ctx.currentTime>prox){prox=ctx.currentTime+6+Math.random()*8;roncoChuva(m,1);}},25);}
+    else{ // fina (a Fase 3 inteira): "chuva na mata" bem baixinha, grave e abafada, pingos nas folhas, um ronco raro (30 a 40 s)
+      const k=.45;rampa(m,.4,2.5);fontes=[camadaChuva(m,'lowpass',1400,.5,.6*k),camadaChuva(m,'bandpass',3500,.8,.15*k)];
+      let prox=ctx.currentTime+20+Math.random()*15;
+      iv=setInterval(()=>{if(document.hidden||ctx.state!=='running')return;
+        if(Math.random()<.35)pingoFolha(m,500+Math.random()*700,.05+.05*Math.random());
+        if(Math.random()<.5*k)gotaChuva(m,1200+Math.random()*1500,.08*k);
+        if(ctx.currentTime>prox){prox=ctx.currentTime+30+Math.random()*10;roncoChuva(m,.6);}},60);}
+    chuva={nivel,m,fontes,iv};}
   // efeitos gravados (arquivos curtos em sons/): baixados e decodificados quando o áudio liga; até chegarem, vale o sintetizado
   const AMOSTRAS={trovao:'sons/trovao.m4a?v=1'},amostra={};
   function carregaAmostras(){for(const [n,url] of Object.entries(AMOSTRAS))
@@ -1116,6 +1157,11 @@ const Som=(()=>{
     // Fase 3, saúva saltando do formigueiro: a terra estoura na saída, um sopro no ar e o baque no pouso (p = segundos até cair)
     saltoSauva(o={}){const p=o.p||.7;chiado('lowpass',3000,400,.12,.45,0,.7,.002);tom('sine',var_(180),90,.08,.3);chiado('bandpass',600,2200,.35,.08,.05,1.2,.1);
       tom('sine',var_(140),60,.12,.4,p);chiado('lowpass',1500,250,.15,.35,p,.7,.002);},
+    // Fase 2, Cão lançando bola de fogo das costas: um "fwump" grave na saída, o voo crepitando e, no pouso, folhas queimando (v = segundos de voo)
+    bolaFogo(o={}){const v=o.v||.6;chiado('lowpass',300,1800,.18,.5,0,.8,.01);tom('sine',var_(120),60,.15,.35);chiado('bandpass',900,1500,v,.18,.05,1.5,.1);
+      for(let i=0;i<8;i++)chiado('bandpass',var_(2500,.4),1500,.03,.15*(.5+Math.random()*.5),.05+Math.random()*(v-.1),6,.001);
+      chiado('highpass',3500,5500,.35,.15,v,.7,.03); // pouso: folhas queimando (chiadinho seco e leve)
+      for(let i=0;i<10;i++)chiado('bandpass',var_(4500,.4),2700,.03,.08*(.5+Math.random()*.5),v+Math.random()*.3,6,.001);},
     fala(){tom('sine',var_(620,.1),520,.06,.07);},
   };
   const ultimo={};
@@ -1128,6 +1174,8 @@ const Som=(()=>{
   }
   function aplica(){if(saida)saida.gain.setTargetAtTime(ganho(),ctx.currentTime,.03);if(musSaida)musSaida.gain.setTargetAtTime(ganhoMus(),ctx.currentTime,.08);grava();}
   return{toca,liga,
+    chuva(nivel){querChuva=nivel||null;ajustaChuva();},
+    chuvaPausa(p){if(chuvaPausada===!!p)return;chuvaPausada=!!p;ajustaChuva();},
     preCarrega(...nomes){if(cfg.musMudo)return;for(const n of nomes)if(n)urlMus(n).catch(()=>{});},
     musica(nome,fim){if(nome!==querMus)aoAcabar=fim||null;querMus=nome;tocaMus(nome);},
     vinheta(nome,somReserva){if(!vinheta(nome))toca(somReserva,{sempre:true});},
@@ -1155,7 +1203,7 @@ Som.preCarrega('menu');
 // no menu: adianta a música da próxima fase da campanha (a do botão Jogar)
 function preCarregaProxima(){const f=typeof proxFase==='function'&&proxFase();if(!f)return;
   Som.preCarrega(...(f.n===1?['f1abertura','f1vila']:[MUSICA_FASE[f.n]||'mapa']));}
-setInterval(()=>{const m=musicaAgora();if(m===undefined)return;if(m==='menu')preCarregaProxima();
+setInterval(()=>{const m=musicaAgora();Som.chuvaPausa(m==='menu');if(m===undefined)return;if(m==='menu')preCarregaProxima();
   const jogo=typeof J!=='undefined'?J:null;
   Som.musica(m,m==='f1abertura'?()=>{if(jogo&&jogo.f1)jogo.f1.musAb=false;if(J===jogo){const p=musicaAgora();if(p)Som.musica(p);}}:null);},600);
 // clique dos botões do jogo (qualquer <button> habilitado)
@@ -2784,7 +2832,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.62'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.63'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -3360,7 +3408,7 @@ async function lancaFogo(cao,k){
   if(VEL&&!document.hidden){
     const [x1,y1]=centro(...DK(k));viraPara(cao,x1);
     const [cx,cy]=centro(cao.c,cao.r),x0=cx-cao.dir*R*.3,y0=cy-R*.6; // sai das costas
-    fx.push({bola:true,x0,y0,x:x1,y:y1,t0:performance.now(),dur:600});cao.hit=performance.now();atualiza();
+    fx.push({bola:true,x0,y0,x:x1,y:y1,t0:performance.now(),dur:600});cao.hit=performance.now();atualiza();Som.toca('bolaFogo',{v:.6});
     await dorme(610);}
   return criaChama(k);
 }
@@ -3636,7 +3684,7 @@ async function raiosF2(){
     linha(b.pts,9*b.forca,'#7fa8ff',a*.35);linha(b.pts,4*b.forca,'#cfe0ff',a*.8);linha(b.pts,1.6*b.forca,'#ffffff',a);
     for(const r of b.ramos){linha(r,3*b.forca,'#9fc0ff',a*.45);linha(r,1,'#ffffff',a*.85);}
     g.globalAlpha=1;};
-  const raio=async(x,forca)=>{const b=corisco(x,forca);
+  const raio=async(x,forca)=>{const b=corisco(x,forca);Som.toca('trovao',{longe:forca<1});
     for(const [a,t] of [[1,70],[.25,60],[1,90],[.6,80],[.35,90],[.15,90]]){desenha(b,a);await dorme(t);} // pisca, pisca e apaga
     g.clearRect(0,0,W,H);};
   await raio(W*(.15+Math.random()*.25),.8);await dorme(800);
@@ -4032,7 +4080,7 @@ function chuvaCampo(forte){
   let d=document.getElementById('chuvaCampo');
   if(!d){const m=document.getElementById('mapa');d=document.createElement('div');d.id='chuvaCampo';d.className='chuvaF2 chuvaF3';
     m.insertBefore(d,document.getElementById('menuM'));animaChuva(d);void d.offsetWidth;}
-  d.classList.add('on');d.classList.toggle('forte',!!forte);
+  d.classList.add('on');d.classList.toggle('forte',!!forte);Som.chuva(forte?'forte':'fina');
 }
 // gotas de chuva de verdade: riscos curtos e inclinados em três profundidades (as de perto maiores, mais claras e mais rápidas),
 // cada uma cai até uma "altura de chão" sorteada e respinga ali. A forte tem bem mais gotas que a fina.
@@ -4061,7 +4109,7 @@ function animaChuva(d){
   }
   requestAnimationFrame(passo);
 }
-function tiraChuva(){document.getElementById('chuvaCampo')?.remove();}
+function tiraChuva(){document.getElementById('chuvaCampo')?.remove();Som.chuva(null);}
 const AVISOS_F3={
   intro1:{tit:'Fase 3 · Raízes do Vale',falas:['Tanta mata queimada...'],bt:'Continuar'},
   intro1b:{falas:['Minhas roupas queimaram no varal...'],bt:'Continuar'},
