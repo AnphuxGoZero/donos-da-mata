@@ -2841,7 +2841,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.71'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.72'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -3035,7 +3035,7 @@ function avisoF1(id){if(!id||!J.f1||J.f1.vistos[id]||!avisosF()[id])return;J.f1.
 // da outra sem uma ação no meio (andar, atacar, invocar, um saque do Bando). Uma fala que não pôde sair espera a próxima
 // ação; se passarem 2 ações sem ela sair, perdeu o contexto e é descartada. As da abertura, do alerta do camponês, da
 // evolução do Cão e da vitória saem sempre. A da torre é conferida de novo na hora de aparecer.
-const PRIOR_F1=new Set(['inunda','ninhoCaiu','renasce','raiz','ninho','ninhos','plantar','caiporaBroto','vilasSem','comeu','vilaVerde','plantando','formig','intro1','intro1b','intro2','caiporaLonge','mataSozinha','vitoria','semente','campones','evoluiu','cao','caipora','caiporaChega','sapinho','vilaQueima','incendiou','cinza','alimentou','cacaCaes']);
+const PRIOR_F1=new Set(['inunda','ninhoCaiu','renasce','raiz','ninho','ninhos','plantar','caiporaBroto','vilasSem','comeu','comendo','comeuS','comendoS','vilaVerde','plantando','formig','intro1','intro1b','intro2','caiporaLonge','mataSozinha','vitoria','semente','campones','evoluiu','cao','caipora','caiporaChega','sapinho','vilaQueima','incendiou','cinza','alimentou','cacaCaes']);
 const acaoF1=()=>{if(J&&J.f1)J.f1.acao=(J.f1.acao||0)+1;};
 const podeFalarF1=id=>PRIOR_F1.has(id)||(J.f1.acao||0)>(J.f1.ultFala??-1);
 function proxAvisoF1(){
@@ -3086,7 +3086,7 @@ async function chegadaF1(){
 // a caixa da fala fica perto de onde a coisa acontece: a abertura junto da vila da entrada, as torres junto da torre,
 // o saque junto da vila atacada. Sem lugar definido, ela fica no meio do mapa (como antes).
 const ANCORA_F1={
-  plantar:()=>J.f1.sementeK,plantando:()=>J.f1.plantK,raiz:()=>J.f1.raizK,caiporaBroto:()=>J.f1.caiporaFala,vilasSem:()=>J.f1.vilasSemK,comeu:()=>J.f1.comeuK,vilaVerde:()=>J.f1.vilaK,formig:()=>J.f1.formK,ninho:()=>J.f1.ninhoK,ninhos:()=>J.f1.ninhosK,ninhoCaiu:()=>J.f1.ninhoCaiuK,renasce:()=>J.f1.renasceK,inunda:()=>J.f1.inundaK,
+  plantar:()=>J.f1.sementeK,plantando:()=>J.f1.plantK,raiz:()=>J.f1.raizK,caiporaBroto:()=>J.f1.caiporaFala,vilasSem:()=>J.f1.vilasSemK,comeu:()=>J.f1.comeuK,comendo:()=>J.f1.comeuK,comeuS:()=>J.f1.comeuK,comendoS:()=>J.f1.comeuK,vilaVerde:()=>J.f1.vilaK,formig:()=>J.f1.formK,ninho:()=>J.f1.ninhoK,ninhos:()=>J.f1.ninhosK,ninhoCaiu:()=>J.f1.ninhoCaiuK,renasce:()=>J.f1.renasceK,inunda:()=>J.f1.inundaK,
   intro1b:()=>J.f1.intro1bK,caiporaLonge:()=>J.f1.caiporaLongeK,mataSozinha:()=>J.f1.caiporaFala,
   intro1:()=>ehF3()?J.f1.intro1K:ehF2()?(J.f1.foco2??J.f1.foco0):+Object.keys(J.vilas).find(k=>J.vilas[k].estrela===false),
   incendiou:()=>J.f1.vilaK,cacaCaes:()=>J.f1.cacaK,caiporaChega:()=>J.f1.caiporaK,caipora:()=>J.f1.caiporaK,semente:()=>ehF2()?J.f1.caiporaK:null,vilaQueima:()=>J.f1.vilaK,cinza:()=>J.f1.cinzaK,apagou:()=>J.f1.apagouK,alimentou:()=>J.f1.alimK,cao:()=>J.f1.caoK,
@@ -4133,6 +4133,8 @@ const AVISOS_F3={
   raiz:{falas:['feliz|A Semente criou raízes!',{quem:'soldado',cara:'feliz',txt:'Logo vai recuperar a mata.'}]},
   caiporaBroto:{falas:[{quem:'caipora',txt:'A mata precisa de mais ajuda.'},{quem:'caipora',txt:'Vou levar as sementes para as vilas.'}],bt:'Continuar'},
   comeu:{falas:['furia|As saúvas comeram o broto!',{quem:'soldado',txt:'Proteja as Sementes enquanto elas plantam!'}]},
+  comendo:{falas:['furia|As saúvas estão comendo o broto!',{quem:'soldado',txt:'Proteja as Sementes enquanto elas plantam!'}]},
+  comeuS:{falas:['furia|As saúvas comeram o broto!']},comendoS:{falas:['furia|As saúvas estão comendo o broto!']},
   ninho:{falas:['Tanajura! O cheiro das sementes atraiu elas...',{quem:'soldado',txt:'Saúva corta folha nova.'},'E a gente vai plantar justamente isso.'],bt:'Continuar',volta:true},
   ninhos:{falas:['Mais um?! Tem ninho por todo lado!'],bt:'Continuar',volta:true},
   ninhoCaiu:{falas:['feliz|Derrubamos o formigueiro!']},
@@ -4271,11 +4273,13 @@ async function brotaF3(u,k){
   atualiza();if(anima)await dorme(curto?1100:BROTA_DUR);
   // a mata que brotou vai soltar uma Semente nova ali, no começo da sua próxima vez (semPendF3). Ela herda a vila (ou a Caipora)
   // da que plantou: a vila só chama outra Semente quando a dela morrer para o inimigo
-  if(u)(J.f1.semPend||(J.f1.semPend=[])).push({k,vila:u.vila??null,caip:!!u.caip});
+  // ...mas só se ainda houver mata queimada por perto: com a região toda verde, não nasce mais (e a vila dela para de chamar)
+  if(u){if(queimPertoF3(k))(J.f1.semPend||(J.f1.semPend=[])).push({k,vila:u.vila??null,caip:!!u.caip});
+    else{if(u.vila!=null)(J.f1.vilaFim||(J.f1.vilaFim=[])).push(u.vila);log('🌳 A mata em volta está completa: dali não nasce mais Semente.');}}
   await vilasVerdesF3();if(J.fim)return;
-  // a Caipora vem pelo 1º broto, mas nunca no mesmo turno em que as tanajuras chegam: espera a sua próxima vez
-  agendaMataSozinhaF3(); // sem formigas e com metade da mata: o resto brota sozinho
-  if(J.f1.brotos.length===1&&!J.f1.vistos.caiporaBroto){if(J.f1.ninho1==null||J.f1.ninho1>=J.turno)J.f1.caiporaPend=k;else{await caiporaBrotoF3(k);if(J.fim)return;}}
+  // a Caipora vem pelo 1º broto no começo da sua próxima vez (o broto nasce no fim do turno: se ela viesse agora, a sementinha
+  // da vila apareceria, sumiria na vez das saúvas e voltaria)
+  if(J.f1.brotos.length===1&&!J.f1.vistos.caiporaBroto)J.f1.caiporaPend=k;
   checaVitoriaF3();
 }
 // começo da sua vez: cada mata que brotou no turno passado solta a Semente nova (sai da terra; já joga nesta vez)
@@ -4468,7 +4472,9 @@ async function mataSozinhaF3(){
   if(J===jogo)checaVitoriaF3();
 }
 // Fase 3, depois da Caipora: cada vila de pé chama uma Semente (uma por vila de cada vez; a Semente não conta no limite)
-const vilaSemF3=k=>ehF3()&&J.f1.vilaSem&&J.vilas[k]&&J.vilas[k].n>0&&(!J.f1.vilaSemOk||J.f1.vilaSemOk.includes(k));
+const vilaSemF3=k=>ehF3()&&J.f1.vilaSem&&J.vilas[k]&&J.vilas[k].n>0&&(!J.f1.vilaSemOk||J.f1.vilaSemOk.includes(k))&&!J.f1.vilaFim?.includes(k)&&queimPertoF3(k); // vila com a região toda verde não chama mais
+// ainda há mata queimada a até F3_PERTO casas? (senão a região já está toda verde: não precisa de Semente ali)
+const F3_PERTO=4,queimPertoF3=k=>J.f1.queim.some(j=>d6c(...DK(j),...DK(k))<=F3_PERTO);
 // as vilas ganham Semente aos poucos: a Caipora leva à primeira; depois, a cada turno seu, mais uma
 const VILAS_SEM_LOTE=[1];
 function liberaVilasF3(){
@@ -4588,9 +4594,10 @@ async function turnoSauvas(l){
     await agirSelvagem(u);atualiza();if(J.fim)return;
     for(const a of antes){if(!J.f1.plantio[a.k])continue;
       if(!a.s||!J.un.includes(a.s)||a.s.hp<a.hp){delete J.f1.plantio[a.k];J.f1.comidos++;J.f1.comeuK=a.k;
-        const [x,y]=centro(...DK(a.k));fx.push({txt:'Broto comido!',x,y:y-6,t0:performance.now(),cor:'#ff8a80',dur:1500});piscaHex(a.k,'#ff5b52',900);
-        log('🐜 Uma saúva comeu o broto: o plantio daquela casa voltou a zero.');
-        await avisoJaF1('comeu');}}
+        const morreu=!a.s||!J.un.includes(a.s); // "comeram" só quando a Semente caiu; ferida, as saúvas "estão comendo"
+        const [x,y]=centro(...DK(a.k));fx.push({txt:morreu?'Broto comido!':'Comendo o broto!',x,y:y-6,t0:performance.now(),cor:'#ff8a80',dur:1500});piscaHex(a.k,'#ff5b52',900);
+        log(morreu?'🐜 As saúvas comeram o broto: o plantio daquela casa voltou a zero.':'🐜 As saúvas estão comendo o broto: o plantio daquela casa voltou a zero.');
+        {const id=morreu?'comeu':'comendo',outro=morreu?'comendo':'comeu';await avisoJaF1(J.f1.vistos[outro]?id+'S':id);}}} // a 2ª vez sem o conselho do soldado
     await dorme(150);
   }
 }
