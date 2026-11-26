@@ -1099,8 +1099,9 @@ const Som=(()=>{
       for(let i=0;i<5;i++)chiado('lowpass',var_(500,.4),120,.35,(.35-i*.05)*v,.25+i*(.2+Math.random()*.25),1,.03);}, // estalos do ronco
     torre(){[[60,.12],[64,.12],[67,.12],[72,.45]].reduce((at,[n,d])=>{tom('square',nota(n),0,d+.05,.09,at);tom('triangle',nota(n-12),0,d+.05,.12,at);return at+d;},0);},
     suaVez(){tom('sine',nota(79),0,.35,.16);tom('sine',nota(84),0,.5,.16,.13);},
-    evoSobe(o={}){const d=o.dur||2.3;tom('sawtooth',120,900,d,.05,0,{vib:6,vibA:8,atk:d*.6});tom('sine',240,1800,d,.12,0,{vib:9,vibA:20,atk:d*.5});chiado('bandpass',300,5000,d,.1,0,4,d*.7);},
-    evoRevela(){chiado('highpass',2000,6000,.6,.3,0,1,.005);[60,64,67,72,76,79,84].forEach((n,i)=>{tom('triangle',nota(n),0,.9,.1,i*.05);tom('square',nota(n+12),0,.3,.03,i*.05);});},
+    // evolução "vento da mata": um redemoinho que sobe enquanto a criatura muda; na forma nova, o vento passa e fica um acorde quente
+    evoSobe(o={}){const d=o.dur||2.3;chiado('bandpass',250,2500,d,.3,0,3,d*.7);chiado('bandpass',400,4000,d,.15,.2,5,d*.6);tom('sine',nota(48),nota(55),d,.12,0,{atk:d*.5});},
+    evoRevela(){chiado('bandpass',3000,500,.8,.35,0,1.5,.005);[48,55,60,64,67].forEach((n,i)=>{tom('triangle',nota(n),0,2,.08,.02,{det:(i%2?6:-6),atk:.08});tom('sine',nota(n+12),0,1.6,.04,.02,{atk:.1});});},
     vitoria(){[[67,.15],[67,.1],[67,.1],[72,.3],[67,.15],[72,.15],[76,.6]].reduce((at,[n,d])=>{tom('square',nota(n),0,d+.08,.09,at);tom('triangle',nota(n-12),0,d+.08,.14,at);return at+d;},0);},
     derrota(){[[67,.35],[63,.35],[60,.35],[55,1]].reduce((at,[n,d])=>{tom('triangle',nota(n),0,d+.1,.16,at);tom('sine',nota(n-12),0,d+.1,.12,at);return at+d;},0);},
     fala(){tom('sine',var_(620,.1),520,.06,.07);},
@@ -2771,7 +2772,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.59'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.60'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
