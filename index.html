@@ -2841,7 +2841,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.69'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.70'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -4214,10 +4214,11 @@ async function enraizaF3(u){
   J.f1.raizK=k;J.f1.plantK=k;
   if(!J.f1.vistos.raiz)await avisoJaF1('raiz'); // só na primeira Semente plantada
 }
-// sua vez: uma Semente que já agiu e está parada numa mata queimada, ainda sem raízes, enraíza na hora
+// sua vez: uma Semente parada numa mata queimada, ainda sem raízes, enraíza na hora (assim que chega: não ataca antes de plantar)
 function checaRaizF3(){
   if(!ehF3()||J.vez!==0||J.ocupado||J.fim||J.f1.raizando)return;
-  const u=J.un.find(x=>x.lado===0&&x.esp==='semente'&&x.agiu&&J.f1.queim.includes(K(x.c,x.r))&&!J.f1.plantio[K(x.c,x.r)]);if(!u)return;
+  const u=J.un.find(x=>x.lado===0&&x.esp==='semente'&&!x.anim&&J.f1.queim.includes(K(x.c,x.r))&&!J.f1.plantio[K(x.c,x.r)]);if(!u)return;
+  u.movido=u.agiu=true; // plantada: não anda nem ataca mais neste turno
   J.f1.raizando=true;J.ocupado=true;if(J.sel===u)desseleciona();
   (async()=>{try{await enraizaF3(u);}finally{if(J&&J.f1){J.f1.raizando=false;J.ocupado=false;atualiza();}}})();
 }
@@ -4356,7 +4357,7 @@ function pertoDeF3(k0){
 }
 // Fase 3: a mata queimada que ficou longe de tudo (das suas Sementes, das vilas com Semente e da clareira) não vira
 // maratona: no começo da sua vez, a Caipora aparece lá e deixa uma Semente pronta para jogar (uma de cada vez, a cada 2 turnos)
-const F3_LONGE=5,F3_LONGE_CADA=2;
+const F3_LONGE=5,F3_LONGE_CADA=2,F3_LONGE_ESPERA=2;
 function alvoLongeF3(){
   if(!J.f1.vilaSem||!J.f1.queim.length)return null;
   if(J.un.some(u=>u.lado===0&&u.esp==='semente'&&u.caip))return null;
@@ -4365,13 +4366,16 @@ function alvoLongeF3(){
     ...(J.f1.vilaSemOk||[]).filter(v=>J.vilas[v]&&J.vilas[v].n>0).map(DK),J.f1.castelo];
   let b=null,bd=-1;
   for(const k of J.f1.queim){const d=Math.min(...fontes.map(([c,r])=>d6c(c,r,...DK(k))));if(d>bd){bd=d;b=k;}}
-  return bd>=F3_LONGE?b:null;
+  // a Caipora não vem na hora: espera F3_LONGE_ESPERA turnos depois que a mata ficou longe de tudo
+  if(bd<F3_LONGE){J.f1.longeDesde=null;return null;}
+  if(J.f1.longeDesde==null)J.f1.longeDesde=J.turno;
+  return J.turno>=J.f1.longeDesde+F3_LONGE_ESPERA?b:null;
 }
 async function caiporaLongeF3(){
   const k=alvoLongeF3();if(k==null)return;
   const ok=j=>{const [c,r]=DK(j);return dentro(c,r)&&!unidadeEm(c,r)&&isFinite(custoMov('semente',J.ter[j]))&&!['mont','rio'].includes(J.ter[j])&&!J.f1.formig.includes(j);};
   const casa=ok(k)?k:vizinhos(...DK(k)).map(([c,r])=>K(c,r)).filter(ok)[0];if(casa==null)return;
-  J.f1.caipLongeT=J.turno;
+  J.f1.caipLongeT=J.turno;J.f1.longeDesde=null;
   const jogo=J,anima=VEL&&!document.hidden,p=pertoDeF3(casa);
   const nasce=()=>{const u=criaUnidade('semente',0,...DK(casa));u.caip=true;u.movido=u.agiu=false;
     const [x,y]=centro(...DK(casa));for(let i=0;i<8;i++)fx.push({folha:true,x:x+(i%4-1.5)*R*.3,y:y+R*.3,dx:(Math.random()-.5)*R*1.2,t0:performance.now()+i*50,dur:1000,cor:i%2?'#7fe08a':'#4f9a3e'});
