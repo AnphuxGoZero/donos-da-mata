@@ -2771,7 +2771,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.58'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.59'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -5359,7 +5359,10 @@ function cenaTorre(u,{cristal=false,liberou=false,primeira=false}){
   const av=cristal?{tit:`Vale por ${valorCristal()} torres`,sub:l===0?'Poderoso gerador de energia':`${OM(l)} tomou a Torre do Cristal`,cls:'roxo'}
     :J.f1&&l===0?{tit:'',sub:AVISO_TORRE.primeira.sub,cls:'ouro'} // Fase 1: sem título (sem cabo de guerra nem magia); "Ocupação" fica dourado dentro do quadro
     :recado?AVISO_TORRE.primeira:liberou?AVISO_TORRE[liberou]:null;
-  const espera=l===0&&!!av; // avisos do jogador só fecham com um toque
+  // cena curta: na campanha depois da Fase 1, e na batalha livre depois das três primeiras torres da partida (somando os lados);
+  // as cenas com aviso importante (magia/Força liberada, cristal) continuam esperando o toque e com o tempo cheio
+  const curta=!cristal&&!liberou&&(J.f1?J.f1.n>=2:(J.conq||[]).reduce((s,n)=>s+(n||0),0)>3);
+  const espera=l===0&&!!av&&!curta; // avisos do jogador só fecham com um toque
   const el=document.getElementById('cercoCena');
   const sub=av?(typeof av.sub==='function'?av.sub(l):av.sub):'';
   // sem aviso, o título fica invisível mas ocupa o mesmo lugar: o quadro não muda de tamanho nem de posição
@@ -5373,7 +5376,7 @@ function cenaTorre(u,{cristal=false,liberou=false,primeira=false}){
     for(let x=1;x<=12;x++){const o=Math.round(Math.sin(now/110-x*.7)*1.2*(x/12));
       g.fillStyle=x%4===0?corE:cor;g.fillRect(mx+x,by+o,1,7);g.fillStyle=corE;g.fillRect(mx+x,by+o+6,1,1);}
   };
-  const comum={ceu:E,ceuTxt:sub||null,dur:espera?1150:av?2000:1150,esperaToque:espera,aviso:500};
+  const comum={ceu:E,ceuTxt:sub||null,dur:curta?(av?1000:575):espera?1150:av?2000:1150,esperaToque:espera,aviso:500};
   if(cristal){
     const fundo=fundoCristalAlto(E),[cx,cy]=cxTopo,rgb=rgbHex(COR[l]).join(',');
     return rodaCena({...comum,fundo,raio:['#c58cff','#ffffff'],clarao:'225,200,255',
