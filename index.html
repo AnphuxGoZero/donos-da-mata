@@ -1354,6 +1354,12 @@ async function focar(c,r){
   const t0=performance.now();
   while(performance.now()-t0<900){await new Promise(q=>setTimeout(q,30));if(CAM.parado)break;}
 }
+// como focar, mas só mexe a câmera se a casa não estiver à vista (cenas que se repetem: sem ir e voltar à toa)
+async function focarSeFora(c,r){
+  if(!VEL||document.hidden)return;const [x,y]=centro(c,r),z=CAM.z,hw=TW/(2*z),hh=TH/(2*z),cx=limX(CAM.x);
+  if(x>cx-hw+R&&x<cx+hw-R&&y>CAM.y-hh+R*1.5&&y<CAM.y+hh-R*2.5)return;
+  await focar(c,r);
+}
 // ponto fixo do zoom: criatura ou construção selecionada > casa sob o mouse > centro da tela
 const ZOOM_MAX_TOQUE=2.6; // a pinça passa um pouco do último degrau: no celular as casas precisam caber no dedo
 const zMaxToque=()=>TELA_LIVRE()?zBase()*2:ZOOM_MAX_TOQUE;
@@ -2833,7 +2839,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.64'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.65'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -3926,7 +3932,7 @@ function desenhaVilas(now){
 // (o ataque zera o broto daquela casa); a soldado fica de guarda no formigueiro. A Semente evolui com XP ×4 (F3_XP_SEMENTE); enraizada, não.
 // Vitória: todas as matas queimadas com brotos. Derrota: o mestre cair. Estrelas: vencer · nenhum broto comido · poucos turnos.
 const F3_CHAVE='senhoresDoVeu.fase3';
-const F3_PLANT_NINHO=1,F3_MIN_QUEIM=6,F3_NASCE=3,F3_MAX_OPER=4,F3_GUARDA=2,F3_RENASCE=0.3;
+const F3_PLANT_NINHO=1,F3_MIN_QUEIM=6,F3_MAX_QUEIM=9,F3_MAX_NINHOS=2,F3_NASCE=3,F3_MAX_OPER=4,F3_GUARDA=2,F3_RENASCE=0.3;
 const ehF3=()=>!!(J&&J.f1&&J.f1.n===3);
 function fase3Info(){try{return JSON.parse(localStorage.getItem(F3_CHAVE))||{};}catch(e){return {};}}
 const f3MetaTurnos=n=>4+Math.ceil(n*0.7); // a estrela dos turnos: cresce com a quantidade de mata queimada
@@ -3942,6 +3948,9 @@ function mapaF3(M){
   const add=k=>{if(!queim.includes(k))queim.push(k);};
   // a primeira Semente nasce no castelo e anda devagar: sempre há mata queimada a até 4 casas dele
   if(!queim.some(k=>dC(k)<=4)){const c=m.ter.map((t,k)=>k).filter(k=>flor(k)&&dC(k)>=2&&dC(k)<=4).sort((a,b)=>dC(a)-dC(b)||a-b)[0];if(c!=null)add(c);}
+  // se a Fase 2 deixou muita mata queimada, só F3_MAX_QUEIM contam (as mais perto das vilas e da clareira; o resto volta a ser mata)
+  if(queim.length>F3_MAX_QUEIM){const pe=queim.filter(k=>dC(k)<=4).sort((a,b)=>dC(a)-dC(b))[0],nota=k=>dMin(k,vs)+dC(k)*.3;
+    const fica=[...(pe!=null?[pe]:[]),...queim.filter(k=>k!==pe).sort((a,b)=>nota(a)-nota(b)||a-b)].slice(0,F3_MAX_QUEIM);queim.splice(0,queim.length,...fica);}
   const matas=m.ter.map((t,k)=>k).filter(k=>flor(k)&&dC(k)>=2);
   while(queim.length<F3_MIN_QUEIM){
     let b=null,bs=-Infinity;
@@ -3951,7 +3960,7 @@ function mapaF3(M){
     if(b==null)break;add(b);}
   for(const k of queim)m.ter[k]='plan';
   // formigueiros: planícies livres longe do castelo, com mata queimada por perto, longe um do outro
-  const nF=queim.length>=10?3:2,formig=[];
+  const nF=F3_MAX_NINHOS,formig=[];
   const cand=m.ter.map((t,k)=>k).filter(k=>m.ter[k]==='plan'&&!m.vilas[k]&&!queim.includes(k)&&d6c(...DK(k),...m.f0)>=6&&dMin(k,vs)>=2&&
     vizinhos(...DK(k)).filter(([c,r])=>!['mont','rio'].includes(m.ter[K(c,r)])).length>=3);
   const perto=k=>queim.filter(j=>d6c(...DK(k),...DK(j))<=3).length;
@@ -4011,7 +4020,7 @@ function caiuNinhoF3(u){
   for(const s of J.un)if(s.casa===k)s.casa=null;
   const [x,y]=centro(u.c,u.r);for(let i=0;i<8;i++)fx.push({folha:true,x:x+(i%4-1.5)*R*.3,y:y+R*.1,dx:(Math.random()-.5)*R*1.6,t0:performance.now()+i*50,dur:900,cor:i%2?'#7c4a2a':'#b0452a'});
   J.f1.ninhosDestr=(J.f1.ninhosDestr||0)+1;
-  if(Math.random()<F3_RENASCE){J.f1.renasce=(J.f1.renasce||0)+1;log('🐜 O formigueiro caiu... mas as saúvas que fugiram vão cavar outro.');}
+  if(J.f1.formig.length+J.f1.formigPlan.length+(J.f1.renasce||0)<F3_MAX_NINHOS&&Math.random()<F3_RENASCE){J.f1.renasce=(J.f1.renasce||0)+1;log('🐜 O formigueiro caiu... mas as saúvas que fugiram vão cavar outro.');}
   else log('🐜 O formigueiro foi destruído!');
   J.f1.ninhoCaiuK=k;avisoF1('ninhoCaiu');
 }
@@ -4048,7 +4057,7 @@ async function primeiroNinhoF3(k0){
 }
 // uma rodada depois: a câmera se afasta e os outros formigueiros vão se formando pelo mapa
 async function outrosNinhosF3(){
-  const fs=J.f1.formigPlan.map(casaNinhoF3).filter((k,i,a)=>k!=null&&a.indexOf(k)===i);J.f1.formigPlan=[];if(!fs.length)return;
+  const fs=J.f1.formigPlan.map(casaNinhoF3).filter((k,i,a)=>k!=null&&a.indexOf(k)===i).slice(0,Math.max(0,F3_MAX_NINHOS-J.f1.formig.length));J.f1.formigPlan=[];if(!fs.length)return;
   const jogo=J,anima=VEL&&!document.hidden;
   if(!anima){for(const f of fs){nasceNinhoF3(f,false);guardaNinhoF3(f,false);}J.f1.ninhosK=fs[0];avisoF1('ninhos');atualiza();return;}
   J.f1.chegando=true;CAM.zAlvo=zBase();CAM.enq=true;
@@ -4168,7 +4177,14 @@ async function presenteSementeF3(){
   avisoF1('plantar');atualiza();
 }
 const mataViva=k=>J.ter[k]==='flor'||J.f1.brotos.includes(k);
-const precisaF3=k=>vizinhos(...DK(k)).some(([c,r])=>mataViva(K(c,r)))?1:2;
+// queimada "rápida" (planta em 1 turno): tem 2+ matas vivas do lado, ou uma mata recuperada a até 2 casas; as outras levam 2 turnos.
+// A ordem do plantio importa: cada mata que volta acelera as queimadas em volta (efeito dominó)
+const rapidaF3=k=>vizinhos(...DK(k)).filter(([c,r])=>mataViva(K(c,r))).length>=2||J.f1.brotos.some(b=>d6c(...DK(b),...DK(k))<=2);
+const precisaF3=k=>rapidaF3(k)?1:2;
+// queimada cercada por 3+ matas vivas, sendo pelo menos uma recuperada pelo jogador: brota sozinha no fim do seu turno
+const sozinhaF3=k=>!J.f1.plantio[k]&&vizinhos(...DK(k)).some(([c,r])=>J.f1.brotos.includes(K(c,r)))&&vizinhos(...DK(k)).filter(([c,r])=>mataViva(K(c,r))).length>=3;
+// a partir do 3º plantio as cenas ficam curtas: a câmera só vai se a casa estiver fora da tela
+const curtoF3=()=>(J.f1.brotos.length+Object.keys(J.f1.plantio).length)>=2;
 // fim do seu turno: cada Semente parada numa mata queimada avança o broto; quem saiu da casa perde o que tinha
 async function plantioF3(){
   for(const [ks,p] of Object.entries(J.f1.plantio)){const u=J.un.find(x=>x.id===p.id);if(!u||K(u.c,u.r)!==+ks)delete J.f1.plantio[ks];}
@@ -4180,10 +4196,11 @@ async function plantioF3(){
     const p=J.f1.plantio[k];if(!p)continue;p.n++;p.t0=performance.now();
     const vai=p.n<precisaF3(k); // ainda não brota: a Semente fica enraizada
     if(!vai){delete J.f1.plantio[k];await brotaF3(u,k);if(J.fim)return;}
-    else{if(anima&&!nova)await focar(u.c,u.r);flutua(u,'Plantando...','#9dffb8');piscaHex(k,'#6ee08a',800);J.f1.plantK=k;J.f1.raizK=k;
-      if(anima)await dorme(500);
+    else{if(anima&&!nova){if(curtoF3())await focarSeFora(u.c,u.r);else await focar(u.c,u.r);}flutua(u,'Plantando...','#9dffb8');piscaHex(k,'#6ee08a',800);J.f1.plantK=k;J.f1.raizK=k;
+      if(anima)await dorme(curtoF3()?200:500);
       if(!nova&&!J.f1.vistos.plantando)await avisoJaF1('plantando');}
   }
+  for(let k;!J.fim&&(k=J.f1.queim.find(sozinhaF3))!=null;){log('🌱 Cercada de mata, a queimada brotou sozinha!');J.f1.sozK=k;await brotaF3(null,k,true);}
   if(J.f1.ninho1==null&&!J.fim&&(J.f1.nPlant||0)>=F3_PLANT_NINHO){const k0=J.f1.ultPlant??(+Object.keys(J.f1.plantio)[0]||J.f1.brotos[0]);if(k0!=null&&!isNaN(k0))await primeiroNinhoF3(k0);} // o cheiro das Sementes atrai as saúvas
 }
 // a Semente enraíza assim que termina a ação numa mata queimada (ou no fim do turno, se ficou parada ali sem agir)
@@ -4208,13 +4225,13 @@ async function raizesF3(u,k,anima){
   if(!anima){return;}
   if(primeira){const jogo=J;J.f1.chegando=true;zoomCena();CAM.alvo={fixo:true,px:x,py:y};CAM.centrar=true;CAM.mao=false;
     await dorme(900);if(J!==jogo)return;}
-  else await focar(...DK(k));
-  const dur=primeira?1600:700;p.r0=performance.now();p.rDur=dur;Som.toca('enraiza',{dur:dur/1000});
+  else if(curtoF3())await focarSeFora(...DK(k));else await focar(...DK(k));
+  const dur=primeira?1600:curtoF3()?450:700;p.r0=performance.now();p.rDur=dur;Som.toca('enraiza',{dur:dur/1000});
   piscaHex(k,'#6ee08a',dur);
   if(primeira)for(let i=0;i<8;i++)fx.push({folha:true,x:x+(i%4-1.5)*R*.3,y:y+R*.3,dx:(Math.random()-.5)*R*1.2,t0:performance.now()+500+i*90,dur:1000,cor:i%2?'#7fe08a':'#7c4a2a'});
   await dorme(dur*.7);
   flutua(u,'Enraizou!','#9dffb8');
-  await dorme(primeira?900:350);
+  await dorme(primeira?900:curtoF3()?150:350);
   if(primeira)J.f1.chegando=false;
 }
 // raízes da Semente que está plantando: linhas de pixel saindo da base em seis direções, crescendo quando ela enraíza
@@ -4236,16 +4253,20 @@ function desenhaRaizesF3(now){
     ctx.restore();}
 }
 // a casa vira Mata de brotos: folhas sobem, um passarinho sai, e as vilas em volta podem ganhar um camponês
-async function brotaF3(u,k){
-  const anima=VEL&&!document.hidden,[x,y]=centro(...DK(k));
-  if(anima){await focar(...DK(k));await dorme(250);}
+async function brotaF3(u,k,sozinha){
+  const anima=VEL&&!document.hidden,[x,y]=centro(...DK(k)),curto=curtoF3();
+  if(anima){if(curto)await focarSeFora(...DK(k));else await focar(...DK(k));await dorme(curto?100:250);}
+  const antesRap=new Set(J.f1.queim.filter(j=>j!==k&&rapidaF3(j)));
   J.f1.queim=J.f1.queim.filter(j=>j!==k);J.f1.brotos.push(k);J.terV=(J.terV||0)+1;
+  // efeito dominó: as queimadas que esta mata acelerou piscam verde e avisam
+  for(const j of J.f1.queim)if(!antesRap.has(j)&&rapidaF3(j)){const [jx,jy]=centro(...DK(j));piscaHex(j,'#9dffb8',1400);
+    fx.push({txt:'Agora brota rápido!',x:jx,y:jy-6,t0:performance.now()+300,cor:'#9dffb8',dur:1600});}
   if(u&&J.un.includes(u)){J.un=J.un.filter(x=>x!==u);if(J.sel===u)desseleciona();} // a Semente vira a mata: some do mapa
   for(let i=0;i<9;i++)fx.push({folha:true,x:x+(i%3-1)*R*.4,y:y+R*.2,dx:(Math.random()-.5)*R*1.4,t0:performance.now()+i*60,dur:1100,cor:i%3?'#7fe08a':'#4f9a3e'});
   fx.push({passaro:true,x,y:y-R*.2,dir:Math.random()<.5?-1:1,t0:performance.now()+350,dur:1600});
-  fx.push({txt:'Virou mata!',x,y:y-6,t0:performance.now(),cor:'#9dffb8',dur:1400});piscaHex(k,'#6ee08a',1000);
+  fx.push({txt:sozinha?'Brotou sozinha!':'Virou mata!',x,y:y-6,t0:performance.now(),cor:'#9dffb8',dur:1400});piscaHex(k,'#6ee08a',1000);
   log(`🌱 A mata queimada voltou a brotar (${J.f1.brotos.length} de ${J.f1.queim0}).`);
-  atualiza();if(anima)await dorme(900);
+  atualiza();if(anima)await dorme(curto?450:900);
   await vilasVerdesF3();if(J.fim)return;
   // a Caipora vem pelo 1º broto, mas nunca no mesmo turno em que as tanajuras chegam: espera a sua próxima vez
   agendaMataSozinhaF3(); // sem formigas e com metade da mata: o resto brota sozinho
@@ -4491,7 +4512,7 @@ function alvoSauva(u){
 async function turnoSauvas(l){
   // 0. uma rodada depois do 1º ninho, os outros se formam; e os que vão renascer de um formigueiro destruído
   if(J.f1.ninho1!=null&&J.turno>J.f1.ninho1&&J.f1.formigPlan.length){await outrosNinhosF3();if(J.fim)return;}
-  while(J.f1.renasce>0){J.f1.renasce--;await renasceNinhoF3();if(J.fim)return;}
+  while(J.f1.renasce>0){J.f1.renasce--;if(J.f1.formig.length+J.f1.formigPlan.length>=F3_MAX_NINHOS)continue;await renasceNinhoF3();if(J.fim)return;} // nunca mais de F3_MAX_NINHOS ninhos ao mesmo tempo
   // 1. de F3_NASCE em F3_NASCE turnos (contados de quando o ninho se formou), cada formigueiro livre solta uma operária (até F3_MAX_OPER)
   for(const f of J.f1.formig){
     const t=J.turno-(J.f1.formNasc[f]??J.turno);if(t<=0||t%F3_NASCE)continue;
@@ -4603,8 +4624,11 @@ function iconeFormigueiro(){
 function fumacaQueimF3(now){
   ctx.save();const f2=ehF2(); // Fase 2: a mata acabou de queimar e ainda não chove: fumaça e brasa um pouco mais fortes
   // brilho de brasa pulsando devagar no meio da casa: mostra que ali dá pra ir (e plantar), sem gritar
-  for(const k of J.f1.queim){const [x,y]=centro(...DK(k)),a=(f2?.24:.18)+.08*Math.sin(now/650+k*1.7);
-    const g=ctx.createRadialGradient(x,y+R*.1,0,x,y+R*.1,R*.85);g.addColorStop(0,`rgba(255,96,32,${a})`);g.addColorStop(1,'rgba(255,60,20,0)');
+  // Fase 3: a queimada "rápida" (planta em 1 turno) brilha verde em vez de brasa
+  for(const k of J.f1.queim){const [x,y]=centro(...DK(k)),a=(f2?.24:.18)+.08*Math.sin(now/650+k*1.7),rap=!f2&&ehF3()&&rapidaF3(k);
+    const g=ctx.createRadialGradient(x,y+R*.1,0,x,y+R*.1,R*.85);
+    if(rap){g.addColorStop(0,`rgba(120,240,140,${a+.2})`);g.addColorStop(1,'rgba(80,220,110,0)');}
+    else{g.addColorStop(0,`rgba(255,96,32,${a})`);g.addColorStop(1,'rgba(255,60,20,0)');}
     ctx.globalAlpha=1;ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y+R*.1,R*.85,0,Math.PI*2);ctx.fill();}
   for(const k of J.f1.queim){const [x,y]=centro(...DK(k)),forte=J.f1.fumacaK===k,n=forte?9:f2?7:5,a=forte?.95:f2?.82:.7;
     for(let i=0;i<n;i++){const t=((now/(forte?1500:2200))+i/n+k*.37)%1,ox=((i*7+k*3)%5-2)*R*.2;
@@ -4627,6 +4651,12 @@ function desenhaF3(now){
     const alt=Math.round((4+q*7)*(.4+.6*t)),bx=Math.round(x+R*.45),by=Math.round(y+R*.55);
     ctx.save();ctx.fillStyle='#2b6a22';ctx.fillRect(bx,by-alt,2,alt);
     ctx.fillStyle='#7fe08a';ctx.fillRect(bx-3,by-alt,3,2);ctx.fillRect(bx+2,by-alt-2,3,2);ctx.fillStyle='#4f9a3e';ctx.fillRect(bx-2,by-alt+3,2,2);ctx.restore();}
+  // queimada rápida: uma mudinha de duas folhas no canto mostra que ali a Semente brota em 1 turno
+  for(const k of J.f1.queim){if(J.f1.plantio[k]||!rapidaF3(k))continue;const [x,y]=centro(...DK(k)),bx=Math.round(x-R*.5),by=Math.round(y+R*.5)+Math.round(Math.sin(now/500+k));
+    ctx.save();const P=(c,dx,dy,w,h)=>{ctx.fillStyle=c;ctx.fillRect(bx+dx*2,by+dy*2,w*2,h*2);};
+    P('#1e120a',-4,-6,9,1);P('#1e120a',-5,-5,11,3);P('#1e120a',-1,-2,4,4); // contorno escuro: aparece na cinza
+    P('#2b6a22',0,-3,2,4);P('#7fe08a',-4,-5,4,2);P('#4f9a3e',-3,-4,3,1);P('#7fe08a',2,-5,4,2);P('#4f9a3e',2,-4,3,1);P('#c8ffd0',-3,-5,1,1);P('#c8ffd0',4,-5,1,1);
+    ctx.restore();}
   desenhaCheiaF3(now);
 }
 // fim da Fase 3: estrelas (vencer, nenhum broto comido, poucos turnos); vencer leva à tela de "em construção"
@@ -4950,7 +4980,7 @@ let CRISTAL_META=50,CRISTAL_VALOR=3; // let: o simulador testa outros valores
 // senão só avança quem tem mais torres que todos os rivais somados
 const valorCristal=()=>CRISTAL_VALOR*(NP()-1);
 const ehCristal=k=>!!(J&&J.cristal)&&J.cristal.k===k;
-const nomeTer=k=>J.f1&&J.ter[k]==='cast'?'Clareira':J.f1&&J.ter[k]==='fort'?nomeEsteio(k):J.f1?.formig?.includes(k)?'Formigueiro':J.f1?.brotos?.includes(k)?'Mata de brotos':J.f1?.queim?.includes(k)?'Floresta queimada':ehCristal(k)?'Torre do Cristal':J.vilas?.[k]?(J.vilas[k].n>0?'Vila':'Vila destruída'):TER[J.ter[k]].nome;
+const nomeTer=k=>J.f1&&J.ter[k]==='cast'?'Clareira':J.f1&&J.ter[k]==='fort'?nomeEsteio(k):J.f1?.formig?.includes(k)?'Formigueiro':J.f1?.brotos?.includes(k)?'Mata de brotos':J.f1?.queim?.includes(k)?(ehF3()&&rapidaF3(k)?'Floresta queimada (brota rápido)':'Floresta queimada'):ehCristal(k)?'Torre do Cristal':J.vilas?.[k]?(J.vilas[k].n>0?'Vila':'Vila destruída'):TER[J.ter[k]].nome;
 const forcaCristal=l=>torresDe(l)+(J.dono[J.cristal.k]===l?valorCristal()-1:0);
 function puxaCristal(l){
   const C=J.cristal;if(!C||J.fim)return;
