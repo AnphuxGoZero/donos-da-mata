@@ -989,6 +989,7 @@ const Som=(()=>{
     saida.connect(comp);comp.connect(ctx.destination);
     musSaida=ctx.createGain();musSaida.gain.value=ganhoMus();musSaida.connect(ctx.destination); // a música não passa pelo compressor dos efeitos
     if(querMus)tocaMus(querMus);
+    carregaAmostras();
     ruido=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate);
     const d=ruido.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
   }
@@ -1029,6 +1030,16 @@ const Som=(()=>{
   // vinheta (vitória): a música sai, a vinheta toca uma vez e o silêncio fica até a próxima música pedida
   function vinheta(nome){if(!ctx||cfg.musMudo)return false;querMus=musAtual=null;for(const d of decks)if(d.vivo)soltaDeck(d,.4);
     deckAt=1-deckAt;poeNoDeck(deckAt,nome,.05,false);return true;}
+  // efeitos gravados (arquivos curtos em sons/): baixados e decodificados quando o áudio liga; até chegarem, vale o sintetizado
+  const AMOSTRAS={trovao:'sons/trovao.m4a?v=1'},amostra={};
+  function carregaAmostras(){for(const [n,url] of Object.entries(AMOSTRAS))
+    fetch(url).then(r=>{if(!r.ok)throw new Error(r.status);return r.arrayBuffer();})
+      .then(b=>new Promise((ok,erro)=>ctx.decodeAudioData(b,ok,erro))).then(buf=>{amostra[n]=buf;}).catch(e=>console.warn('Som (arquivo)',n,e));}
+  // toca uma amostra: vol, rate (velocidade/afinação), lp (filtro passa-baixa em Hz: soa mais longe)
+  function tocaAmostra(n,{vol=1,rate=1,lp=0}={}){
+    const s=ctx.createBufferSource(),g=ctx.createGain();s.buffer=amostra[n];s.playbackRate.value=rate;g.gain.value=vol;
+    let no=s;if(lp){const f=ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=lp;s.connect(f);no=f;}
+    no.connect(g);g.connect(saida);s.start();}
   // envelope: sobe em atk, cai até zero no fim
   function env(g,t,dur,vol,atk=.005){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+atk);g.gain.exponentialRampToValueAtTime(.0001,t+dur);}
   // um tom: forma, frequência inicial e final, duração (s), volume, atraso (s)
@@ -1072,7 +1083,9 @@ const Som=(()=>{
     cura(){[67,71,74,79].forEach((n,i)=>tom('sine',nota(n),0,.4,.14,i*.08,{atk:.02}));},
     barreira(){tom('square',nota(76),0,.12,.08);tom('square',nota(83),0,.25,.08,.08);},
     // trovão: o estalo do raio e o ronco que rola longe (o 1º raio da cena vem cheio; os seguintes, mais distantes)
-    trovao(o={}){const v=o.longe?.55:1,d=o.longe?2:3;
+    trovao(o={}){
+      if(amostra.trovao){tocaAmostra('trovao',o.longe?{vol:.5,rate:var_(.82,.05),lp:1400}:{vol:1,rate:var_(1,.03)});return;} // o trovão gravado
+      const v=o.longe?.55:1,d=o.longe?2:3;
       chiado('highpass',var_(2200,.2),500,.22,.7*v,0,.7,.002);chiado('bandpass',var_(3500,.2),1200,.08,.5*v,0,1.5,.001);
       chiado('lowpass',1100,70,d,.9*v,.04,.8,.03);chiado('lowpass',320,50,d+.5,.8*v,.15,.7,.12);
       tom('sine',var_(58,.1),28,d*.6,.45*v,.03,{atk:.04});
@@ -2745,7 +2758,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.53'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.54'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
