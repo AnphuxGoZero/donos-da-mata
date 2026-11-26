@@ -2839,7 +2839,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.66'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.67'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -8627,7 +8627,7 @@ function previsao(){
   return `<div class="prev">${txt}</div>`;
 }
 // ===== Compartilhar: QR code do link público (gerado aqui mesmo, sem biblioteca, funciona offline) =====
-const URL_JOGO='https://anphuxgozero.github.io/senhores-do-veu/';
+const URL_JOGO='https://anphuxgozero.github.io/donos-da-mata/';
 // QR modo byte, correção M, versões 1 a 6 (até 106 bytes); devolve a matriz de módulos (true = escuro)
 function geraQR(txt){
   const dados=[...new TextEncoder().encode(txt)];
