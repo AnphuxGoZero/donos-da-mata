@@ -1148,7 +1148,7 @@ function musicaAgora(){
   if(J.fim)return undefined; // fim de partida: a música segue até a vinheta da vitória (ou a derrota a calar)
   if(J.f1){if(J.f1.musAb)return 'f1abertura'; // Fase 1: a abertura dos Filhotes chegando, que emenda no loop da vila
     return MUSICA_FASE[J.f1.n]||'mapa';}
-  return 'combate'; // Batalha Livre
+  return 'batalhalivre'; // Batalha Livre: fundo leve e discreto ('combate' fica guardada para momentos de luta)
 }
 // ao abrir: já baixa a música do menu (quando o jogador tocar na tela, ela começa na hora)
 Som.preCarrega('menu');
@@ -2784,7 +2784,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.61'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.62'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
