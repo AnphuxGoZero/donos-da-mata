@@ -2841,7 +2841,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.72'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.73'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -3220,8 +3220,8 @@ function alvoSelvagem(u){
 }
 async function agirSelvagem(u){
   if(!J.un.includes(u)||u.agiu)return;
-  await focar(u.c,u.r);
-  if(RITMO_IA>1)await dorme(250);
+  // a câmera só vai até o bicho se ele for andar ou atacar (o que fica parado não puxa a câmera à toa)
+  const vai=async()=>{await focar(u.c,u.r);if(RITMO_IA>1)await dorme(250);};
   const alvo=alvoSelvagem(u);if(!alvo){u.movido=u.agiu=true;return;}
   const A=alcancaveis(u),D=distanciasAte(alvo.k,u.esp),[ac,ar]=DK(alvo.k);
   // distância que falta: na vila ou ao lado dela já chegou
@@ -3240,9 +3240,10 @@ async function agirSelvagem(u){
       if(!atk||s>atk.s)atk={s,k,e};
     }
   }
-  if(atk){await moverPara(u,atk.k,A.prev);await atacar(u,atk.e);return true;}
+  if(atk){await vai();await moverPara(u,atk.k,A.prev);await atacar(u,atk.e);return true;}
   let bk=dests[0],bs=Infinity;
   for(const k of dests){const s=falta(k)-defTer(u.esp,terEvK(u.lado,k))*0.5;if(s<bs){bs=s;bk=k;}}
+  if(bk!==K(u.c,u.r))await vai();
   await moverPara(u,bk,A.prev);u.agiu=true;
 }
 // os 8 camponeses da tela de batalha (folha 4×2, figuras de pé na base; olha = para onde a figura está virada)
@@ -5115,7 +5116,12 @@ function log(t){J.logs.unshift(t);if(J.logs.length>60)J.logs.pop();}
 function inicioTurno(l){
   checaCerco(l);if(J.fim)return;
   // sua vez: volta para a PRIMEIRA criatura que você jogou no turno anterior (se caiu, a seguinte; sem nenhuma, o mestre): sensação de ciclo
-  if(l===0){const ids=J.jogaram||[];J.jogaram=[];if(!(ehF3()&&J.f1.caiporaPend!=null))seguir(ids.map(id=>J.un.find(u=>u.id===id&&u.lado===0)).find(Boolean)||mestreDe(0));}
+  if(l===0){const ids=J.jogaram||[];J.jogaram=[];
+    if(ehF3()){ // Fase 3: a Fogueira não anda: em vez de voltar para ela, vai para quem ainda tem o que fazer (ou a câmera fica onde está)
+      if(J.f1.caiporaPend==null&&!J.f1.semPend?.length){ // a Caipora e as Sementes novas levam a câmera elas mesmas
+        const livre=u=>u&&!(u.esp==='semente'&&plantandoU(u));
+        const a=ids.map(id=>J.un.find(u=>u.id===id&&u.lado===0)).find(livre)||J.un.find(u=>u.lado===0&&!ESP[u.esp].mestre&&livre(u));if(a)seguir(a);}} // (aqui o agiu ainda não foi zerado)
+    else seguir(ids.map(id=>J.un.find(u=>u.id===id&&u.lado===0)).find(Boolean)||mestreDe(0));}
   else seguir(mestreDe(l));
   if(J.avisoCerco)J.avisoCerco[l]=false;
   // aviso de evolução: aparece quando a reserva CHEGA a EVO_CUSTO; depois de "Agora não", só volta
