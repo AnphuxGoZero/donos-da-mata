@@ -2448,7 +2448,7 @@ function podeSalvar(){return J&&J.vez===0&&!J.ocupado&&!J.fim&&!J.invocando&&!J.
 function f1ParaSalvar(f){
   const c=JSON.parse(JSON.stringify(f,(k,v)=>v===Infinity?0:v));
   for(const k of ['chegando','abrindo','forcar','podePular'])c[k]=false;
-  for(const k of ['solta','caiporaAnim','caiporaGolpe','sobreCena','fumacaK','semTour'])c[k]=null;
+  for(const k of ['solta','caiporaAnim','caiporaGolpe','sobreCena','fumacaK','semTour','brotaAnim'])c[k]=null;
   c.sobreEvo=false;c.fogoNasce=0;c.inunda={};
   for(const o of ['formT','cheia'])if(c[o])for(const k in c[o])c[o][k]=0;
   if(c.plantio)for(const p of Object.values(c.plantio)){p.t0=0;p.r0=0;}
@@ -2841,7 +2841,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.70'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.71'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -4260,13 +4260,15 @@ async function brotaF3(u,k){
   const anima=VEL&&!document.hidden,[x,y]=centro(...DK(k)),curto=curtoF3();
   J.f1.queim=J.f1.queim.filter(j=>j!==k); // já não é queimada: nada enraíza ali de novo durante a animação
   if(anima){if(curto)await focarSeFora(...DK(k));else await focar(...DK(k));await dorme(curto?100:250);}
+  // animação da mata nova: guarda como a casa queimada estava (a textura troca na hora) e revela a mata de dentro para fora
+  if(anima)(J.f1.brotaAnim||(J.f1.brotaAnim={}))[k]={t0:performance.now(),img:recorteTexF3(k)};
   J.f1.brotos.push(k);J.terV=(J.terV||0)+1;
   delete J.f1.plantio[k];if(u&&J.un.includes(u)){J.un=J.un.filter(x=>x!==u);if(J.sel===u)desseleciona();} // a Semente vira a mata: some do mapa (enterrada até aqui)
   for(let i=0;i<9;i++)fx.push({folha:true,x:x+(i%3-1)*R*.4,y:y+R*.2,dx:(Math.random()-.5)*R*1.4,t0:performance.now()+i*60,dur:1100,cor:i%3?'#7fe08a':'#4f9a3e'});
   fx.push({passaro:true,x,y:y-R*.2,dir:Math.random()<.5?-1:1,t0:performance.now()+350,dur:1600});
   fx.push({txt:'Virou mata!',x,y:y-6,t0:performance.now(),cor:'#9dffb8',dur:1400});piscaHex(k,'#6ee08a',1000);
   log(`🌱 A mata queimada voltou a brotar (${J.f1.brotos.length} de ${J.f1.queim0}).`);
-  atualiza();if(anima)await dorme(curto?450:900);
+  atualiza();if(anima)await dorme(curto?1100:BROTA_DUR);
   // a mata que brotou vai soltar uma Semente nova ali, no começo da sua próxima vez (semPendF3). Ela herda a vila (ou a Caipora)
   // da que plantou: a vila só chama outra Semente quando a dela morrer para o inimigo
   if(u)(J.f1.semPend||(J.f1.semPend=[])).push({k,vila:u.vila??null,caip:!!u.caip});
@@ -4294,6 +4296,35 @@ async function semPendF3(){
     flutua(n,'Nova Semente!','#9dffb8');piscaHex(k,'#6ee08a',900);atualiza();log('🌱 Da mata nova caiu outra Semente.');
     if(anima)await dorme(450);}
   if(novas.length)seguir(novas[0]);
+}
+// a mata nova crescendo: a terra queimada se abre do meio para as bordas (anel verde) e mudinhas brotam, do centro para fora
+const BROTA_DUR=1600;
+function recorteTexF3(k){ // pedaço da textura do mapa (1 px por unidade) com a casa como está agora
+  if(!texJ)return null;const [cx,cy]=centro(...DK(k)),hw=W/2,x0=Math.floor(cx-hw-1),y0=Math.floor(cy-R-1),w=Math.ceil(hw*2+2),h=Math.ceil(R*2+2);
+  const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(texJ,x0,y0,w,h,0,0,w,h);return {c,x0,y0,w,h};
+}
+function desenhaBrotaF3(now){
+  const A=J.f1.brotaAnim;if(!A)return;
+  for(const [ks,a] of Object.entries(A)){
+    const k=+ks,t=(now-a.t0)/BROTA_DUR;if(t>=1){delete A[ks];continue;}if(t<0)continue;
+    const [x,y]=centro(...DK(k)),ab=Math.min(1,t/.6),rr=R*1.15*(ab*.75+ab*ab*.25);
+    ctx.save();hexPath(x,y,R-.6);ctx.clip();
+    if(a.img&&ab<1){ctx.save();ctx.beginPath();ctx.rect(x-R*2,y-R*2,R*4,R*4);ctx.arc(x,y,Math.max(.1,rr),0,Math.PI*2,true);ctx.clip('evenodd');
+      ctx.imageSmoothingEnabled=false;ctx.drawImage(a.img.c,a.img.x0,a.img.y0,a.img.w,a.img.h);ctx.restore();}
+    if(ab<1){ctx.globalAlpha=.85*(1-ab*.6);ctx.strokeStyle='#a8ec62';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(x,y,rr,0,Math.PI*2);ctx.stroke(); // o anel verde avançando
+      ctx.globalAlpha=.5*(1-ab);ctx.strokeStyle='#e8ffc8';ctx.lineWidth=1;ctx.beginPath();ctx.arc(x,y,Math.max(0,rr-2),0,Math.PI*2);ctx.stroke();}
+    // mudinhas: nascem atrás do anel e crescem com um pulinho; no fim se desfazem na textura da mata (que já tem as dela)
+    const fim=t>.8?1-(t-.8)/.2:1;
+    for(let i=0;i<7;i++){
+      const ang=i*2.399+k*.7,dist=i?R*.66*Math.sqrt((i+.5)/7):0,mx=Math.round(x+Math.cos(ang)*dist),my=Math.round(y+Math.sin(ang)*dist*.8+R*.12);
+      const q=Math.max(0,Math.min(1,(t-.08-dist/R*.45)/.3));if(!q)continue;
+      const cres=q<1?q*(1+.35*Math.sin(q*Math.PI)):1,alt=Math.round((6+(i%3)*1.5)*cres),f=Math.max(1,Math.round(2*cres)); // f: tamanho da folha
+      const forma=(dx,dy,c)=>{ctx.fillStyle=c;ctx.fillRect(mx+dx,my-alt+dy,2,alt+1);if(alt>=3){ctx.fillRect(mx-2-f*2+dx,my-alt-f+dy,f*2+2,f+1);ctx.fillRect(mx+2+dx,my-alt-f-1+dy,f*2+2,f+1);}};
+      ctx.globalAlpha=fim*.9;for(const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1]])forma(dx,dy,'#1e120a'); // contorno escuro de 1 pixel
+      ctx.globalAlpha=fim;forma(0,0,'#62c23e');ctx.fillStyle='#2f7a24';ctx.fillRect(mx,my-alt+1,2,alt);
+      if(alt>=3){ctx.fillStyle='#a8ec62';ctx.fillRect(mx-2-f*2,my-alt-f,2,1);ctx.fillRect(mx+2+f*2,my-alt-f-1,2,1);}}
+    ctx.restore();
+  }
 }
 // vila com todas as matas queimadas em volta já brotando: comemora e ganha um camponês (uma vila em ruínas volta a ter casa)
 async function vilasVerdesF3(){
@@ -4663,7 +4694,7 @@ function fumacaQueimF3(now){
   ctx.restore();
 }
 function desenhaF3(now){
-  fumacaQueimF3(now);desenhaRaizesF3(now);
+  desenhaBrotaF3(now);fumacaQueimF3(now);desenhaRaizesF3(now);
   for(const k of J.f1.formig){const [x,y]=centro(...DK(k)),t=Math.min(1,Math.max(0,(now-(J.f1.formT[k]||0))/1300));
     // cresce de baixo para cima, tremendo, com um pulinho no fim
     const s=t<1?Math.min(1.08,1-Math.pow(1-t,3)*1+Math.sin(t*Math.PI)*.12):1,tr=t<1?Math.sin(now/35)*1.2*(1-t):0;
