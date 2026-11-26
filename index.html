@@ -2841,7 +2841,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.73'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.74'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -4274,14 +4274,39 @@ async function brotaF3(u,k){
   atualiza();if(anima)await dorme(curto?1100:BROTA_DUR);
   // a mata que brotou vai soltar uma Semente nova ali, no começo da sua próxima vez (semPendF3). Ela herda a vila (ou a Caipora)
   // da que plantou: a vila só chama outra Semente quando a dela morrer para o inimigo
-  // ...mas só se ainda houver mata queimada por perto: com a região toda verde, não nasce mais (e a vila dela para de chamar)
+  // ...mas só se ainda houver mata queimada por perto: com a região toda verde, não nasce ali (a vila dela volta a poder chamar
+  // outra, se ainda tiver mata queimada perto dela)
   if(u){if(queimPertoF3(k))(J.f1.semPend||(J.f1.semPend=[])).push({k,vila:u.vila??null,caip:!!u.caip});
-    else{if(u.vila!=null)(J.f1.vilaFim||(J.f1.vilaFim=[])).push(u.vila);log('🌳 A mata em volta está completa: dali não nasce mais Semente.');}}
+    else log('🌳 A mata em volta está completa: dali não nasce mais Semente.');}
   await vilasVerdesF3();if(J.fim)return;
   // a Caipora vem pelo 1º broto no começo da sua próxima vez (o broto nasce no fim do turno: se ela viesse agora, a sementinha
   // da vila apareceria, sumiria na vez das saúvas e voltaria)
   if(J.f1.brotos.length===1&&!J.f1.vistos.caiporaBroto)J.f1.caiporaPend=k;
   checaVitoriaF3();
+}
+// garantia: no começo da sua vez, com menos de F3_MIN_SEM Sementes e ainda mata queimada, vem a que falta (de graça):
+// primeiro numa vila que tenha mata queimada perto; se nenhuma puder, a Caipora deixa uma junto de uma mata queimada
+const F3_MIN_SEM=2;
+async function minSementesF3(){
+  if(!J.f1.queim.length||!J.f1.vilaSem)return; // só depois que a Caipora levou as Sementes às vilas
+  const sems=()=>J.un.filter(u=>u.lado===0&&u.esp==='semente');
+  let falta=F3_MIN_SEM-sems().length-(J.f1.semPend?.length||0);
+  const anima=VEL&&!document.hidden,dq=k=>Math.min(99,...J.f1.queim.map(j=>d6c(...DK(j),...DK(k))));
+  for(;falta>0&&J.f1.queim.length&&!J.fim;falta--){
+    // 1) uma vila de pé, com mata queimada perto, sem Semente dela em campo (mesmo que ainda não tenha sido liberada)
+    const vs=Object.keys(J.vilas).map(Number).filter(v=>J.vilas[v].n>0&&queimPertoF3(v)&&!vilaTemSemF3(v)&&casaSemVilaF3(v)!=null).sort((a,b)=>dq(a)-dq(b)||a-b);
+    if(vs.length){const v=vs[0],k=casaSemVilaF3(v),[x,y]=centro(...DK(k));
+      if(J.f1.vilaSemOk&&!J.f1.vilaSemOk.includes(v)){J.f1.vilaSemOk.push(v);J.f1.vilaSemFila=(J.f1.vilaSemFila||[]).filter(w=>w!==v);}
+      if(anima)await focarSeFora(...DK(k));
+      const n=criaUnidade('semente',0,...DK(k));n.movido=n.agiu=false;n.vila=v;
+      for(let i=0;i<8;i++)fx.push({folha:true,x:x+(i%4-1.5)*R*.3,y:y+R*.3,dx:(Math.random()-.5)*R*1.2,t0:performance.now()+i*50,dur:1000,cor:i%2?'#7fe08a':'#4f9a3e'});
+      if(anima){n.anim={x0:x,y0:y+R*1.1,t0:performance.now(),dur:850,terra:true};atualiza();await dorme(870);if(n.anim&&n.anim.terra)n.anim=null;}
+      flutua(n,'Nova Semente!','#9dffb8');piscaHex(v,'#6ee08a',900);atualiza();log('🌱 Faltavam Sementes: uma vila mandou mais uma.');
+      if(anima)await dorme(500);continue;}
+    // 2) nenhuma vila pode: a Caipora deixa a Semente junto da mata queimada mais longe das Sementes que você já tem
+    const ss=sems(),k=J.f1.queim.slice().sort((a,b)=>{const d=q=>ss.length?Math.min(...ss.map(u=>d6c(u.c,u.r,...DK(q)))):0;return d(b)-d(a)||a-b;})[0];
+    const antes=sems().length;await caiporaLongeF3(k);if(sems().length===antes)return; // sem casa livre lá: desiste por agora
+  }
 }
 // começo da sua vez: cada mata que brotou no turno passado solta a Semente nova (sai da terra; já joga nesta vez)
 async function semPendF3(){
@@ -4407,8 +4432,8 @@ function alvoLongeF3(){
   if(J.f1.longeDesde==null)J.f1.longeDesde=J.turno;
   return J.turno>=J.f1.longeDesde+F3_LONGE_ESPERA?b:null;
 }
-async function caiporaLongeF3(){
-  const k=alvoLongeF3();if(k==null)return;
+async function caiporaLongeF3(k0){ // k0: a mata queimada onde deixar a Semente (garantia do mínimo); sem ele, a mais distante
+  const k=k0??alvoLongeF3();if(k==null)return;
   const ok=j=>{const [c,r]=DK(j);return dentro(c,r)&&!unidadeEm(c,r)&&isFinite(custoMov('semente',J.ter[j]))&&!['mont','rio'].includes(J.ter[j])&&!J.f1.formig.includes(j);};
   const casa=ok(k)?k:vizinhos(...DK(k)).map(([c,r])=>K(c,r)).filter(ok)[0];if(casa==null)return;
   J.f1.caipLongeT=J.turno;J.f1.longeDesde=null;
@@ -4473,7 +4498,7 @@ async function mataSozinhaF3(){
   if(J===jogo)checaVitoriaF3();
 }
 // Fase 3, depois da Caipora: cada vila de pé chama uma Semente (uma por vila de cada vez; a Semente não conta no limite)
-const vilaSemF3=k=>ehF3()&&J.f1.vilaSem&&J.vilas[k]&&J.vilas[k].n>0&&(!J.f1.vilaSemOk||J.f1.vilaSemOk.includes(k))&&!J.f1.vilaFim?.includes(k)&&queimPertoF3(k); // vila com a região toda verde não chama mais
+const vilaSemF3=k=>ehF3()&&J.f1.vilaSem&&J.vilas[k]&&J.vilas[k].n>0&&(!J.f1.vilaSemOk||J.f1.vilaSemOk.includes(k))&&queimPertoF3(k); // vila com a região toda verde não chama mais
 // ainda há mata queimada a até F3_PERTO casas? (senão a região já está toda verde: não precisa de Semente ali)
 const F3_PERTO=4,queimPertoF3=k=>J.f1.queim.some(j=>d6c(...DK(j),...DK(k))<=F3_PERTO);
 // as vilas ganham Semente aos poucos: a Caipora leva à primeira; depois, a cada turno seu, mais uma
@@ -6619,6 +6644,7 @@ async function fimTurnoJogo(){
   J.vez=0;J.fimTurno=false;J.turno++;avancaCiclo();anunciaFase(antes);inicioTurno(0);atualiza();
   if(!J.fim)mostraSuaVez();
   if(ehF3()&&!J.fim&&J.f1.semPend?.length){J.ocupado=true;try{await semPendF3();}finally{J.ocupado=false;atualiza();}} // Fase 3: as Sementes novas das matas que brotaram
+  if(ehF3()&&!J.fim){J.ocupado=true;try{await minSementesF3();}finally{J.ocupado=false;atualiza();}} // Fase 3: nunca menos de 2 Sementes
   if(ehF3()&&J.f1.caiporaPend!=null&&!J.fim){const k=J.f1.caiporaPend;J.f1.caiporaPend=null; // Fase 3: a Caipora que esperou as tanajuras chega agora
     if(!J.f1.vistos.caiporaBroto){J.ocupado=true;try{await caiporaBrotoF3(k);}finally{J.ocupado=false;atualiza();}}}
   if(ehF3()&&!J.fim){agendaMataSozinhaF3();if(!mataSozinhaPodeF3())await caiporaLongeF3();} // Fase 3: a Caipora ajuda com a mata distante
