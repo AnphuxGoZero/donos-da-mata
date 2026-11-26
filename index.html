@@ -1071,6 +1071,12 @@ const Som=(()=>{
     magia(){[0,4,7,12,16].forEach((n,i)=>tom('triangle',nota(72+n),0,.35,.12,i*.05,{det:(i%2?8:-8)}));chiado('highpass',5000,2500,.5,.08,.05);},
     cura(){[67,71,74,79].forEach((n,i)=>tom('sine',nota(n),0,.4,.14,i*.08,{atk:.02}));},
     barreira(){tom('square',nota(76),0,.12,.08);tom('square',nota(83),0,.25,.08,.08);},
+    // trovão: o estalo do raio e o ronco que rola longe (o 1º raio da cena vem cheio; os seguintes, mais distantes)
+    trovao(o={}){const v=o.longe?.55:1,d=o.longe?2:3;
+      chiado('highpass',var_(2200,.2),500,.22,.7*v,0,.7,.002);chiado('bandpass',var_(3500,.2),1200,.08,.5*v,0,1.5,.001);
+      chiado('lowpass',1100,70,d,.9*v,.04,.8,.03);chiado('lowpass',320,50,d+.5,.8*v,.15,.7,.12);
+      tom('sine',var_(58,.1),28,d*.6,.45*v,.03,{atk:.04});
+      for(let i=0;i<5;i++)chiado('lowpass',var_(500,.4),120,.35,(.35-i*.05)*v,.25+i*(.2+Math.random()*.25),1,.03);}, // estalos do ronco
     torre(){[[60,.12],[64,.12],[67,.12],[72,.45]].reduce((at,[n,d])=>{tom('square',nota(n),0,d+.05,.09,at);tom('triangle',nota(n-12),0,d+.05,.12,at);return at+d;},0);},
     suaVez(){tom('sine',nota(79),0,.35,.16);tom('sine',nota(84),0,.5,.16,.13);},
     evoSobe(o={}){const d=o.dur||2.3;tom('sawtooth',120,900,d,.05,0,{vib:6,vibA:8,atk:d*.6});tom('sine',240,1800,d,.12,0,{vib:9,vibA:20,atk:d*.5});chiado('bandpass',300,5000,d,.1,0,4,d*.7);},
@@ -2739,7 +2745,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.52'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.53'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -5012,7 +5018,7 @@ async function moverPara(u,k,prev){
   }
   u.movido=true;acaoF1();
   const tomou=captura(u);
-  if(tomou){Som.toca('torre');hist(u).torre++;if(contaHj(u))hj(u.lado).torre++;atualiza();await mostraTorre(u,tomou.antes,tomou.liberou,tomou.primeira);if(u.lado===0)tomouTorreF1(K(u.c,u.r));} // cena da torre conquistada (o jogo espera ela fechar)
+  if(tomou){hist(u).torre++;if(contaHj(u))hj(u.lado).torre++;atualiza();await mostraTorre(u,tomou.antes,tomou.liberou,tomou.primeira);if(u.lado===0)tomouTorreF1(K(u.c,u.r));} // cena da torre conquistada (o jogo espera ela fechar)
   avisaCerco(u.lado);
 }
 // a vitória só vale se a ocupação aguentar até o início do próximo turno de quem cercou
@@ -5241,7 +5247,7 @@ function rodaCena(o){
       if(o.aviso!=null&&t>=o.aviso){av.classList.add('vis');ceuTxt.classList.add('vis');}
       if(t>o.dur){if(!o.esperaToque){fecha();return;}t=o.dur;if(!parada){parada=true;av.classList.add('vis');ceuTxt.classList.add('vis');}}
       requestAnimationFrame(quadro); // agendado antes de desenhar: um erro num quadro não congela a cena
-      while(prox<o.agenda.length&&t>=o.agenda[prox].t){const a=o.agenda[prox++];ativos.push({...raioCerco(a.x,a.y+E),t:t});flash=1;}
+      while(prox<o.agenda.length&&t>=o.agenda[prox].t){const a=o.agenda[prox++];ativos.push({...raioCerco(a.x,a.y+E),t:t});flash=1;Som.toca('trovao',{longe:prox>1});}
       g.drawImage(o.fundo,0,0);
       if(o.baixo){g.save();g.translate(0,E);o.baixo(g,t,now);g.restore();}
       if(flash>0){g.fillStyle=`rgba(${clarao},${flash*.55})`;g.fillRect(0,0,CC_W,H);flash=Math.max(0,flash-.09);}
