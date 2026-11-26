@@ -1066,7 +1066,7 @@ const Som=(()=>{
         if(Math.random()<.8)gotaChuva(m,2500+Math.random()*4000,.08+.1*Math.random());
         if(ctx.currentTime>prox){prox=ctx.currentTime+6+Math.random()*8;roncoChuva(m,1);}},25);}
     else{ // fina (a Fase 3 inteira): "chuva na mata" bem baixinha, grave e abafada, pingos nas folhas, um ronco raro (30 a 40 s)
-      const k=.45;rampa(m,.4,2.5);fontes=[camadaChuva(m,'lowpass',1400,.5,.6*k),camadaChuva(m,'bandpass',3500,.8,.15*k)];
+      const k=.45;rampa(m,.2,2.5);fontes=[camadaChuva(m,'lowpass',1400,.5,.6*k),camadaChuva(m,'bandpass',3500,.8,.15*k)];
       let prox=ctx.currentTime+20+Math.random()*15;
       iv=setInterval(()=>{if(document.hidden||ctx.state!=='running')return;
         if(Math.random()<.35)pingoFolha(m,500+Math.random()*700,.05+.05*Math.random());
@@ -1132,8 +1132,9 @@ const Som=(()=>{
     barreira(){tom('square',nota(76),0,.12,.08);tom('square',nota(83),0,.25,.08,.08);},
     // trovão: o estalo do raio e o ronco que rola longe (o 1º raio da cena vem cheio; os seguintes, mais distantes)
     trovao(o={}){
-      if(amostra.trovao){tocaAmostra('trovao',o.longe?{vol:.5,rate:var_(.82,.05),lp:1400}:{vol:1,rate:var_(1,.03)});return;} // o trovão gravado
-      const v=o.longe?.55:1,d=o.longe?2:3;
+      const vol=o.vol??1; // vol: as cenas de torre tocam mais baixo que a chuva da Fase 2
+      if(amostra.trovao){tocaAmostra('trovao',o.longe?{vol:.5*vol,rate:var_(.82,.05),lp:1400}:{vol,rate:var_(1,.03)});return;} // o trovão gravado
+      const v=(o.longe?.55:1)*vol,d=o.longe?2:3;
       chiado('highpass',var_(2200,.2),500,.22,.7*v,0,.7,.002);chiado('bandpass',var_(3500,.2),1200,.08,.5*v,0,1.5,.001);
       chiado('lowpass',1100,70,d,.9*v,.04,.8,.03);chiado('lowpass',320,50,d+.5,.8*v,.15,.7,.12);
       tom('sine',var_(58,.1),28,d*.6,.45*v,.03,{atk:.04});
@@ -2832,7 +2833,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.63'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.64'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -5334,7 +5335,7 @@ function rodaCena(o){
       if(o.aviso!=null&&t>=o.aviso){av.classList.add('vis');ceuTxt.classList.add('vis');}
       if(t>o.dur){if(!o.esperaToque){fecha();return;}t=o.dur;if(!parada){parada=true;av.classList.add('vis');ceuTxt.classList.add('vis');}}
       requestAnimationFrame(quadro); // agendado antes de desenhar: um erro num quadro não congela a cena
-      while(prox<o.agenda.length&&t>=o.agenda[prox].t){const a=o.agenda[prox++];ativos.push({...raioCerco(a.x,a.y+E),t:t});flash=1;Som.toca('trovao',{longe:prox>1});}
+      while(prox<o.agenda.length&&t>=o.agenda[prox].t){const a=o.agenda[prox++];ativos.push({...raioCerco(a.x,a.y+E),t:t});flash=1;Som.toca('trovao',{longe:prox>1,vol:.6});}
       g.drawImage(o.fundo,0,0);
       if(o.baixo){g.save();g.translate(0,E);o.baixo(g,t,now);g.restore();}
       if(flash>0){g.fillStyle=`rgba(${clarao},${flash*.55})`;g.fillRect(0,0,CC_W,H);flash=Math.max(0,flash-.09);}
