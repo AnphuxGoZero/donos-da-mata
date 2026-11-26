@@ -1295,7 +1295,9 @@ function limitaCam(){CAM.x=limX(CAM.x);CAM.y=limY(CAM.y);}
 const paraTela=(x,y)=>[(x-CAM.x)*CAM.z+TW/2,(y-CAM.y)*CAM.z+TH/2];
 const paraMundo=(x,y)=>[(x-TW/2)/CAM.z+CAM.x,(y-TH/2)/CAM.z+CAM.y];
 function seguir(u,centrar=false){if(!u)return;CAM.alvo=u;CAM.centrar=centrar;CAM.mao=false;}
-function posUn(u){if(u.px!=null)return [u.px,u.py];let [x,y]=centro(u.c,u.r);if(u.anim){const t=Math.min(1,(performance.now()-u.anim.t0)/u.anim.dur);x=u.anim.x0+(x-u.anim.x0)*t;y=u.anim.y0+(y-u.anim.y0)*t-pulo(u.anim,t);}return [x,y];}
+function posUn(u){if(u.px!=null)return [u.px,u.py];let [x,y]=centro(u.c,u.r);if(u.anim){const t=Math.min(1,(performance.now()-u.anim.t0)/u.anim.dur);[x,y]=posAnim(u.anim,x,y,t);}return [x,y];}
+// posição durante a animação: deslize de (x0,y0) até a casa, com pulo; ou investida (toque): vai até perto do alvo e volta
+function posAnim(a,x,y,t){if(a.toque){const k=Math.sin(Math.PI*t)*.42;return [x+(a.toque[0]-x)*k,y+(a.toque[1]-y)*k];}return [a.x0+(x-a.x0)*t,a.y0+(y-a.y0)*t-pulo(a,t)];}
 // altura do pulo: um arco só (arco) ou vários saltos seguidos (pulos)
 const pulo=(a,t)=>a.arco?Math.abs(Math.sin(t*Math.PI*(a.pulos||1)))*a.arco:0;
 function atualizaCam(now){
@@ -2839,7 +2841,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.67'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.68'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -4139,7 +4141,7 @@ const AVISOS_F3={
   vitoria:{falas:[{quem:'soldado',txt:'Primeiro os Cães Infernais...<br>Agora essa chuva que não para...'},
     {quem:'caipora',txt:'Nada disso é normal.'},{quem:'caipora',txt:'Quem será que está por trás disso?'}],bt:'Continuar'},
 };
-// abertura: chuva; a câmera passa por até três matas queimadas e o camponês lamenta
+// abertura: chuva; a câmera passa por até duas matas queimadas e os camponeses lamentam
 async function aberturaF3(semAnim){
   chuvaCampo(false);
   const jogo=J,qs=[...J.f1.queim];if(semAnim||!VEL||document.hidden||!qs.length)return;
@@ -4147,7 +4149,7 @@ async function aberturaF3(semAnim){
   // a fala vem logo na primeira mata queimada (o jogador entende o que são essas casas); depois a câmera passa pelas outras
   J.f1.fila=J.f1.fila.filter(x=>x!=='intro1');J.f1.tourF3=true;
   J.ocupado=true;J.f1.chegando=true;zoomCena();comecaAberturaF();
-  const ks=vis.slice(-3).reverse();
+  const ks=vis.slice(-2).reverse(); // duas matas queimadas no passeio: na 1ª o camponês avisa, na 2ª o outro lamenta
   for(let i=0;i<ks.length;i++){const k=ks[i],[x,y]=centro(...DK(k));CAM.alvo={fixo:true,px:x,py:y};CAM.centrar=true;CAM.mao=false;
     J.f1.fumacaK=k;await dorme(1100);if(J!==jogo)return;piscaHex(k,'#b8b0a8',900);await dorme(700);if(J!==jogo)return;
     if(i===0){J.f1.intro1K=k;J.f1.chegando=false;await avisoJaF1('intro1');if(J!==jogo)return;J.f1.chegando=true;}
@@ -4171,8 +4173,11 @@ async function presenteSementeF3(){
       for(let i=0;i<8;i++)fx.push({folha:true,x:x+(i%4-1.5)*R*.3,y:y+R*.3,dx:(Math.random()-.5)*R*1.2,t0:performance.now()+i*50,dur:1000,cor:i%2?'#7fe08a':'#4f9a3e'});
       await dorme(680);if(J!==jogo)return;u.anim=null;}
     seguir(u,true);flutua(u,'Presente da Caipora!','#6ee08a');piscaHex(k0,'#6ee08a',900);
-    J.f1.sementeK=alvo;log('🌱 A Semente que a Caipora deu brotou ao lado da Fogueira.');
-    if(anima){await dorme(1100);if(J!==jogo)return;J.ocupado=false;}}
+    J.f1.sementeK=k0;log('🌱 A Semente que a Caipora deu brotou ao lado da Fogueira.'); // a fala se ancora na Semente: a caixa não a cobre
+    if(anima){await dorme(1100);if(J!==jogo)return;
+      // a caixa da fala é alta (tem a figura da Semente): a câmera desce a Semente para a parte de baixo da tela, e a caixa fica em cima
+      CAM.alvo={fixo:true,px:x,py:y-TH*.24/CAM.z};CAM.centrar=true;CAM.mao=false;await dorme(600);if(J!==jogo)return;
+      J.ocupado=false;}}
   for(const k of J.f1.queim)piscaHex(k,'#9dffb8',1200);
   avisoF1('plantar');atualiza();
 }
@@ -4235,7 +4240,7 @@ function desenhaRaizesF3(now){
     ctx.save();
     const seg=[];
     for(let i=0;i<6;i++){const ang=Math.PI*(i/3)+Math.PI/6+((k*7+i*3)%5-2)*.08,len=R*.95*q;
-      let px=x,py=y+R*.3;const passos=Math.max(1,Math.round(len/3));
+      let px=x,py=y;const passos=Math.max(1,Math.round(len/3)); // saem do montinho, no meio da casa
       for(let j=0;j<passos;j++){const f=j/passos;px+=Math.cos(ang)*3+Math.sin(j*1.7+i)*1.3;py+=Math.sin(ang)*3*.62;seg.push([px,py,f]);
         if(j===Math.round(passos*.5))seg.push([px+Math.cos(ang+.9)*4,py+Math.sin(ang+.9)*3,.8],[px+Math.cos(ang+.9)*7,py+Math.sin(ang+.9)*5,.95]);} // galhinho
       seg.push([px,py,1,true]);}
@@ -4258,21 +4263,33 @@ async function brotaF3(u,k){
   fx.push({txt:'Virou mata!',x,y:y-6,t0:performance.now(),cor:'#9dffb8',dur:1400});piscaHex(k,'#6ee08a',1000);
   log(`🌱 A mata queimada voltou a brotar (${J.f1.brotos.length} de ${J.f1.queim0}).`);
   atualiza();if(anima)await dorme(curto?450:900);
-  // a mata que brotou solta uma Semente nova ali mesmo: o jogador segue dali. Ela herda a vila (ou a Caipora) da que plantou,
-  // então a vila só chama outra Semente quando a dela morrer para o inimigo
-  if(u&&J.f1.queim.length&&!unidadeEm(...DK(k))){const n=criaUnidade('semente',0,...DK(k));n.movido=n.agiu=true;
-    if(u.vila!=null)n.vila=u.vila;if(u.caip)n.caip=true;
-    if(anima){n.anim={x0:x,y0:y-R*1.6,t0:performance.now(),dur:520,arco:R*.3,pulos:1};
-      setTimeout(()=>{if(n.anim&&n.anim.dur===520)n.anim=null;for(let i=0;i<6;i++)fx.push({folha:true,x:x+(i%3-1)*R*.3,y:y+R*.2,dx:(Math.random()-.5)*R,t0:performance.now()+i*40,dur:800,cor:i%2?'#7fe08a':'#4f9a3e'});
-        flutua(n,'Nova Semente!','#9dffb8');atualiza();},530);
-      atualiza();await dorme(curto?600:900);}
-    else atualiza();
-    log('🌱 Da mata nova caiu outra Semente.');}
+  // a mata que brotou vai soltar uma Semente nova ali, no começo da sua próxima vez (semPendF3). Ela herda a vila (ou a Caipora)
+  // da que plantou: a vila só chama outra Semente quando a dela morrer para o inimigo
+  if(u)(J.f1.semPend||(J.f1.semPend=[])).push({k,vila:u.vila??null,caip:!!u.caip});
   await vilasVerdesF3();if(J.fim)return;
   // a Caipora vem pelo 1º broto, mas nunca no mesmo turno em que as tanajuras chegam: espera a sua próxima vez
   agendaMataSozinhaF3(); // sem formigas e com metade da mata: o resto brota sozinho
   if(J.f1.brotos.length===1&&!J.f1.vistos.caiporaBroto){if(J.f1.ninho1==null||J.f1.ninho1>=J.turno)J.f1.caiporaPend=k;else{await caiporaBrotoF3(k);if(J.fim)return;}}
   checaVitoriaF3();
+}
+// começo da sua vez: cada mata que brotou no turno passado solta a Semente nova (sai da terra; já joga nesta vez)
+async function semPendF3(){
+  const ps=J.f1.semPend||[];J.f1.semPend=[];if(!ps.length||!J.f1.queim.length)return;
+  const anima=VEL&&!document.hidden,novas=[];
+  const livre=j=>{const [c,r]=DK(j);return dentro(c,r)&&!unidadeEm(c,r)&&isFinite(custoMov('semente',J.ter[j]))&&!['mont','rio'].includes(J.ter[j])&&!J.f1.formig.includes(j);};
+  for(const p of ps){
+    const k=livre(p.k)?p.k:vizinhos(...DK(p.k)).map(([c,r])=>K(c,r)).filter(livre)[0];if(k==null)continue; // ocupada: cai do lado
+    const [x,y]=centro(...DK(k));
+    if(anima){await focarSeFora(...DK(k));}
+    const n=criaUnidade('semente',0,...DK(k));n.movido=n.agiu=false;if(p.vila!=null)n.vila=p.vila;if(p.caip)n.caip=true;novas.push(n);
+    // sai da terra: a terra treme e se abre, a Semente sobe devagar do chão
+    const terra=()=>{for(let i=0;i<8;i++)fx.push({folha:true,x:x+(i%4-1.5)*R*.25,y:y+R*.35,dx:(Math.random()-.5)*R*1.2,t0:performance.now()+i*45,dur:800,cor:i%2?'#7c4a2a':'#8a6a48'});};
+    if(anima){terra();Som.toca('enraiza',{dur:.8});n.anim={x0:x,y0:y+R*1.1,t0:performance.now(),dur:850,terra:true};atualiza();await dorme(870);if(n.anim&&n.anim.terra)n.anim=null;}
+    else terra();
+    for(let i=0;i<6;i++)fx.push({folha:true,x:x+(i%3-1)*R*.3,y:y+R*.2,dx:(Math.random()-.5)*R,t0:performance.now()+i*40,dur:800,cor:i%2?'#7fe08a':'#4f9a3e'});
+    flutua(n,'Nova Semente!','#9dffb8');piscaHex(k,'#6ee08a',900);atualiza();log('🌱 Da mata nova caiu outra Semente.');
+    if(anima)await dorme(450);}
+  if(novas.length)seguir(novas[0]);
 }
 // vila com todas as matas queimadas em volta já brotando: comemora e ganha um camponês (uma vila em ruínas volta a ter casa)
 async function vilasVerdesF3(){
@@ -4423,7 +4440,7 @@ function liberaVilasF3(){
   F.vilaSemOk.push(...novas); // o puf de folhas sai sozinho quando a vila fica pronta (desenhaSemVilas)
   log(`🌱 A Caipora levou Sementes para mais ${novas.length>1?novas.length+' vilas':'uma vila'}.`);
 }
-const vilaTemSemF3=v=>J.un.some(u=>u.lado===0&&u.esp==='semente'&&u.vila===v);
+const vilaTemSemF3=v=>J.un.some(u=>u.lado===0&&u.esp==='semente'&&u.vila===v)||!!J.f1.semPend?.some(p=>p.vila===v); // a que vai cair da mata nova também conta
 function casaSemVilaF3(v){ // a própria vila, ou a casa livre ao lado mais perto de uma mata queimada
   const ok=k=>{const [c,r]=DK(k);return dentro(c,r)&&!unidadeEm(c,r)&&isFinite(custoMov('semente',J.ter[k]))&&!['mont','rio'].includes(J.ter[k])&&!J.f1.formig.includes(k);};
   if(ok(v))return v;
@@ -5637,7 +5654,12 @@ async function atacar(a,d){
   a.movido=true;a.agiu=true;acaoF1();
   if(!a.elemental)hist(a).mordidas=(hist(a).mordidas||0)+1; // história do estágio (ramo do Cão Infernal)
   if(contaHj(a)){const f=faseAtual().nome;hj(a.lado)[f==='Dia'?'atkDia':f==='Noite'?'atkNoite':'atkCresp']++;} // história da partida (Evoluir)
-  const revida=dist<=ESP[d.esp].alc&&!(d.chama&&ESP[a.esp].el==='fogo'); // Fase 2: a chama não fere quem é de Fogo
+  // Fase 3: a Semente plantada está presa na terra: não revida, e o ataque nela é só no mapa (sem a tela de combate)
+  const presa=ehF3()&&d.esp==='semente'&&plantandoU(d);
+  const revida=!presa&&dist<=ESP[d.esp].alc&&!(d.chama&&ESP[a.esp].el==='fogo'); // Fase 2: a chama não fere quem é de Fogo
+  if(presa){CENA=null;a.investe=true;try{await golpear(a,d,1,false);}finally{a.investe=false;}
+    if(VEL&&!document.hidden)await dorme(250);
+    for(const u of [a,d])await checaEvo(u);return;}
   await abreCena(a,d,{revida});
   await golpear(a,d,1,false);
   if(J.un.includes(d)&&J.un.includes(a)&&revida){
@@ -5647,11 +5669,20 @@ async function atacar(a,d){
   await fechaCena();
   for(const u of [a,d])await checaEvo(u);
 }
+// ataque só no mapa: o atacante avança até perto do alvo e volta; o golpe acontece no meio do caminho
+async function investidaMapa(a,d){
+  if(!VEL||document.hidden)return;
+  if(a.anim&&a.anim.toque)await dorme(Math.max(0,a.anim.t0+a.anim.dur-performance.now())+120); // termina a investida anterior
+  a.anim={toque:centro(d.c,d.r),t0:performance.now(),dur:320};
+  await dorme(150);
+  setTimeout(()=>{if(a.anim&&a.anim.toque)a.anim=null;},190);
+}
 async function golpear(a,d,mult,contra){
   if(d.chama&&!a.chama&&ESP[a.esp].el==='fogo'){await alimentaChama(a,d);return;} // Fase 2: Fogo não apaga fogo
   const ch=chanceAcerto(a,d,terEv(d)),pg=porGolpe(danoBase(a,d)*mult),n=golpesDe(a);
   let acertos=0,total=0;
   for(let i=0;i<n&&vivo(d);i++){
+    if(!CENA&&a.investe)await investidaMapa(a,d);
     if(Math.random()<ch){
       const dano=rolar(pg);acertos++;total+=dano;
       d.hp-=dano;d.hit=performance.now();flutua(d,'-'+dano,d.elemental?'#ffb070':'#ff7070',d.elemental?150:0);
@@ -6534,6 +6565,7 @@ async function fimTurnoJogo(){
   const antes=faseIdx();
   J.vez=0;J.fimTurno=false;J.turno++;avancaCiclo();anunciaFase(antes);inicioTurno(0);atualiza();
   if(!J.fim)mostraSuaVez();
+  if(ehF3()&&!J.fim&&J.f1.semPend?.length){J.ocupado=true;try{await semPendF3();}finally{J.ocupado=false;atualiza();}} // Fase 3: as Sementes novas das matas que brotaram
   if(ehF3()&&J.f1.caiporaPend!=null&&!J.fim){const k=J.f1.caiporaPend;J.f1.caiporaPend=null; // Fase 3: a Caipora que esperou as tanajuras chega agora
     if(!J.f1.vistos.caiporaBroto){J.ocupado=true;try{await caiporaBrotoF3(k);}finally{J.ocupado=false;atualiza();}}}
   if(ehF3()&&!J.fim){agendaMataSozinhaF3();if(!mataSozinhaPodeF3())await caiporaLongeF3();} // Fase 3: a Caipora ajuda com a mata distante
@@ -8114,9 +8146,16 @@ function seloEl(el,x,y){
   ctx.fillText(ELI[el],x,y+0.5);
   ctx.restore();
 }
+// quanto a Semente plantada já afundou (0 a 1, no ritmo das raízes): no fim, só as folhas ficam de fora: acompanha o crescimento das raízes
+function enterraF3(u,now){
+  if(u.esp!=='semente'||!J.f1||J.f1.n!==3)return 0;
+  const p=J.f1.plantio[K(u.c,u.r)];if(!p||p.id!==u.id||p.r0===Infinity)return 0;
+  return Math.max(0,Math.min(1,(now-(p.r0||0))/(p.rDur||1)));
+}
 function desenhaSprite(u,e,si,x,y,now){
   // mestres: um pouco menores que um 3º estágio, para caberem no hexágono
-  const t=e.tier,s=e.mestre?46:TAM_SPR[t],base=y+R*0.5,rx=e.mestre?14:BASE_RX[t];
+  // Fase 3: a Semente plantada vai para o meio da casa enquanto afunda (o montinho fica bem no centro do hexágono)
+  const t=e.tier,s=e.mestre?46:TAM_SPR[t],enq=enterraF3(u,now),base=y+R*(0.5-.5*enq),rx=e.mestre?14:BASE_RX[t];
   const feito=u.lado===0&&J.vez===0&&u.agiu;
   ctx.save();
   // base: cor do dono; estágios 2 e 3 ganham um anel prata/ouro por fora
@@ -8127,9 +8166,14 @@ function desenhaSprite(u,e,si,x,y,now){
   // já agiu: a criatura mantém a cor; só o selo ✓ indica
   ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
   const aF=arteF1(u),cF=aF&&mapaF1Arte(aF,u.lado); // Fase 1: miniatura própria do Bando
+  // Fase 3: a Semente plantada afunda até a metade na terra (desce devagar enquanto as raízes crescem); a base e a vida ficam à vista
+  const af=enq*.45*s; // .45 do quadro: o corpo e os olhos ficam debaixo da terra
+  if(af){ctx.beginPath();ctx.rect(x-R*2,base-R*4,R*4,R*4+1);ctx.clip();}
   ctx.translate(x,0);if((u.dir||1)!==(cF?aF.olha:OLHA_SPR[spr(u.esp)]||1))ctx.scale(-1,1);
-  if(cF){const S=s*1.25;ctx.drawImage(cF,-S/2,base-S+voo+2,S,S);}else celSpr(ctx,atlasTime[u.lado],si,-s/2,base-s+voo,s);
+  if(cF){const S=s*1.25;ctx.drawImage(cF,-S/2,base-S+voo+2+af,S,S);}else celSpr(ctx,atlasTime[u.lado],si,-s/2,base-s+voo+af,s);
   ctx.restore();
+  if(af){ctx.save();ctx.fillStyle='#5a3a22';ctx.beginPath();ctx.ellipse(x,base,rx*.85,3.2,0,0,Math.PI*2);ctx.fill(); // montinho de terra em volta
+    ctx.fillStyle='#7c5634';ctx.beginPath();ctx.ellipse(x,base-1,rx*.6,2,0,0,Math.PI*2);ctx.fill();ctx.restore();}
   {const mv=multVant(u);if(mv!==1)seloVant(mv,x+rx+2,base-1);} // o elemento fica só na ficha
   // barra de vida + marcadores de estágio (◆ por estágio) logo acima dela
   const bw=26,frac=Math.max(0,u.hp/e.hp);
@@ -8297,12 +8341,15 @@ function desenhaEsteios(now){
   }
 }
 function desenhaUnidade(u,now){
+  // saindo da terra (anim.terra): só aparece o que já passou do chão da casa
+  if(u.anim&&u.anim.terra&&!u._terra){const [cx,gy]=centro(u.c,u.r);ctx.save();ctx.beginPath();ctx.rect(cx-R*2,gy-R*4,R*4,R*4+R*.42);ctx.clip();
+    u._terra=true;try{desenhaUnidade(u,now);}finally{u._terra=false;ctx.restore();}return;}
   let [x,y]=centro(u.c,u.r);
   if(u.esp==='fogueira'){if(u.hit&&now>=u.hit&&now-u.hit<260)x+=Math.sin((now-u.hit)/14)*3;desenhaFogueiraMapa(u,x,y,now);return;}
   if(u.esp==='formigueiro'){const e=ESP[u.esp],fr=Math.max(0,u.hp/e.hp);if(u.hit&&now-u.hit<260)x+=Math.sin((now-u.hit)/14)*3;
     if(fr<1){ctx.fillStyle='#111';ctx.fillRect(x-14,y+R*.62,28,4);ctx.fillStyle=fr>.5?'#5fd27a':fr>.25?'#e6c34a':'#e85a4f';ctx.fillRect(x-14,y+R*.62,28*fr,4);}
     return;}
-  if(u.anim){const t=Math.min(1,(now-u.anim.t0)/u.anim.dur);x=u.anim.x0+(x-u.anim.x0)*t;y=u.anim.y0+(y-u.anim.y0)*t-pulo(u.anim,t);}
+  if(u.anim){const t=Math.min(1,(now-u.anim.t0)/u.anim.dur);[x,y]=posAnim(u.anim,x,y,t);}
   if(u.hit&&now>=u.hit&&now-u.hit<260)x+=Math.sin((now-u.hit)/14)*3;
   if(u.balanca&&now-u.balanca<520)x+=Math.sin((now-u.balanca)/40)*3.5*(1-(now-u.balanca)/520); // a chama balança antes de soltar um foguinho
   const e=ESP[u.esp],rad=11+e.tier*2+(e.mestre?1:0);
