@@ -999,9 +999,10 @@ const Som=(()=>{
   // ----- Música: arquivos em musicas/, baixados só quando vão tocar (e guardados pelo sw.js para jogar sem internet) -----
   // Dois "decks" para emendar: perto do fim da faixa, a mesma faixa recomeça no outro deck e as duas se cruzam,
   // então o loop não precisa de ponto de corte perfeito. Trocar de faixa também é um cruzamento curto.
-  const MUS_VER=1,CRUZA=3; // MUS_VER: subir quando trocar algum arquivo de música; CRUZA: segundos do cruzamento do loop
-  const blobs={},decks=[{},{}];let querMus=null,musAtual=null,deckAt=0;
-  const urlMus=n=>blobs[n]||(blobs[n]=fetch(`musicas/${n}.m4a?v=${MUS_VER}`).then(r=>{if(!r.ok)throw new Error(r.status);return r.blob();}).then(b=>URL.createObjectURL(b)).catch(e=>{delete blobs[n];throw e;}));
+  const MUS_VER={menu:2},CRUZA=3; // MUS_VER: versão de cada música (subir a dela quando trocar o arquivo; sem entrada = 1); CRUZA: segundos do cruzamento do loop
+  const UMA_VEZ=new Set(['f1abertura']); // tocam uma vez; perto do fim avisam (aoAcabar) para a próxima música entrar cruzando
+  const blobs={},decks=[{},{}];let querMus=null,musAtual=null,deckAt=0,aoAcabar=null;
+  const urlMus=n=>blobs[n]||(blobs[n]=fetch(`musicas/${n}.m4a?v=${MUS_VER[n]||1}`).then(r=>{if(!r.ok)throw new Error(r.status);return r.blob();}).then(b=>URL.createObjectURL(b)).catch(e=>{delete blobs[n];throw e;}));
   function rampa(g,v,seg){const t=ctx.currentTime;g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(g.gain.value,t);g.gain.linearRampToValueAtTime(v,t+seg);}
   function soltaDeck(d,seg){if(!d.el)return;d.vivo=false;rampa(d.g,0,seg);const el=d.el;setTimeout(()=>{if(!d.vivo&&d.el===el)el.pause();},seg*1000+60);}
   async function poeNoDeck(i,nome,seg,loop=true){
@@ -1010,6 +1011,7 @@ const Som=(()=>{
     if(!d.el){d.el=new Audio();d.el.preload='auto';d.src=ctx.createMediaElementSource(d.el);d.g=ctx.createGain();d.g.gain.value=0;d.src.connect(d.g);d.g.connect(musSaida);
       d.el.addEventListener('timeupdate',()=>{ // perto do fim: emenda no outro deck
         if(!d.vivo||!d.loop||d.emendou||!d.el.duration)return;
+        if(UMA_VEZ.has(d.nome)){if(d.el.duration-d.el.currentTime<=1.3&&d.nome===musAtual){d.emendou=true;const f=aoAcabar;aoAcabar=null;if(f)f();}return;}
         if(d.el.duration-d.el.currentTime<=CRUZA){d.emendou=true;const o=1-decks.indexOf(d);deckAt=o;soltaDeck(d,CRUZA);poeNoDeck(o,d.nome,CRUZA);}});
       d.el.addEventListener('ended',()=>{d.vivo=false;});}
     d.nome=nome;d.loop=loop;d.emendou=false;d.vivo=true;
@@ -1019,7 +1021,9 @@ const Som=(()=>{
   }
   function tocaMus(nome){
     if(!ctx||nome===musAtual)return;musAtual=nome;
-    for(const d of decks)if(d.vivo)soltaDeck(d,1.2);
+    for(const d of decks)if(d.vivo){
+      if(UMA_VEZ.has(d.nome)&&d.el.duration-d.el.currentTime<2){d.vivo=false;continue;} // já no finzinho: termina inteira, sem corte
+      soltaDeck(d,1.2);}
     if(nome){deckAt=1-deckAt;poeNoDeck(deckAt,nome,1.5);}
   }
   // vinheta (vitória): a música sai, a vinheta toca uma vez e o silêncio fica até a próxima música pedida
@@ -1085,7 +1089,7 @@ const Som=(()=>{
   }
   function aplica(){if(saida)saida.gain.setTargetAtTime(ganho(),ctx.currentTime,.03);if(musSaida)musSaida.gain.setTargetAtTime(ganhoMus(),ctx.currentTime,.08);grava();}
   return{toca,liga,
-    musica(nome){querMus=nome;tocaMus(nome);},
+    musica(nome,fim){if(nome!==querMus)aoAcabar=fim||null;querMus=nome;tocaMus(nome);},
     vinheta(nome,somReserva){if(!vinheta(nome))toca(somReserva,{sempre:true});},
     get estado(){return{ctx:ctx?ctx.state:'desligado',musica:musAtual,decks:decks.map(d=>d.el?{nome:d.nome,vivo:!!d.vivo,t:+d.el.currentTime.toFixed(1),dur:+(d.el.duration||0).toFixed(1),pausado:d.el.paused,ganho:+d.g.gain.value.toFixed(2)}:null)};}, // diagnóstico
     get musMudo(){return cfg.musMudo;},get musVol(){return cfg.musVol;},
@@ -1096,16 +1100,19 @@ const Som=(()=>{
     volume(v){cfg.vol=Math.max(0,Math.min(1,v));if(cfg.vol>0)cfg.mudo=false;aplica();}};
 })();
 // qual música cabe agora (conferido a cada instante: as telas mudam por muitos caminhos)
-const MUSICA_FASE={2:'fogo',4:'enchente'}; // as outras fases da campanha usam 'mapa'
+const MUSICA_FASE={1:'f1vila',2:'fogo',4:'enchente'}; // as outras fases da campanha usam 'mapa'
 function musicaAgora(){
   const sv=document.getElementById('saves');
   if(sv&&sv.style.display==='block')return 'menu';
   if(typeof J==='undefined'||!J)return null;
   if(J.fim)return undefined; // fim de partida: a música segue até a vinheta da vitória (ou a derrota a calar)
-  if(J.f1)return MUSICA_FASE[J.f1.n]||'mapa';
+  if(J.f1){if(J.f1.musAb)return 'f1abertura'; // Fase 1: a abertura dos Filhotes chegando, que emenda no loop da vila
+    return MUSICA_FASE[J.f1.n]||'mapa';}
   return 'combate'; // Batalha Livre
 }
-setInterval(()=>{const m=musicaAgora();if(m!==undefined)Som.musica(m);},600);
+setInterval(()=>{const m=musicaAgora();if(m===undefined)return;
+  const jogo=typeof J!=='undefined'?J:null;
+  Som.musica(m,m==='f1abertura'?()=>{if(jogo&&jogo.f1)jogo.f1.musAb=false;if(J===jogo){const p=musicaAgora();if(p)Som.musica(p);}}:null);},600);
 // clique dos botões do jogo (qualquer <button> habilitado)
 addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('button');if(b&&!b.disabled)Som.toca('clique');},true);
 // ---------- Tela de toque ----------
@@ -2732,7 +2739,7 @@ function fundoMenu(cena='inicio'){
 }
 // cada cena tem seu ponto de interesse (torre, pavilhão, monólito): é ele que fica à vista quando a tela corta os lados
 const poeArte=(el,cena)=>{try{el.style.setProperty('--fundoMenu',`url(${fundoMenu(cena)})`);el.style.setProperty('--fundoX',{inicio:'50%',batalha:'46%',carregar:'30%'}[cena]);el.dataset.cena=cena;el.classList.add('arte');}catch(e){}};
-const VERSAO='2.51'; // aumentar 0.01 a cada atualização publicada
+const VERSAO='2.52'; // aumentar 0.01 a cada atualização publicada
 // tela inicial: menu principal (Jogar/Continuar a campanha, Fases e Batalha Livre, que reúne a nova batalha e as salvas)
 // inicio = aberta ao abrir o jogo (ou no fim da partida): sem partida para voltar, "Continuar" começa a próxima fase
 function abreConfig(inicio=false){
@@ -2945,7 +2952,7 @@ function fechaAvisoF1(){if(J&&J.f1){const id=J.f1.fila.shift();marcaFalaF1();if(
 // do outro; rosnam, e a câmera volta para o seu mestre. Só então aparece o aviso de abertura (que espera J.ocupado)
 async function chegadaF1(){
   const jogo=J,fs=J.un.filter(u=>u.selvagem);if(!fs.length||!VEL||document.hidden)return;
-  J.ocupado=true;J.f1.chegando=true;comecaAberturaF();
+  J.ocupado=true;J.f1.chegando=true;J.f1.musAb=true;comecaAberturaF();
   // câmera bem de perto: abre na entrada do primeiro Filhote; quando ele chega e rosna, desliza numa passada só
   // até enquadrar os dois, enquanto o segundo já vem correndo (o zoom volta ao normal quando ela viaja até o mestre)
   const cima=J.f1.entra==='cima';
